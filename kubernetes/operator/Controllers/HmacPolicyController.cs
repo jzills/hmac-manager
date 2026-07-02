@@ -60,7 +60,9 @@ public sealed class HmacPolicyController : IEntityController<V1HmacPolicy>
         var policies = await _client.ListAsync<V1HmacPolicy>(@namespace, cancellationToken: cancellationToken);
         var resolved = new List<ResolvedPolicy>();
 
-        foreach (var policy in policies.OrderBy(policy => policy.Metadata.Name, StringComparer.Ordinal))
+        // Iterate in list order. PolicyConfigRenderer imposes the canonical ordering that aligns the
+        // config array with the key-file indices, so there is no need to sort here as well.
+        foreach (var policy in policies)
         {
             var privateKey = await ResolvePrivateKeyAsync(policy, @namespace, cancellationToken);
             var (isValid, message) = PolicyValidation.Validate(policy.Metadata.Name, policy.Spec.PublicKey, privateKey);
@@ -102,16 +104,38 @@ public sealed class HmacPolicyController : IEntityController<V1HmacPolicy>
     private async Task UpdateStatusIfChangedAsync(V1HmacPolicy policy, string phase, string? message, CancellationToken cancellationToken)
     {
         policy.Status ??= new V1HmacPolicy.PolicyStatus();
-        if (policy.Status.Phase == phase && policy.Status.Message == message)
+
+        // Only write when something actually changed, so we don't re-trigger reconciliation for no
+        // reason. ObservedGeneration is part of that comparison: a spec edit that keeps the policy
+        // valid leaves phase/message unchanged, but the status must still advance to the generation
+        // we just observed — otherwise clients gating on observedGeneration == generation never see
+        // the reconcile.
+        if (!TryApplyStatus(policy.Status, phase, message, policy.Metadata.Generation ?? 0))
         {
-            // Avoid a status write that would re-trigger reconciliation for no reason.
             return;
         }
 
-        policy.Status.Phase = phase;
-        policy.Status.Message = message;
-        policy.Status.ObservedGeneration = policy.Metadata.Generation ?? 0;
         await _client.UpdateStatusAsync(policy, cancellationToken);
+    }
+
+    /// <summary>
+    /// Applies the desired <paramref name="phase"/>, <paramref name="message"/> and
+    /// <paramref name="generation"/> onto <paramref name="status"/> in place, returning
+    /// <c>true</c> when a field actually changed (and a status write is therefore needed).
+    /// ObservedGeneration is compared and advanced alongside phase/message so a valid-to-valid
+    /// spec edit still records the generation the operator has observed.
+    /// </summary>
+    internal static bool TryApplyStatus(V1HmacPolicy.PolicyStatus status, string phase, string? message, long generation)
+    {
+        if (status.Phase == phase && status.Message == message && status.ObservedGeneration == generation)
+        {
+            return false;
+        }
+
+        status.Phase = phase;
+        status.Message = message;
+        status.ObservedGeneration = generation;
+        return true;
     }
 
     private Task SaveConfigMapAsync(string @namespace, string configJson, CancellationToken cancellationToken) =>
