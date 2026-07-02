@@ -39,11 +39,11 @@ service:
 #
 # Example:
 # policies:
-#   - name: MyPolicy
+#   - name: my-policy
 #     publicKey: "00000000-0000-0000-0000-000000000001"
 #     privateKeySecret:
 #       name: my-hmac-secrets
-#       key: myPolicy-privateKey
+#       key: my-policy-privateKey
 #     algorithms:
 #       contentHash: SHA256
 #       signingHash: HMACSHA256

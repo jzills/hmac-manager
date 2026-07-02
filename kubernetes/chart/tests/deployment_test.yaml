@@ -10,7 +10,7 @@ tests:
       image.repository: my-registry/hmac-manager
       image.tag: v1.2.3
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -24,7 +24,7 @@ tests:
     set:
       namespace: my-namespace
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -38,7 +38,7 @@ tests:
     set:
       service.port: 9090
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -54,7 +54,7 @@ tests:
     set:
       environment: Development
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -69,7 +69,7 @@ tests:
   - it: defaults ASPNETCORE_ENVIRONMENT to Production
     set:
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -84,7 +84,7 @@ tests:
   - it: injects ConnectionStrings__Redis when redis is enabled
     set:
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -100,7 +100,7 @@ tests:
     set:
       redis.enabled: false
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -115,7 +115,7 @@ tests:
   - it: mounts the operator-owned aggregate ConfigMap and Secret as optional volumes
     set:
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -139,7 +139,7 @@ tests:
   - it: mounts the aggregate config and keys volumes read-only
     set:
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -162,7 +162,7 @@ tests:
     set:
       replicaCount: 3
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -177,7 +177,7 @@ tests:
       replicaCount: 3
       redis.enabled: false
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret
@@ -189,7 +189,7 @@ tests:
   - it: labels pods with the server component to distinguish them from bundled Redis
     set:
       policies:
-        - name: MyPolicy
+        - name: my-policy
           publicKey: "00000000-0000-0000-0000-000000000001"
           privateKeySecret:
             name: my-secret

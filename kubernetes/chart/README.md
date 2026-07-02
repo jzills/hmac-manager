@@ -30,10 +30,10 @@ helm repo update
 helm install hmac-manager zills/hmac-manager \
   --namespace hmac-system \
   --create-namespace \
-  --set "policies[0].name=MyPolicy" \
+  --set "policies[0].name=my-policy" \
   --set "policies[0].publicKey=00000000-0000-0000-0000-000000000001" \
   --set "policies[0].privateKeySecret.name=my-hmac-secrets" \
-  --set "policies[0].privateKeySecret.key=MyPolicy-privateKey"
+  --set "policies[0].privateKeySecret.key=my-policy-privateKey"
 ```
 
 Or with a values file:
@@ -41,11 +41,11 @@ Or with a values file:
 ```yaml
 # values.yaml
 policies:
-  - name: MyPolicy
+  - name: my-policy
     publicKey: "00000000-0000-0000-0000-000000000001"
     privateKeySecret:
       name: my-hmac-secrets   # pre-existing Secret, e.g. from External Secrets
-      key: MyPolicy-privateKey
+      key: my-policy-privateKey
 ```
 
 ```bash
@@ -102,11 +102,11 @@ At least one policy is required. Private keys must live in a pre-existing Kubern
 
 ```yaml
 policies:
-  - name: MyPolicy
+  - name: my-policy
     publicKey: "00000000-0000-0000-0000-000000000001"
     privateKeySecret:
       name: my-hmac-secrets     # name of a pre-existing Secret
-      key: MyPolicy-privateKey  # key within that Secret
+      key: my-policy-privateKey  # key within that Secret
     algorithms:
       contentHash: SHA256       # SHA1 | SHA256 | SHA512   (default: SHA256)
       signingHash: HMACSHA256   # HMACSHA1 | HMACSHA256 | HMACSHA512 (default: HMACSHA256)
@@ -200,7 +200,7 @@ kubectl port-forward deploy/hmac-manager 9090:8081 -n hmac-system
 
 curl -s -X POST http://localhost:9090/sign \
   -H "Content-Type: application/json" \
-  -d '{"policy":"MyPolicy","method":"GET","uri":"http://echo.default.svc.cluster.local/"}'
+  -d '{"policy":"my-policy","method":"GET","uri":"http://echo.default.svc.cluster.local/"}'
 ```
 
 Returns the HMAC headers to attach to your request. Never use `Development` in a production cluster.
