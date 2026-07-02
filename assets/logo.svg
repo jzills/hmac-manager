@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="470" height="220" viewBox="0 0 470 220" role="img" aria-label="HMAC MANAGER">
-  <text xml:space="preserve" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="14" fill="#58a6ff">
-    <tspan x="8" y="20">╔═════════════════════════════════════════════════╗</tspan>
-    <tspan x="8" y="37">║     __  ____  ______   ______                   ║</tspan>
-    <tspan x="8" y="54">║    / / / /  |/  /   | / ____/                   ║</tspan>
-    <tspan x="8" y="71">║   / /_/ / /|_/ / /| |/ /                        ║</tspan>
-    <tspan x="8" y="88">║  / __  / /  / / ___ / /___                      ║</tspan>
-    <tspan x="8" y="105">║ /_/ /_/_/  /_/_/  |_\____/                      ║</tspan>
-    <tspan x="8" y="122">║     __  ______    _   _____   ________________  ║</tspan>
-    <tspan x="8" y="139">║    /  |/  /   |  / | / /   | / ____/ ____/ __ \ ║</tspan>
-    <tspan x="8" y="156">║   / /|_/ / /| | /  |/ / /| |/ / __/ __/ / /_/ / ║</tspan>
-    <tspan x="8" y="173">║  / /  / / ___ |/ /|  / ___ / /_/ / /___/ _, _/  ║</tspan>
-    <tspan x="8" y="190">║ /_/  /_/_/  |_/_/ |_/_/  |_\____/_____/_/ |_|   ║</tspan>
-    <tspan x="8" y="207">╚═════════════════════════════════════════════════╝</tspan>
+  <text xml:space="preserve" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="14" fill="#58a6ff">
+    <tspan x="235" y="20">╔═════════════════════════════════════════════════╗</tspan>
+    <tspan x="235" y="37">║     __  ____  ______   ______                   ║</tspan>
+    <tspan x="235" y="54">║    / / / /  |/  /   | / ____/                   ║</tspan>
+    <tspan x="235" y="71">║   / /_/ / /|_/ / /| |/ /                        ║</tspan>
+    <tspan x="235" y="88">║  / __  / /  / / ___ / /___                      ║</tspan>
+    <tspan x="235" y="105">║ /_/ /_/_/  /_/_/  |_\____/                      ║</tspan>
+    <tspan x="235" y="122">║     __  ______    _   _____   ________________  ║</tspan>
+    <tspan x="235" y="139">║    /  |/  /   |  / | / /   | / ____/ ____/ __ \ ║</tspan>
+    <tspan x="235" y="156">║   / /|_/ / /| | /  |/ / /| |/ / __/ __/ / /_/ / ║</tspan>
+    <tspan x="235" y="173">║  / /  / / ___ |/ /|  / ___ / /_/ / /___/ _, _/  ║</tspan>
+    <tspan x="235" y="190">║ /_/  /_/_/  |_/_/ |_/_/  |_\____/_____/_/ |_|   ║</tspan>
+    <tspan x="235" y="207">╚═════════════════════════════════════════════════╝</tspan>
   </text>
 </svg>
