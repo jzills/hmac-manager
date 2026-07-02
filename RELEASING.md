@@ -12,9 +12,10 @@ Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whos
 |---|---|---|---|
 | NuGet package | `release/vX.Y.Z` | `nuget/vX.Y.Z` | `.github/workflows/release.yml` |
 | Docker image (ext-authz service) | `release/service/vX.Y.Z` | `service/vX.Y.Z` | `.github/workflows/service-release.yml` |
+| Docker image (policy operator) | `release/operator/vX.Y.Z` | `operator/vX.Y.Z` | `.github/workflows/operator-release.yml` |
 | Helm chart | `release/chart/vX.Y.Z` | `chart/vX.Y.Z` | `.github/workflows/chart-release.yml` |
 
-The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion`) so that:
+The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `HmacManager.Operator.csproj`'s `<Version>` for the operator, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion`) so that:
 
 - local/manual builds report the right version, and
 - the release branch has a real commit to bring back into `develop`. If a release branch has no changes vs `develop` at merge time, `tag.yml`'s `merge-back` job fails loudly with an error telling you to bump the version — it does not silently skip.
@@ -82,6 +83,42 @@ git branch -d release/service/v1.2.0
 Builds multi-arch images (`linux/amd64`, `linux/arm64`) and pushes two tags:
 - `your-username/hmac-manager:1.2.0`
 - `your-username/hmac-manager:latest`
+
+---
+
+## Docker Image (policy operator) {#policy-operator}
+
+Covers changes to `kubernetes/operator/` — the controller that reconciles `HmacPolicy` custom resources into the aggregate ConfigMap and Secret the verifier pods mount. Released independently of the ext-authz service image.
+
+```bash
+# 1. Cut a release branch from develop
+git checkout develop && git pull origin develop
+git checkout -b release/operator/v1.1.0
+
+# 2. Bump the version and stabilize
+#    Edit kubernetes/operator/HmacManager.Operator.csproj: <Version>1.1.0</Version>
+git commit -am "chore: bump operator version to 1.1.0"
+git push origin release/operator/v1.1.0
+
+# 3. Open a PR release/operator/v1.1.0 -> main and merge it once checks pass.
+#    Merging the PR automatically:
+#      - tags main as operator/v1.1.0 (triggers operator-release.yml: test, build, push image)
+#      - opens and auto-merges a PR to back-merge release/operator/v1.1.0 into develop
+gh pr create --base main --head release/operator/v1.1.0 --title "release: operator v1.1.0" --fill
+gh pr merge --merge --auto
+
+# 4. Once the back-merge PR has merged, delete the release branch
+git push origin --delete release/operator/v1.1.0
+git branch -d release/operator/v1.1.0
+```
+
+**Required secrets:** `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (Settings → Secrets → Actions).
+
+Builds multi-arch images (`linux/amd64`, `linux/arm64`) and pushes two tags:
+- `your-username/hmac-manager-operator:1.1.0`
+- `your-username/hmac-manager-operator:latest`
+
+The chart deploys this image via `operator.image.repository` / `operator.image.tag`; bump those in `values.yaml` (and cut a chart release) when you want a new operator version rolled out by `helm upgrade`.
 
 ---
 
@@ -165,7 +202,7 @@ This ensures the Docker image exists on Docker Hub before the chart that referen
 | Secret | Used by | Where to obtain |
 |---|---|---|
 | `NUGET_API_KEY` | `release.yml` | nuget.org → Account → API Keys (push-only, scoped to HmacManager) |
-| `DOCKERHUB_USERNAME` | `service-release.yml` | Your Docker Hub username |
-| `DOCKERHUB_TOKEN` | `service-release.yml` | Docker Hub → Account Settings → Security → Access Tokens |
+| `DOCKERHUB_USERNAME` | `service-release.yml`, `operator-release.yml` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | `service-release.yml`, `operator-release.yml` | Docker Hub → Account Settings → Security → Access Tokens |
 
 GHCR (Helm chart) uses the built-in `GITHUB_TOKEN` — no additional secret required.
