@@ -125,6 +125,36 @@ wait_for_signed_200() {
     return 1
 }
 
+# Sign a request that carries a scheme's custom header, so the library folds its value into the
+# signature. The /sign helper attaches Headers to the message before signing (see SignHandler).
+sign_request_scheme() {
+    local method="$1" uri="$2" policy="$3" scheme="$4" userid="$5"
+    curl -s -X POST "http://localhost:${SIGN_PORT}/sign" \
+        -H "Content-Type: application/json" \
+        -d "{\"Policy\":\"${policy}\",\"Method\":\"${method}\",\"Uri\":\"${uri}\",\"Scheme\":\"${scheme}\",\"Headers\":{\"X-UserId\":\"${userid}\"}}"
+}
+
+# Replay a scheme-signed request from the curl pod, including the Hmac-Scheme and X-UserId headers the
+# verifier needs. $2 is the X-UserId value actually sent — pass a different value than was signed to
+# simulate tampering.
+send_signed_scheme() {
+    local sign_json="$1" userid="$2" target="${3:-http://${ECHO_SVC}/}"
+    local auth policy scheme nonce date
+    auth=$(extract "$sign_json" "Authorization")
+    policy=$(extract "$sign_json" "Hmac-Policy")
+    scheme=$(extract "$sign_json" "Hmac-Scheme")
+    nonce=$(extract "$sign_json" "Hmac-Nonce")
+    date=$(extract "$sign_json" "Hmac-DateRequested")
+    kubectl exec -n default curl -- curl -s -o /dev/null -w "%{http_code}" \
+        -H "Authorization: $auth" \
+        -H "Hmac-Policy: $policy" \
+        -H "Hmac-Scheme: $scheme" \
+        -H "Hmac-Nonce: $nonce" \
+        -H "Hmac-DateRequested: $date" \
+        -H "X-UserId: $userid" \
+        "$target"
+}
+
 create_ns_with_curl() {
     local ns="$1" ambient="${2:-true}"
     kubectl create namespace "$ns" --save-config 2>/dev/null || true
@@ -465,4 +495,43 @@ teardown_ingress() {
 
     run wait_for_aggregate_absent "kubectl-policy-invalid" 60
     [ "$status" -eq 0 ]
+}
+
+@test "kubectl-managed HmacPolicy: a scheme signs+verifies with its header (200) and rejects a tampered header (403)" {
+    kubectl apply -f - <<EOF 2>&1
+apiVersion: hmac-manager.io/v1alpha1
+kind: HmacPolicy
+metadata:
+  name: kubectl-scheme-policy
+  namespace: $HMAC_NS
+  labels: { e2e-test: kubectl-lifecycle }
+spec:
+  publicKey: "00000000-0000-0000-0000-0000000000d4"
+  privateKeySecretRef: { name: hmac-manager-policy, key: my-policy-privateKey }
+  schemes:
+    - name: UserContext
+      headers:
+        - name: X-UserId
+          claimType: userId
+EOF
+
+    run wait_for_status_phase "kubectl-scheme-policy" "Ready" 60
+    [ "$status" -eq 0 ]
+
+    # Gate on the policy being live on the running pod: a schemeless sign+verify (200) proves it
+    # has reconciled and hot-reloaded before the scheme-specific assertions below.
+    run wait_for_signed_200 "kubectl-scheme-policy" 180
+    [ "$status" -eq 0 ]
+
+    # Scheme header present and matching what was signed → the folded X-UserId value verifies → 200.
+    local sign
+    sign=$(sign_request_scheme "GET" "http://${ECHO_SVC}/" "kubectl-scheme-policy" "UserContext" "user-123")
+    run send_signed_scheme "$sign" "user-123"
+    [ "$output" = "200" ]
+
+    # Re-sign (fresh nonce) but replay with a different X-UserId than was signed → the recomputed
+    # signature no longer matches → 403. This proves the scheme header is genuinely in the signature.
+    sign=$(sign_request_scheme "GET" "http://${ECHO_SVC}/" "kubectl-scheme-policy" "UserContext" "user-123")
+    run send_signed_scheme "$sign" "user-999"
+    [ "$output" = "403" ]
 }

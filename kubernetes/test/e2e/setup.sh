@@ -154,6 +154,9 @@ providers.append({
         'port': 8080,
         'includeRequestHeadersInCheck': [
             'authorization', 'hmac-policy', 'hmac-nonce', 'hmac-daterequested',
+            # hmac-scheme selects the scheme; x-userid is the UserContext scheme's header, whose value
+            # is folded into the signature — both must reach the verifier for scheme requests to pass.
+            'hmac-scheme', 'x-userid',
         ],
         'withRequestBody': {'maxRequestBytes': 8192, 'allowPartialMessage': False}
     }

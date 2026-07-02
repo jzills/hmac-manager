@@ -41,6 +41,15 @@ public class PolicyConfigRendererTests
         Assert.AreEqual(Guid.Parse("00000000-0000-0000-0000-000000000001"), policy.Keys.PublicKey);
         Assert.AreEqual(Key("payments-secret"), policy.Keys.PrivateKey);
         Assert.AreEqual(60, policy.Nonce.MaxAgeInSeconds);
+
+        // The scheme (and its header + claim type) must survive the render → bind round-trip, not
+        // just parse without error: a renderer that dropped or mis-nested schemes would still yield
+        // a config.json the pipeline accepts, so assert the scheme actually lands on the policy.
+        var scheme = policy.Schemes.Get("UserContext");
+        Assert.IsNotNull(scheme, "the UserContext scheme should survive rendering and binding");
+        var header = scheme!.Headers.Get("X-UserId");
+        Assert.IsNotNull(header, "the scheme's X-UserId header should survive rendering and binding");
+        Assert.AreEqual("userId", header!.ClaimType);
     }
 
     [Test]
