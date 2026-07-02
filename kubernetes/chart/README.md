@@ -30,10 +30,10 @@ helm repo update
 helm install hmac-manager zills/hmac-manager \
   --namespace hmac-system \
   --create-namespace \
-  --set "policies[0].name=MyPolicy" \
+  --set "policies[0].name=my-policy" \
   --set "policies[0].publicKey=00000000-0000-0000-0000-000000000001" \
   --set "policies[0].privateKeySecret.name=my-hmac-secrets" \
-  --set "policies[0].privateKeySecret.key=MyPolicy-privateKey"
+  --set "policies[0].privateKeySecret.key=my-policy-privateKey"
 ```
 
 Or with a values file:
@@ -41,11 +41,11 @@ Or with a values file:
 ```yaml
 # values.yaml
 policies:
-  - name: MyPolicy
+  - name: my-policy
     publicKey: "00000000-0000-0000-0000-000000000001"
     privateKeySecret:
       name: my-hmac-secrets   # pre-existing Secret, e.g. from External Secrets
-      key: MyPolicy-privateKey
+      key: my-policy-privateKey
 ```
 
 ```bash
@@ -102,11 +102,11 @@ At least one policy is required. Private keys must live in a pre-existing Kubern
 
 ```yaml
 policies:
-  - name: MyPolicy
+  - name: my-policy
     publicKey: "00000000-0000-0000-0000-000000000001"
     privateKeySecret:
       name: my-hmac-secrets     # name of a pre-existing Secret
-      key: MyPolicy-privateKey  # key within that Secret
+      key: my-policy-privateKey  # key within that Secret
     algorithms:
       contentHash: SHA256       # SHA1 | SHA256 | SHA512   (default: SHA256)
       signingHash: HMACSHA256   # HMACSHA1 | HMACSHA256 | HMACSHA512 (default: HMACSHA256)
@@ -119,7 +119,20 @@ policies:
             claimType: userId
 ```
 
-Policy changes — including updating `policies[].privateKeySecret` to point at a rotated key — take effect on running pods without a restart: `helm upgrade` updates the ConfigMap and the projected Secret volume, and each pod picks up the change the next time kubelet syncs its mounted volumes (typically within about a minute). Key rotation is an instant cutover: once a pod reloads, requests signed with the old key are rejected, so coordinate rotation with whoever holds the key.
+The policy `name` becomes the name of an `HmacPolicy` resource, so it must be a valid RFC 1123 subdomain (lowercase alphanumerics, `-` and `.`).
+
+#### How policies work (operator + CRD)
+
+Each entry in `policies` is rendered as an `HmacPolicy` custom resource (`hmac-manager.io/v1alpha1`). A controller — deployed by this chart — watches those resources and reconciles them into the ConfigMap and Secret that the verifier pods mount. The custom resource is the single source of truth, so you can also manage policies directly:
+
+```bash
+kubectl get hmacpolicies -n hmac-system
+kubectl describe hmacpolicy payments-api -n hmac-system   # .status shows Ready / Invalid + why
+```
+
+Note: a policy defined in `values.policies` is Helm-managed — if you also edit that same policy via `kubectl`, `helm upgrade` will revert it. Keep a given policy name in one place: `values.policies` **or** `kubectl`, not both.
+
+Policy changes — including updating `privateKeySecretRef` to point at a rotated key — take effect on running pods without a restart: the operator updates the ConfigMap and Secret, and each pod picks up the change the next time kubelet syncs its mounted volumes (typically within about a minute). Key rotation is an instant cutover: once a pod reloads, requests signed with the old key are rejected, so coordinate rotation with whoever holds the key.
 
 ### Redis (replay protection)
 
@@ -140,6 +153,8 @@ When `redis.enabled=false` the chart refuses `replicaCount > 1` — the in-proce
 | `namespace` | `hmac-system` | Namespace to deploy into. |
 | `image.repository` | `zills/hmac-manager` | Container image repository. |
 | `image.tag` | `0.1.0` | Container image tag. |
+| `operator.image.repository` | `zills/hmac-manager-operator` | Operator (policy controller) image repository. |
+| `operator.image.tag` | `0.1.0` | Operator image tag. |
 | `service.port` | `8080` | Port the ext-authz service listens on. |
 | `istio.enabled` | `true` | Master switch for Istio integration and the NOTES MeshConfig instructions. |
 | `istio.ingressGateway.enabled` | `false` | Enforce inbound (ingress gateway) traffic. Requires `name` + `namespace`. |
@@ -185,7 +200,7 @@ kubectl port-forward deploy/hmac-manager 9090:8081 -n hmac-system
 
 curl -s -X POST http://localhost:9090/sign \
   -H "Content-Type: application/json" \
-  -d '{"policy":"MyPolicy","method":"GET","uri":"http://echo.default.svc.cluster.local/"}'
+  -d '{"policy":"my-policy","method":"GET","uri":"http://echo.default.svc.cluster.local/"}'
 ```
 
 Returns the HMAC headers to attach to your request. Never use `Development` in a production cluster.

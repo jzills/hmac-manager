@@ -73,6 +73,8 @@ Tests mirror the source structure under `test/Unit/`. Shared test data and helpe
 
 All pipelines are defined under `.github/workflows/`. Dependabot is configured separately at `.github/dependabot.yml`.
 
+The per-artifact release pipelines (`release.yml` for the NuGet package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md).
+
 ---
 
 ### `pr.yml` — PR Validation
@@ -81,7 +83,7 @@ All pipelines are defined under `.github/workflows/`. Dependabot is configured s
 
 **Trigger**: Any pull request opened or updated targeting `main` or `develop`.
 
-**Purpose**: Gate merges by verifying the full test suite passes. Runs unit and integration tests as parallel jobs so a failure in one does not block feedback from the other.
+**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
 
 **Jobs**:
 
@@ -92,6 +94,13 @@ All pipelines are defined under `.github/workflows/`. Dependabot is configured s
 4. Builds `test/Unit`.
 5. Runs the unit test suite via `dotnet test`.
 
+#### `operator-tests`
+1. Checks out the repository.
+2. Installs .NET `8.0.x` and `10.0.x`.
+3. Restores dependencies in `test/Operator`.
+4. Builds `test/Operator`.
+5. Runs the operator test suite via `dotnet test` (rendering, mapping, validation, and status reconciliation for the `HmacPolicy` CRD controller under `kubernetes/operator/`).
+
 #### `integration-tests`
 1. Checks out the repository.
 2. Starts a Redis 7 instance using `supercharge/redis-github-action`.
@@ -101,7 +110,7 @@ All pipelines are defined under `.github/workflows/`. Dependabot is configured s
 6. Builds `test/Integration`.
 7. Runs the integration test suite via `dotnet test`.
 
-**Branch protection**: Both the `Unit Tests` and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
+**Branch protection**: The `Unit Tests`, `Operator Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
 
 ---
 

@@ -46,10 +46,10 @@ helm repo add zills https://jzills.github.io/hmac-manager
 helm repo update
 helm install hmac-manager zills/hmac-manager \
   --namespace hmac-system --create-namespace \
-  --set "policies[0].name=MyPolicy" \
+  --set "policies[0].name=my-policy" \
   --set "policies[0].publicKey=00000000-0000-0000-0000-000000000001" \
   --set "policies[0].privateKeySecret.name=my-hmac-secrets" \
-  --set "policies[0].privateKeySecret.key=MyPolicy-privateKey"
+  --set "policies[0].privateKeySecret.key=my-policy-privateKey"
 ```
 
 - **Helm chart** — [kubernetes/chart](kubernetes/chart/README.md) · [Artifact Hub](https://artifacthub.io/packages/search?repo=zills)

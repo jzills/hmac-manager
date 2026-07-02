@@ -21,21 +21,17 @@ spec:
         app.kubernetes.io/component: server
     spec:
       volumes:
+        # Both aggregate resources are written by the operator from the HmacPolicy resources, so
+        # they may not exist yet on a fresh install — optional lets the pod start and pick them up
+        # (via config reload) once the operator has reconciled at least once.
         - name: config
           configMap:
             name: {{ include "hmac-manager.fullname" . }}-config
-        {{- if .Values.policies }}
+            optional: true
         - name: secret-keys
-          projected:
-            sources:
-              {{- range $i, $policy := .Values.policies }}
-              - secret:
-                  name: {{ $policy.privateKeySecret.name }}
-                  items:
-                    - key: {{ $policy.privateKeySecret.key }}
-                      path: {{ printf "HmacManager__%d__Keys__PrivateKey" $i }}
-              {{- end }}
-        {{- end }}
+          secret:
+            secretName: {{ include "hmac-manager.fullname" . }}-keys
+            optional: true
       containers:
         - name: {{ include "hmac-manager.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -48,16 +44,22 @@ spec:
             - name: config
               mountPath: /etc/hmac-manager
               readOnly: true
-            {{- if .Values.policies }}
             - name: secret-keys
               mountPath: /etc/hmac-manager/secrets
               readOnly: true
-            {{- end }}
           env:
             - name: ASPNETCORE_URLS
               value: "http://+:{{ .Values.service.port }}"
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.environment | quote }}
+            # Required for reloadOnChange (config.json + key files) to fire on a running pod.
+            # kubelet updates a mounted ConfigMap/Secret by atomically swapping the volume's
+            # `..data` symlink; .NET's default inotify FileSystemWatcher watches the file path and
+            # never observes that swap, so live policy changes would be ignored until a restart.
+            # The polling watcher re-checks on an interval and does pick the change up, which is
+            # what makes the operator's reconcile take effect without a pod restart.
+            - name: DOTNET_USE_POLLING_FILE_WATCHER
+              value: "true"
             {{- if .Values.redis.enabled }}
             - name: ConnectionStrings__Redis
               value: {{ include "hmac-manager.redisAddress" . | quote }}

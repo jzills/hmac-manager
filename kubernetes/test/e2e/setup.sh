@@ -74,6 +74,14 @@ docker build -f "$REPO_ROOT/kubernetes/service/Dockerfile" \
 log "Loading hmac-manager image into kind..."
 kind load docker-image "zills/hmac-manager:${IMAGE_TAG}" --name "$CLUSTER_NAME"
 
+log "Building hmac-manager-operator image ($IMAGE_TAG)..."
+docker build -f "$REPO_ROOT/kubernetes/operator/Dockerfile" \
+    -t "zills/hmac-manager-operator:${IMAGE_TAG}" \
+    "$REPO_ROOT"
+
+log "Loading hmac-manager-operator image into kind..."
+kind load docker-image "zills/hmac-manager-operator:${IMAGE_TAG}" --name "$CLUSTER_NAME"
+
 log "Pulling and loading bundled Redis image into kind..."
 docker pull redis:7-alpine
 kind load docker-image redis:7-alpine --name "$CLUSTER_NAME"
@@ -83,7 +91,7 @@ log "Creating namespace and HMAC policy secret..."
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic hmac-manager-policy \
     --namespace "$NAMESPACE" \
-    --from-literal="MyPolicy-privateKey=$TEST_PRIVATE_KEY" \
+    --from-literal="my-policy-privateKey=$TEST_PRIVATE_KEY" \
     --dry-run=client -o yaml | kubectl apply -f -
 
 log "Installing hmac-manager Helm chart..."
@@ -91,17 +99,42 @@ helm upgrade --install hmac-manager "$REPO_ROOT/kubernetes/chart" \
     --namespace "$NAMESPACE" \
     --set image.tag="$IMAGE_TAG" \
     --set image.pullPolicy=Never \
+    --set operator.image.tag="$IMAGE_TAG" \
+    --set operator.image.pullPolicy=Never \
     --set environment=Development \
-    --set "policies[0].name=MyPolicy" \
+    --set "policies[0].name=my-policy" \
     --set "policies[0].publicKey=$TEST_PUBLIC_KEY" \
     --set "policies[0].privateKeySecret.name=hmac-manager-policy" \
-    --set "policies[0].privateKeySecret.key=MyPolicy-privateKey" \
+    --set "policies[0].privateKeySecret.key=my-policy-privateKey" \
     --set istio.ingressGateway.enabled=false \
     --set istio.waypoint.enabled=true \
     --set istio.waypoint.authorizationPolicy.enabled=true \
     --set istio.waypoint.name=waypoint \
     --set istio.waypoint.namespace=default \
     --wait --timeout=180s
+
+# ── 8b. Wait for the operator to reconcile the aggregate config ──────────────
+# Policies are HmacPolicy resources reconciled by the operator into the ConfigMap
+# and Secret the server mounts. The server pod starts with optional (initially
+# empty) mounts, so block until the operator has produced the config before the
+# ext-authz wiring and signed-request warmup depend on real policies being loaded.
+log "Waiting for the operator to reconcile the aggregate ConfigMap..."
+RECONCILED=false
+for _ in $(seq 1 60); do
+    if kubectl get configmap hmac-manager-config -n "$NAMESPACE" >/dev/null 2>&1; then
+        RECONCILED=true
+        break
+    fi
+    sleep 2
+done
+if [[ "$RECONCILED" != "true" ]]; then
+    log "ERROR: operator did not produce the aggregate ConfigMap 'hmac-manager-config' after 120s."
+    kubectl get pods -n "$NAMESPACE" -o wide || true
+    kubectl logs -l app.kubernetes.io/component=operator -n "$NAMESPACE" --tail=100 || true
+    kubectl get hmacpolicies -n "$NAMESPACE" -o yaml || true
+    exit 1
+fi
+log "Operator reconciled the aggregate ConfigMap."
 
 # ── 9. MeshConfig: register ext-authz provider ───────────────────────────────
 log "Patching Istio MeshConfig with ext-authz provider..."
@@ -121,6 +154,9 @@ providers.append({
         'port': 8080,
         'includeRequestHeadersInCheck': [
             'authorization', 'hmac-policy', 'hmac-nonce', 'hmac-daterequested',
+            # hmac-scheme selects the scheme; x-userid is the UserContext scheme's header, whose value
+            # is folded into the signature — both must reach the verifier for scheme requests to pass.
+            'hmac-scheme', 'x-userid',
         ],
         'withRequestBody': {'maxRequestBytes': 8192, 'allowPartialMessage': False}
     }
@@ -211,7 +247,7 @@ WARMUP_OK=false
 for _ in $(seq 1 15); do
     sign=$(curl -s --max-time 2 -X POST "http://localhost:9090/sign" \
         -H "Content-Type: application/json" \
-        -d '{"Policy":"MyPolicy","Method":"GET","Uri":"http://echo.default.svc.cluster.local/"}' \
+        -d '{"Policy":"my-policy","Method":"GET","Uri":"http://echo.default.svc.cluster.local/"}' \
         2>/dev/null) || true
 
     if echo "$sign" | python3 -c "import sys,json; json.load(sys.stdin)" >/dev/null 2>&1; then

@@ -1,0 +1,40 @@
+{{- /*
+Render an HmacPolicy custom resource for each entry in .Values.policies. The CRD is the single
+source of truth the operator reconciles; templating CRs here keeps the declarative values-file
+workflow for GitOps users. A policy defined here is Helm-managed — do not also manage the same
+policy name via kubectl or it will be reverted on the next `helm upgrade`.
+*/}}
+{{- range .Values.policies }}
+---
+apiVersion: hmac-manager.io/v1alpha1
+kind: HmacPolicy
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "hmac-manager.labels" $ | nindent 4 }}
+spec:
+  publicKey: {{ .publicKey | quote }}
+  {{- with .privateKeySecret }}
+  privateKeySecretRef:
+    name: {{ .name | quote }}
+    key: {{ .key | quote }}
+  {{- end }}
+  {{- with .algorithms }}
+  algorithms:
+    {{- with .contentHash }}
+    contentHash: {{ . | quote }}
+    {{- end }}
+    {{- with .signingHash }}
+    signingHash: {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  {{- with .nonce }}
+  nonce:
+    maxAgeInSeconds: {{ .maxAgeInSeconds }}
+  {{- end }}
+  {{- with .schemes }}
+  schemes:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -5,7 +5,7 @@
 # satisfy the schema on its own. This file supplies a single sample policy so the
 # linter validates a realistic, schema-valid configuration.
 policies:
-  - name: LintPolicy
+  - name: lint-policy
     publicKey: "00000000-0000-0000-0000-000000000001"
     privateKeySecret:
       name: lint-secret

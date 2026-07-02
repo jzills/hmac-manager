@@ -30,6 +30,31 @@ jobs:
         working-directory: ./test/Unit
         run: dotnet test --no-build --verbosity normal
 
+  operator-tests:
+    name: Operator Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        working-directory: ./test/Operator
+        run: dotnet restore
+
+      - name: Build
+        working-directory: ./test/Operator
+        run: dotnet build --no-restore
+
+      - name: Test
+        working-directory: ./test/Operator
+        run: dotnet test --no-build --verbosity normal
+
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
