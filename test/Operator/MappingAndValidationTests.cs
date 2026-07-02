@@ -1,4 +1,5 @@
 using System.Text;
+using HmacManager.Components;
 using HmacManager.Operator.Entities;
 using HmacManager.Operator.Rendering;
 using k8s.Models;
@@ -18,8 +19,8 @@ public class MappingAndValidationTests
             PublicKey = "00000000-0000-0000-0000-000000000001",
             Algorithms = new V1HmacPolicy.AlgorithmsSpec
             {
-                ContentHash = "SHA512",
-                SigningHash = "HMACSHA512",
+                ContentHash = ContentHashAlgorithm.SHA512,
+                SigningHash = SigningHashAlgorithm.HMACSHA512,
             },
             Nonce = new V1HmacPolicy.NonceSpec { MaxAgeInSeconds = 45 },
             Schemes =

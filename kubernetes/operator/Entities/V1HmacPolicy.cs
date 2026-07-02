@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using HmacManager.Components;
 using k8s.Models;
 using KubeOps.Abstractions.Entities;
 
@@ -48,11 +50,14 @@ public sealed class V1HmacPolicy : CustomKubernetesEntity<V1HmacPolicy.PolicySpe
 
     public sealed class AlgorithmsSpec
     {
-        // Strings validated by the CRD schema's enum, avoiding any ambiguity in how a CR's
-        // string value would (de)serialize to a C# enum. Values flow straight into the rendered
-        // config.json, where the library parses them.
-        public string ContentHash { get; set; } = "SHA256";
-        public string SigningHash { get; set; } = "HMACSHA256";
+        // The Kubernetes client's serializer already renders enums as their string names, but the
+        // explicit converters pin that here so the CR round-trip (string name <-> enum, matching the
+        // CRD schema's enum constraint) holds regardless of the ambient serializer options.
+        [JsonConverter(typeof(JsonStringEnumConverter<ContentHashAlgorithm>))]
+        public ContentHashAlgorithm ContentHash { get; set; } = ContentHashAlgorithm.SHA256;
+
+        [JsonConverter(typeof(JsonStringEnumConverter<SigningHashAlgorithm>))]
+        public SigningHashAlgorithm SigningHash { get; set; } = SigningHashAlgorithm.HMACSHA256;
     }
 
     public sealed class NonceSpec

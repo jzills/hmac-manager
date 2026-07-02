@@ -13,8 +13,8 @@ public static class PolicyMapper
             Name: cr.Metadata.Name,
             PublicKey: cr.Spec.PublicKey,
             PrivateKey: privateKey,
-            ContentHashAlgorithm: cr.Spec.Algorithms.ContentHash,
-            SigningHashAlgorithm: cr.Spec.Algorithms.SigningHash,
+            ContentHashAlgorithm: cr.Spec.Algorithms.ContentHash.ToString(),
+            SigningHashAlgorithm: cr.Spec.Algorithms.SigningHash.ToString(),
             NonceMaxAgeInSeconds: cr.Spec.Nonce.MaxAgeInSeconds,
             Schemes: cr.Spec.Schemes
                 .Select(scheme => new ResolvedScheme(
