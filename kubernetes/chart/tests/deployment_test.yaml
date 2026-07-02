@@ -112,38 +112,7 @@ tests:
           content:
             name: ConnectionStrings__Redis
 
-  - it: projects each policy's private key into the secret-keys volume, named for hot-reload binding
-    set:
-      policies:
-        - name: PolicyA
-          publicKey: "00000000-0000-0000-0000-000000000001"
-          privateKeySecret:
-            name: secret-a
-            key: key-a
-        - name: PolicyB
-          publicKey: "00000000-0000-0000-0000-000000000002"
-          privateKeySecret:
-            name: secret-b
-            key: key-b
-    asserts:
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: secret-keys
-            projected:
-              sources:
-                - secret:
-                    name: secret-a
-                    items:
-                      - key: key-a
-                        path: HmacManager__0__Keys__PrivateKey
-                - secret:
-                    name: secret-b
-                    items:
-                      - key: key-b
-                        path: HmacManager__1__Keys__PrivateKey
-
-  - it: mounts the config ConfigMap and secret-keys volumes read-only
+  - it: mounts the operator-owned aggregate ConfigMap and Secret as optional volumes
     set:
       policies:
         - name: MyPolicy
@@ -158,6 +127,24 @@ tests:
             name: config
             configMap:
               name: hmac-manager-config
+              optional: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret-keys
+            secret:
+              secretName: hmac-manager-keys
+              optional: true
+
+  - it: mounts the aggregate config and keys volumes read-only
+    set:
+      policies:
+        - name: MyPolicy
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: my-secret
+            key: private-key
+    asserts:
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:

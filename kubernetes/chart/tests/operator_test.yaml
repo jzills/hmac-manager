@@ -1,0 +1,111 @@
+suite: operator
+release:
+  name: hmac-manager
+templates:
+  - operator.yaml
+set:
+  policies:
+    - name: MyPolicy
+      publicKey: "00000000-0000-0000-0000-000000000001"
+      privateKeySecret:
+        name: my-secret
+        key: private-key
+
+tests:
+  - it: renders four documents (ServiceAccount, Role, RoleBinding, Deployment)
+    asserts:
+      - hasDocuments:
+          count: 4
+
+  - it: renders the operator ServiceAccount
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: ServiceAccount
+      - equal:
+          path: metadata.name
+          value: hmac-manager-operator
+
+  - it: renders the operator Role with RBAC on policies, status, configmaps and secrets
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Role
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["hmac-manager.io"]
+            resources: ["hmacpolicies"]
+            verbs: ["get", "list", "watch"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["hmac-manager.io"]
+            resources: ["hmacpolicies/status"]
+            verbs: ["get", "update", "patch"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["configmaps", "secrets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+  - it: binds the Role to the operator ServiceAccount
+    documentIndex: 2
+    asserts:
+      - isKind:
+          of: RoleBinding
+      - equal:
+          path: roleRef.name
+          value: hmac-manager-operator
+      - equal:
+          path: subjects[0].name
+          value: hmac-manager-operator
+
+  - it: configures the operator Deployment image, service account and settings
+    documentIndex: 3
+    set:
+      operator:
+        image:
+          repository: my-registry/hmac-manager-operator
+          tag: v2.0.0
+          pullPolicy: Always
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: hmac-manager-operator
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my-registry/hmac-manager-operator:v2.0.0
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Operator__ConfigMapName
+            value: hmac-manager-config
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Operator__SecretName
+            value: hmac-manager-keys
+
+  - it: sets the operator nonce cache type to Distributed when redis is enabled
+    documentIndex: 3
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Operator__NonceCacheType
+            value: "Distributed"
+
+  - it: sets the operator nonce cache type to Memory when redis is disabled
+    documentIndex: 3
+    set:
+      redis.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Operator__NonceCacheType
+            value: "Memory"

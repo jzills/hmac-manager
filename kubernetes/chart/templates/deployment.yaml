@@ -21,21 +21,17 @@ spec:
         app.kubernetes.io/component: server
     spec:
       volumes:
+        # Both aggregate resources are written by the operator from the HmacPolicy resources, so
+        # they may not exist yet on a fresh install — optional lets the pod start and pick them up
+        # (via config reload) once the operator has reconciled at least once.
         - name: config
           configMap:
             name: {{ include "hmac-manager.fullname" . }}-config
-        {{- if .Values.policies }}
+            optional: true
         - name: secret-keys
-          projected:
-            sources:
-              {{- range $i, $policy := .Values.policies }}
-              - secret:
-                  name: {{ $policy.privateKeySecret.name }}
-                  items:
-                    - key: {{ $policy.privateKeySecret.key }}
-                      path: {{ printf "HmacManager__%d__Keys__PrivateKey" $i }}
-              {{- end }}
-        {{- end }}
+          secret:
+            secretName: {{ include "hmac-manager.fullname" . }}-keys
+            optional: true
       containers:
         - name: {{ include "hmac-manager.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -48,11 +44,9 @@ spec:
             - name: config
               mountPath: /etc/hmac-manager
               readOnly: true
-            {{- if .Values.policies }}
             - name: secret-keys
               mountPath: /etc/hmac-manager/secrets
               readOnly: true
-            {{- end }}
           env:
             - name: ASPNETCORE_URLS
               value: "http://+:{{ .Values.service.port }}"

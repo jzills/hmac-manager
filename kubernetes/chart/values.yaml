@@ -6,6 +6,14 @@ image:
   tag: 0.1.0
   pullPolicy: IfNotPresent
 
+# The controller that reconciles HmacPolicy resources into the ConfigMap/Secret the
+# server mounts. Runs as a single replica in the release namespace.
+operator:
+  image:
+    repository: zills/hmac-manager-operator
+    tag: 0.1.0
+    pullPolicy: IfNotPresent
+
 replicaCount: 1
 namespace: hmac-system
 
