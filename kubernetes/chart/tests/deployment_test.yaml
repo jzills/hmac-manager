@@ -81,6 +81,21 @@ tests:
             name: ASPNETCORE_ENVIRONMENT
             value: Production
 
+  - it: enables the polling file watcher so mounted config/key changes reload without a restart
+    set:
+      policies:
+        - name: my-policy
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: my-secret
+            key: private-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DOTNET_USE_POLLING_FILE_WATCHER
+            value: "true"
+
   - it: injects ConnectionStrings__Redis when redis is enabled
     set:
       policies:

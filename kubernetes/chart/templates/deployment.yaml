@@ -52,6 +52,14 @@ spec:
               value: "http://+:{{ .Values.service.port }}"
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.environment | quote }}
+            # Required for reloadOnChange (config.json + key files) to fire on a running pod.
+            # kubelet updates a mounted ConfigMap/Secret by atomically swapping the volume's
+            # `..data` symlink; .NET's default inotify FileSystemWatcher watches the file path and
+            # never observes that swap, so live policy changes would be ignored until a restart.
+            # The polling watcher re-checks on an interval and does pick the change up, which is
+            # what makes the operator's reconcile take effect without a pod restart.
+            - name: DOTNET_USE_POLLING_FILE_WATCHER
+              value: "true"
             {{- if .Values.redis.enabled }}
             - name: ConnectionStrings__Redis
               value: {{ include "hmac-manager.redisAddress" . | quote }}
