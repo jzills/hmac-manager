@@ -6,14 +6,17 @@
 
 HMAC_SVC="hmac-manager.hmac-system.svc.cluster.local"
 ECHO_SVC="echo.default.svc.cluster.local"
+HMAC_NS="hmac-system"
 SIGN_PORT=9090
 
 sign_request() {
-    local method="$1" uri="$2"
-    # -f omitted intentionally: sign endpoint is internal and always 200
+    local method="$1" uri="$2" policy="${3:-my-policy}"
+    # -f omitted intentionally: we want the response body even when the sign
+    # endpoint returns 404 for an unknown policy, which the CRD-lifecycle tests
+    # rely on to tell that a policy is no longer loaded.
     curl -s -X POST "http://localhost:${SIGN_PORT}/sign" \
         -H "Content-Type: application/json" \
-        -d "{\"Policy\":\"my-policy\",\"Method\":\"${method}\",\"Uri\":\"${uri}\"}"
+        -d "{\"Policy\":\"${policy}\",\"Method\":\"${method}\",\"Uri\":\"${uri}\"}"
 }
 
 extract() {
@@ -36,6 +39,90 @@ send_signed() {
         -H "Hmac-Nonce: $nonce" \
         -H "Hmac-DateRequested: $date" \
         "$target"
+}
+
+# --- kubectl-managed HmacPolicy helpers (CRD producer path) ----------------
+
+# Apply an HmacPolicy CR directly (the kubectl producer, not Helm). Reuses the
+# hmac-manager-policy Secret created at install time for the private key.
+apply_policy() {
+    local name="$1" pubkey="$2" secret_key="${3:-my-policy-privateKey}"
+    kubectl apply -f - <<EOF
+apiVersion: hmac-manager.io/v1alpha1
+kind: HmacPolicy
+metadata:
+  name: ${name}
+  namespace: ${HMAC_NS}
+  labels:
+    e2e-test: kubectl-lifecycle
+spec:
+  publicKey: "${pubkey}"
+  privateKeySecretRef:
+    name: hmac-manager-policy
+    key: ${secret_key}
+EOF
+}
+
+# True (exit 0) when the operator-owned aggregate ConfigMap lists a policy by name.
+aggregate_has_policy() {
+    kubectl get configmap hmac-manager-config -n "$HMAC_NS" -o json 2>/dev/null \
+        | POLICY="$1" python3 -c '
+import os, sys, json
+try:
+    cm = json.load(sys.stdin)
+    cfg = json.loads(cm["data"]["config.json"])
+except Exception:
+    sys.exit(1)
+names = [p.get("Name") for p in cfg.get("HmacManager", [])]
+sys.exit(0 if os.environ["POLICY"] in names else 1)
+'
+}
+
+wait_for_status_phase() {
+    local policy="$1" want="$2" timeout="${3:-60}"
+    local deadline=$((SECONDS + timeout)) phase
+    while (( SECONDS < deadline )); do
+        phase=$(kubectl get hmacpolicy "$policy" -n "$HMAC_NS" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+        [[ "$phase" == "$want" ]] && return 0
+        sleep 2
+    done
+    return 1
+}
+
+wait_for_aggregate_contains() {
+    local policy="$1" timeout="${2:-60}"
+    local deadline=$((SECONDS + timeout))
+    while (( SECONDS < deadline )); do
+        aggregate_has_policy "$policy" && return 0
+        sleep 2
+    done
+    return 1
+}
+
+wait_for_aggregate_absent() {
+    local policy="$1" timeout="${2:-60}"
+    local deadline=$((SECONDS + timeout))
+    while (( SECONDS < deadline )); do
+        aggregate_has_policy "$policy" || return 0
+        sleep 2
+    done
+    return 1
+}
+
+# Poll until a request signed with $policy passes ext-authz (200). Proves the
+# operator reconciled the CR *and* the server hot-reloaded the aggregate config.
+wait_for_signed_200() {
+    local policy="$1" timeout="${2:-150}"
+    local deadline=$((SECONDS + timeout)) sign code
+    while (( SECONDS < deadline )); do
+        sign=$(sign_request "GET" "http://${ECHO_SVC}/" "$policy")
+        if echo "$sign" | python3 -c "import sys,json; d=json.load(sys.stdin); assert isinstance(d, dict) and 'Authorization' in d" >/dev/null 2>&1; then
+            code=$(send_signed "$sign")
+            [[ "$code" == "200" ]] && return 0
+        fi
+        sleep 3
+    done
+    return 1
 }
 
 create_ns_with_curl() {
@@ -140,6 +227,17 @@ setup() {
         *"ambient-enrolled"*|*"non-ambient"*)
             kubectl delete namespace test-ns external-ns --ignore-not-found --wait=true \
                 --timeout=60s 2>/dev/null || true
+            ;;
+    esac
+}
+
+teardown() {
+    # Remove any CRs the kubectl-lifecycle tests created, including after a mid-test
+    # failure. Scoped by test name so the other suites are untouched.
+    case "$BATS_TEST_NAME" in
+        *kubectl*)
+            kubectl delete hmacpolicy -n "$HMAC_NS" -l e2e-test=kubectl-lifecycle \
+                --ignore-not-found --wait=true 2>/dev/null || true
             ;;
     esac
 }
@@ -310,4 +408,61 @@ teardown_ingress() {
         -H "Hmac-Nonce: $nonce" -H "Hmac-DateRequested: $date"
     teardown_ingress
     [ "$output" = "403" ]
+}
+
+# ---------------------------------------------------------------------------
+# kubectl-managed HmacPolicy (CRD producer path + status)
+#
+# The install-time policy is templated by Helm; these tests exercise the CRD as
+# a co-equal producer — creating, patching and deleting an HmacPolicy directly
+# with kubectl — and assert both the reconciled .status.phase and that signing
+# reflects the change end-to-end (operator reconcile + server hot-reload).
+# ---------------------------------------------------------------------------
+
+@test "kubectl-managed HmacPolicy: create reports Ready, enters the aggregate config, signs end-to-end, then delete removes it" {
+    local pubkey="00000000-0000-0000-0000-0000000000a1"
+
+    apply_policy "kubectl-policy" "$pubkey"
+
+    run wait_for_status_phase "kubectl-policy" "Ready" 60
+    [ "$status" -eq 0 ]
+
+    run wait_for_aggregate_contains "kubectl-policy" 60
+    [ "$status" -eq 0 ]
+
+    # A policy added via kubectl after install must become usable without a pod restart.
+    run wait_for_signed_200 "kubectl-policy" 180
+    [ "$status" -eq 0 ]
+
+    kubectl delete hmacpolicy kubectl-policy -n "$HMAC_NS" --wait=true
+
+    run wait_for_aggregate_absent "kubectl-policy" 60
+    [ "$status" -eq 0 ]
+
+    run kubectl get hmacpolicy kubectl-policy -n "$HMAC_NS"
+    [ "$status" -ne 0 ]
+}
+
+@test "kubectl-managed HmacPolicy: patching to a missing Secret key reports Invalid and drops it from the aggregate" {
+    local pubkey="00000000-0000-0000-0000-0000000000a2"
+
+    apply_policy "kubectl-policy-invalid" "$pubkey"
+
+    run wait_for_status_phase "kubectl-policy-invalid" "Ready" 60
+    [ "$status" -eq 0 ]
+    run wait_for_aggregate_contains "kubectl-policy-invalid" 60
+    [ "$status" -eq 0 ]
+
+    # Repoint the key reference at a key that does not exist in the Secret.
+    kubectl patch hmacpolicy kubectl-policy-invalid -n "$HMAC_NS" --type merge \
+        -p '{"spec":{"privateKeySecretRef":{"name":"hmac-manager-policy","key":"does-not-exist"}}}'
+
+    run wait_for_status_phase "kubectl-policy-invalid" "Invalid" 60
+    [ "$status" -eq 0 ]
+
+    run kubectl get hmacpolicy kubectl-policy-invalid -n "$HMAC_NS" -o jsonpath='{.status.message}'
+    [ -n "$output" ]
+
+    run wait_for_aggregate_absent "kubectl-policy-invalid" 60
+    [ "$status" -eq 0 ]
 }
