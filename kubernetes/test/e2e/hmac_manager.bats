@@ -13,7 +13,7 @@ sign_request() {
     # -f omitted intentionally: sign endpoint is internal and always 200
     curl -s -X POST "http://localhost:${SIGN_PORT}/sign" \
         -H "Content-Type: application/json" \
-        -d "{\"Policy\":\"MyPolicy\",\"Method\":\"${method}\",\"Uri\":\"${uri}\"}"
+        -d "{\"Policy\":\"my-policy\",\"Method\":\"${method}\",\"Uri\":\"${uri}\"}"
 }
 
 extract() {
