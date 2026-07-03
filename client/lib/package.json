@@ -10,7 +10,7 @@
     "type": "module",
     "repository": {
         "type": "git",
-        "url": "https://github.com/jzills/HmacManager.git"
+        "url": "https://github.com/jzills/hmac-manager.git"
     },
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -30,10 +30,10 @@
         "test": "vitest"
     },
     "devDependencies": {
-        "@types/node": "^20.14.11",
-        "vite": "^8.0.16",
-        "vite-plugin-dts": "^5.0.2",
-        "vitest": "^4.1.8"
+        "@types/node": "^26.0.1",
+        "vite": "^8.1.2",
+        "vite-plugin-dts": "^5.0.3",
+        "vitest": "^4.1.9"
     },
     "dependencies": {
         "node-fetch": "^3.3.1"

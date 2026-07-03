@@ -1,7 +1,7 @@
 
 ## Summary
 
-JavaScript and TypeScript clients for ASP.NET Core [HmacManager](https://github.com/jzills/HmacManager/blob/main/README.md).
+JavaScript and TypeScript clients for ASP.NET Core [HmacManager](https://github.com/jzills/hmac-manager/blob/main/README.md).
 
 ## Installation
 
@@ -9,4 +9,4 @@ JavaScript and TypeScript clients for ASP.NET Core [HmacManager](https://github.
 
 ## Usage
 
-Documentation can be found [here](https://github.com/jzills/HmacManager/blob/main/client/lib/hmac_manager/README.md).
+Documentation can be found [here](https://github.com/jzills/hmac-manager/blob/main/client/lib/hmac_manager/README.md).

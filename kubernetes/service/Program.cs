@@ -5,9 +5,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Load the chart-generated policy config mounted at a well-known path.
 // optional: true so the app starts normally outside Kubernetes.
-// Private keys are never written to this file — they arrive via secretKeyRef
-// env vars which cover different config keys, so ordering is not a concern.
-builder.Configuration.AddJsonFile("/etc/hmac-manager/config.json", optional: true, reloadOnChange: false);
+// reloadOnChange: true lets HmacManager pick up edits (e.g. a rotated key) without
+// a pod restart — see HmacPolicyCollectionReloader in the HmacManager library.
+// Private keys are never written to this file — they arrive via a separate mounted
+// Secret volume, read below via AddKeyPerFile, so ordering is not a concern.
+builder.Configuration.AddJsonFile("/etc/hmac-manager/config.json", optional: true, reloadOnChange: true);
+
+// Private keys, one file per policy, named to match the "HmacManager:{i}:Keys:PrivateKey"
+// config path (KeyPerFile's default "__" section delimiter, mirroring the JSON structure
+// above). Mounted from a projected Secret volume so, like config.json, it can be watched
+// and reloaded — see kubernetes/chart/templates/deployment.yaml.
+builder.Configuration.AddKeyPerFile("/etc/hmac-manager/secrets", optional: true, reloadOnChange: true);
 
 // Register a shared distributed cache for nonce storage when a Redis connection
 // string is provided. This must run BEFORE AddHmacManager: the library calls

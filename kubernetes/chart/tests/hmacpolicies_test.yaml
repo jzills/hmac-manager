@@ -1,0 +1,95 @@
+suite: hmacpolicies
+release:
+  name: hmac-manager
+templates:
+  - hmacpolicies.yaml
+
+tests:
+  - it: renders an HmacPolicy resource per policy with name and public key
+    set:
+      policies:
+        - name: payments-api
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: payments-hmac
+            key: privateKey
+    asserts:
+      - isKind:
+          of: HmacPolicy
+      - equal:
+          path: apiVersion
+          value: hmac-manager.io/v1alpha1
+      - equal:
+          path: metadata.name
+          value: payments-api
+      - equal:
+          path: spec.publicKey
+          value: "00000000-0000-0000-0000-000000000001"
+
+  - it: maps privateKeySecret to spec.privateKeySecretRef
+    set:
+      policies:
+        - name: payments-api
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: payments-hmac
+            key: privateKey
+    asserts:
+      - equal:
+          path: spec.privateKeySecretRef.name
+          value: payments-hmac
+      - equal:
+          path: spec.privateKeySecretRef.key
+          value: privateKey
+
+  - it: passes through algorithms, nonce and schemes
+    set:
+      policies:
+        - name: payments-api
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: payments-hmac
+            key: privateKey
+          algorithms:
+            contentHash: SHA512
+            signingHash: HMACSHA512
+          nonce:
+            maxAgeInSeconds: 120
+          schemes:
+            - name: UserContext
+              headers:
+                - name: X-UserId
+                  claimType: userId
+    asserts:
+      - equal:
+          path: spec.algorithms.contentHash
+          value: SHA512
+      - equal:
+          path: spec.algorithms.signingHash
+          value: HMACSHA512
+      - equal:
+          path: spec.nonce.maxAgeInSeconds
+          value: 120
+      - equal:
+          path: spec.schemes[0].name
+          value: UserContext
+      - equal:
+          path: spec.schemes[0].headers[0].name
+          value: X-UserId
+
+  - it: renders one document per policy
+    set:
+      policies:
+        - name: payments-api
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: payments-hmac
+            key: privateKey
+        - name: orders-api
+          publicKey: "00000000-0000-0000-0000-000000000002"
+          privateKeySecret:
+            name: orders-hmac
+            key: privateKey
+    asserts:
+      - hasDocuments:
+          count: 2

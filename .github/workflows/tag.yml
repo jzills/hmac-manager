@@ -19,18 +19,18 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Extract version from branch name
+      - name: Extract tag from branch name
         id: version
         run: |
-          VERSION=$(bash .github/scripts/extract-version.sh "${{ github.event.pull_request.head.ref }}")
-          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          TAG=$(bash .github/scripts/extract-version.sh "${{ github.event.pull_request.head.ref }}")
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ steps.version.outputs.value }}"
-          git push origin "v${{ steps.version.outputs.value }}"
+          git tag "${{ steps.version.outputs.value }}"
+          git push origin "${{ steps.version.outputs.value }}"
 
   merge-back:
     name: Merge Release Back to Develop
@@ -39,6 +39,25 @@ jobs:
     permissions:
       pull-requests: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check release branch has changes to merge back
+        run: |
+          # checkout on a pull_request event leaves a narrow fetch refspec, so
+          # fetch into explicit remote-tracking refs — a bare `git fetch origin <branch>`
+          # only writes FETCH_HEAD, leaving origin/develop et al. unresolvable below.
+          git fetch origin \
+            "develop:refs/remotes/origin/develop" \
+            "${{ github.event.pull_request.head.ref }}:refs/remotes/origin/${{ github.event.pull_request.head.ref }}"
+          if git diff --quiet "origin/develop...origin/${{ github.event.pull_request.head.ref }}"; then
+            echo "::error::Release branch '${{ github.event.pull_request.head.ref }}' has no changes vs develop." \
+              "Did you forget to bump the version (HmacManager.csproj, the service project, the operator project, or Chart.yaml) before merging?" \
+              "Nothing to merge back into develop — fix the version bump and push a follow-up commit or handle the merge manually."
+            exit 1
+          fi
+
       - name: Open PR to merge release branch back into develop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

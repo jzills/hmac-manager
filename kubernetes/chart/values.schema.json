@@ -19,6 +19,23 @@
       },
       "required": ["repository", "tag", "pullPolicy"]
     },
+    "operator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": { "type": "string", "minLength": 1 },
+            "tag":        { "type": "string", "minLength": 1 },
+            "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+          },
+          "required": ["repository", "tag", "pullPolicy"]
+        }
+      },
+      "required": ["image"]
+    },
     "replicaCount": {
       "type": "integer",
       "minimum": 1
@@ -50,7 +67,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Becomes the HmacPolicy resource name, so it must be a valid RFC 1123 subdomain (lowercase alphanumerics, '-' and '.')."
           },
           "publicKey": {
             "type": "string",
@@ -179,5 +197,5 @@
       "required": ["enabled", "meshConfig", "ingressGateway", "waypoint"]
     }
   },
-  "required": ["image", "replicaCount", "namespace", "environment", "service", "policies", "istio"]
+  "required": ["image", "operator", "replicaCount", "namespace", "environment", "service", "policies", "istio"]
 }

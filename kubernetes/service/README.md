@@ -15,22 +15,22 @@ Client → Istio waypoint / ingress gateway
 
 ## Deploy with Helm
 
-The recommended way to run this image is via the [hmac-manager Helm chart](https://github.com/jzills/HmacManager/tree/main/kubernetes/chart), which bundles Redis for replay protection and abstracts all configuration:
+The recommended way to run this image is via the [hmac-manager Helm chart](https://github.com/jzills/hmac-manager/tree/main/kubernetes/chart), which bundles Redis for replay protection and abstracts all configuration:
 
 ```bash
-helm repo add hmac-manager https://jzills.github.io/HmacManager
+helm repo add zills https://jzills.github.io/hmac-manager
 helm repo update
 
-helm install hmac-manager hmac-manager/hmac-manager \
+helm install hmac-manager zills/hmac-manager \
   --namespace hmac-system \
   --create-namespace \
-  --set "policies[0].name=MyPolicy" \
+  --set "policies[0].name=my-policy" \
   --set "policies[0].publicKey=00000000-0000-0000-0000-000000000001" \
   --set "policies[0].privateKeySecret.name=my-hmac-secrets" \
-  --set "policies[0].privateKeySecret.key=MyPolicy-privateKey"
+  --set "policies[0].privateKeySecret.key=my-policy-privateKey"
 ```
 
-A fresh install deploys the verifier and a bundled Redis but does not enforce any traffic until you enable an Istio enforcement point (`istio.ingressGateway.*` or `istio.waypoint.*`). See the [chart documentation](https://artifacthub.io/packages/helm/hmac-manager/hmac-manager) for the full values reference.
+A fresh install deploys the verifier and a bundled Redis but does not enforce any traffic until you enable an Istio enforcement point (`istio.ingressGateway.*` or `istio.waypoint.*`). See the [chart documentation](https://artifacthub.io/packages/helm/zills/hmac-manager) for the full values reference.
 
 ## Tags
 
@@ -56,7 +56,7 @@ Policies are loaded from a JSON config file mounted at `/etc/hmac-manager/config
 {
   "HmacManager": [
     {
-      "Name": "MyPolicy",
+      "Name": "my-policy",
       "Keys": {
         "PublicKey": "00000000-0000-0000-0000-000000000001"
       },
@@ -92,4 +92,4 @@ Use the [HmacManager NuGet package](https://www.nuget.org/packages/HmacManager) 
 
 ## Source
 
-[github.com/jzills/HmacManager](https://github.com/jzills/HmacManager)
+[github.com/jzills/hmac-manager](https://github.com/jzills/hmac-manager)

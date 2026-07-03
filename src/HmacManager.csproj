@@ -16,8 +16,8 @@
     <Company></Company>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/jzills/HmacManager</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/jzills/HmacManager.git</RepositoryUrl> 
+    <PackageProjectUrl>https://github.com/jzills/hmac-manager</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jzills/hmac-manager.git</RepositoryUrl> 
     <RepositoryType>git</RepositoryType> 
     <PackageIcon>Icon.jpg</PackageIcon>
     <PackageTags>hmac;authentication</PackageTags>
