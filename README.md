@@ -3,7 +3,7 @@
 
 <img src="assets/logo.svg" alt="HMAC MANAGER" width="470">
 
-[![NuGet Version](https://img.shields.io/nuget/v/HmacManager.svg)](https://www.nuget.org/packages/HmacManager/) [![NuGet Downloads](https://img.shields.io/nuget/dt/HmacManager.svg)](https://www.nuget.org/packages/HmacManager/) [![npm Version](https://img.shields.io/npm/v/hmac-manager?logo=npm&label=npm)](https://www.npmjs.com/package/hmac-manager) [![Docker Image Version](https://img.shields.io/docker/v/zills/hmac-manager?logo=docker&label=docker)](https://hub.docker.com/r/zills/hmac-manager) [![Docker Pulls](https://img.shields.io/docker/pulls/zills/hmac-manager?logo=docker)](https://hub.docker.com/r/zills/hmac-manager) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/zills)](https://artifacthub.io/packages/search?repo=zills) [![.NET](https://github.com/jzills/hmac-manager/actions/workflows/pr.yml/badge.svg)](https://github.com/jzills/hmac-manager/actions/workflows/pr.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![NuGet Version](https://img.shields.io/nuget/v/HmacManager.svg)](https://www.nuget.org/packages/HmacManager/) [![NuGet Downloads](https://img.shields.io/nuget/dt/HmacManager.svg)](https://www.nuget.org/packages/HmacManager/) [![npm Version](https://img.shields.io/npm/v/hmac-manager?logo=npm&label=npm)](https://www.npmjs.com/package/hmac-manager) [![Docker service image](https://img.shields.io/docker/v/zills/hmac-manager?logo=docker&label=docker%20service)](https://hub.docker.com/r/zills/hmac-manager) [![Docker operator image](https://img.shields.io/docker/v/zills/hmac-manager-operator?logo=docker&label=docker%20operator)](https://hub.docker.com/r/zills/hmac-manager-operator) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/zills)](https://artifacthub.io/packages/search?repo=zills) [![.NET](https://github.com/jzills/hmac-manager/actions/workflows/pr.yml/badge.svg)](https://github.com/jzills/hmac-manager/actions/workflows/pr.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 _Secure HMAC request authentication for ASP.NET Core — as a NuGet library, or as a containerized Istio ext-authz service for Kubernetes._
 
@@ -53,7 +53,7 @@ helm install hmac-manager zills/hmac-manager \
 ```
 
 - **Helm chart** — [kubernetes/chart](kubernetes/chart/README.md) · [Artifact Hub](https://artifacthub.io/packages/search?repo=zills)
-- **Container image** — [zills/hmac-manager](https://hub.docker.com/r/zills/hmac-manager) on Docker Hub
+- **Container images** — [zills/hmac-manager](https://hub.docker.com/r/zills/hmac-manager) (ext-authz service) · [zills/hmac-manager-operator](https://hub.docker.com/r/zills/hmac-manager-operator) (policy operator) on Docker Hub
 
 ## Resources
 
