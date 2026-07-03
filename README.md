@@ -142,10 +142,10 @@ await factory.create("MyPolicy")!.sign(request); // adds the Hmac headers to `re
 const response = await fetch(request);
 ```
 
-See the [client documentation](client/) for schemes and configuration.
+See the [client documentation](client/lib/src/README.md) for schemes and configuration.
 
 ## Resources
 
 - [Library documentation](src/README.md)
-- [Client documentation](client/)
+- [Client documentation](client/lib/src/README.md)
 - [Samples](samples/README.md)
