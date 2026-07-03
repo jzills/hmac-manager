@@ -26,3 +26,13 @@ the `Operator__*` configuration the controller needs.
 ## Source
 
 [github.com/jzills/hmac-manager](https://github.com/jzills/hmac-manager)
+
+## Releases
+
+### v0.1.0
+
+Initial release. A KubeOps-based controller that reconciles `HmacPolicy` custom
+resources (`hmac-manager.io/v1alpha1`) into the aggregate ConfigMap and Secret the
+verifier pods mount, keeping policy and key changes in sync without a pod restart.
+Published as `zills/hmac-manager-operator:0.1.0` and deployed by the hmac-manager
+Helm chart.
