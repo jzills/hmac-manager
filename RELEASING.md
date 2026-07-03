@@ -1,8 +1,8 @@
 # Releasing
 
-This project has three independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
+This project has four independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
 
-Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whose head branch starts with `release/` is merged into `main`, extracts the artifact and version from the branch name (`.github/scripts/extract-version.sh`), and pushes the matching prefixed tag. Merging into `main` with a direct `git push` (bypassing a PR) will **not** trigger a release — the merge must go through a PR for `tag.yml` to fire.
+Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whose head branch starts with `release/` is merged into `main`, extracts the artifact and version from the branch name (`.github/scripts/extract-version.sh`), and pushes the matching prefixed tag. That tag push — and the follow-up back-merge PR it opens into `develop` — use the **`RELEASE_PAT`** secret, not the built-in `GITHUB_TOKEN`: tags pushed with `GITHUB_TOKEN` are deliberately blocked from triggering the per-artifact release workflows, and `GITHUB_TOKEN` cannot enable auto-merge (nor do its bot-authored PRs run checks without a manual approval). Merging into `main` with a direct `git push` (bypassing a PR) will **not** trigger a release — the merge must go through a PR for `tag.yml` to fire.
 
 > **Prerequisite for `gh pr merge --auto`:** the examples below queue the merge with `--auto`, which requires the repository's **Allow auto-merge** setting to be enabled (Settings → General → Pull Requests) and at least one required status check on `main`. If auto-merge is disabled, `gh pr merge --auto` errors out — drop `--auto` and run `gh pr merge --merge` to merge immediately once checks are green.
 
@@ -204,5 +204,6 @@ This ensures the Docker image exists on Docker Hub before the chart that referen
 | `NUGET_API_KEY` | `release.yml` | nuget.org → Account → API Keys (push-only, scoped to HmacManager) |
 | `DOCKERHUB_USERNAME` | `service-release.yml`, `operator-release.yml` | Your Docker Hub username |
 | `DOCKERHUB_TOKEN` | `service-release.yml`, `operator-release.yml` | Docker Hub → Account Settings → Security → Access Tokens |
+| `RELEASE_PAT` | `tag.yml` | GitHub → Settings → Developer settings → Personal access tokens. Needs `repo` scope (Contents: write to push release tags, Pull requests: write to open + auto-merge the back-merge PR). Required because `GITHUB_TOKEN` can neither trigger the per-artifact release workflows via a tag push nor enable auto-merge. |
 
 GHCR (Helm chart) uses the built-in `GITHUB_TOKEN` — no additional secret required.
