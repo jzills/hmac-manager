@@ -52,33 +52,33 @@
     <p class="tag">Istio ambient-mode ext-authz service for HMAC request authentication.</p>
 
     <h2>Install from this repository (HTTP)</h2>
-<pre class="cmd">helm repo add zills https://jzills.github.io/HmacManager
+<pre class="cmd">helm repo add zills https://jzills.github.io/hmac-manager
 helm repo update
 helm install hmac-manager zills/hmac-manager \
   --namespace hmac-system --create-namespace \
-  --set "policies[0].name=MyPolicy" \
+  --set "policies[0].name=my-policy" \
   --set "policies[0].publicKey=00000000-0000-0000-0000-000000000001" \
   --set "policies[0].privateKeySecret.name=my-hmac-secrets" \
-  --set "policies[0].privateKeySecret.key=MyPolicy-privateKey"</pre>
+  --set "policies[0].privateKeySecret.key=my-policy-privateKey"</pre>
     <p class="note">At least one policy is required. See the <a href="https://artifacthub.io/packages/helm/zills/hmac-manager">chart documentation</a> for the full values reference and how to enable enforcement.</p>
 
     <h2>Or pull the chart from GHCR (OCI)</h2>
 <pre class="cmd">helm install hmac-manager oci://ghcr.io/jzills/charts/hmac-manager --version 0.1.0 \
   --namespace hmac-system --create-namespace \
-  --set "policies[0].name=MyPolicy" \
+  --set "policies[0].name=my-policy" \
   --set "policies[0].publicKey=00000000-0000-0000-0000-000000000001" \
   --set "policies[0].privateKeySecret.name=my-hmac-secrets" \
-  --set "policies[0].privateKeySecret.key=MyPolicy-privateKey"</pre>
+  --set "policies[0].privateKeySecret.key=my-policy-privateKey"</pre>
 
     <h2>Run the container directly</h2>
 <pre class="cmd">docker pull zills/hmac-manager:latest</pre>
 
     <ul class="links">
-      <li><a href="https://github.com/jzills/HmacManager">GitHub</a></li>
+      <li><a href="https://github.com/jzills/hmac-manager">GitHub</a></li>
       <li><a href="https://artifacthub.io/packages/search?repo=zills">Artifact Hub</a></li>
       <li><a href="https://hub.docker.com/r/zills/hmac-manager">Docker Hub</a></li>
       <li><a href="https://www.nuget.org/packages/HmacManager">NuGet</a></li>
-      <li><a href="https://github.com/jzills/HmacManager/blob/main/kubernetes/service/README.md">Setup guide</a></li>
+      <li><a href="https://github.com/jzills/hmac-manager/blob/main/kubernetes/service/README.md">Setup guide</a></li>
     </ul>
 
     <footer>This page is the Helm chart index host — <a href="index.yaml">index.yaml</a>.</footer>
