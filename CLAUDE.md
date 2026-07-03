@@ -118,11 +118,11 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `servic
 
 **File**: `.github/workflows/release.yml`
 
-**Trigger**: Any push to a branch matching the pattern `release/**`.
+**Trigger**: Push of a tag matching `nuget/v*`. These tags are not pushed by hand — `tag.yml` creates them when a `release/vX.Y.Z` PR is merged into `main` (see [RELEASING.md](RELEASING.md)). The pipeline never runs on a branch push.
 
-**Purpose**: Validate the release candidate and publish the NuGet package. The version is derived from the branch name, making it explicit and auditable without requiring commit message conventions.
+**Purpose**: Validate the release candidate and publish the NuGet package. The version is derived from the tag name, making it explicit and auditable without requiring commit message conventions.
 
-**Branch naming convention**: Release branches must follow the pattern `release/vX.Y.Z` (e.g., `release/v2.7.0`). The pipeline validates this format and fails immediately if it does not match, preventing a misnamed branch from triggering a publish.
+**Tag naming convention**: Release tags follow the pattern `nuget/vX.Y.Z` (e.g., `nuget/v2.7.0`). The `publish` job strips the `nuget/v` prefix and fails immediately if the remaining version does not match `X.Y.Z`.
 
 **Jobs**:
 
@@ -135,20 +135,21 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `servic
 
 #### `publish` (runs only if `test` passes)
 1. Checks out the repository with full git history (`fetch-depth: 0`).
-2. Extracts the semantic version from the branch name by stripping the `release/v` prefix. Validates the result matches `X.Y.Z` and exits with an error if not.
+2. Extracts the semantic version from the tag name by stripping the `nuget/v` prefix. Validates the result matches `X.Y.Z` and exits with an error if not.
 3. Installs .NET `8.0.x` and `10.0.x`.
 4. Packs the library in Release configuration with the extracted version: `dotnet pack --configuration Release -p:Version=X.Y.Z`.
 5. Pushes the `.nupkg` to NuGet Gallery using `dotnet nuget push`. The `--skip-duplicate` flag prevents failure if the version was already published (safe to re-run).
 
 **Required secret**: `NUGET_API_KEY` must be set in GitHub → Settings → Secrets and variables → Actions. Obtain this from nuget.org → Account → API Keys. Scope the key to the `HmacManager` package with push-only permissions.
 
-**Branch protection**: The `Test` job check should be required to pass in GitHub → Settings → Branches for the `release/**` pattern. This prevents force-pushes to release branches and ensures tests are always green before the `publish` job is allowed to run.
+**Branch protection**: Gate the release at PR-merge time — require the `pr.yml` checks (`Unit Tests`, `Operator Tests`, `Integration Tests`) on `main` so a `release/*` PR only merges (and thus only tags) when green. The `nuget/v*` tag then triggers this pipeline, which re-runs `test` before `publish`.
 
 **Typical workflow**:
 ```bash
-# Create and push a release branch — the pipeline triggers automatically
+# Cut a release branch, bump src/HmacManager.csproj <Version>, then open a PR to main.
+# Merging the PR tags nuget/vX.Y.Z, which triggers this pipeline. See RELEASING.md.
 git checkout -b release/v2.7.0
-git push origin release/v2.7.0
+# bump <Version>, commit, push, then: gh pr create --base main ... && gh pr merge
 ```
 
 ---
