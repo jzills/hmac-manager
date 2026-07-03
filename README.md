@@ -117,11 +117,13 @@ kubectl apply -f my-policy.yaml
 
 ## JavaScript / TypeScript Client
 
-Sign requests from a browser or Node client with the companion [`hmac-manager`](https://www.npmjs.com/package/hmac-manager) npm package so they verify against an `HmacManager`-protected API.
+`hmac-manager` is available on [npm](https://www.npmjs.com/package/hmac-manager).
 
 ```bash
-npm i hmac-manager
+npm install hmac-manager
 ```
+
+Sign requests from a browser or Node client so they verify against an `HmacManager`-protected API.
 
 ```ts
 import { HmacManagerFactory, HashAlgorithm } from "hmac-manager";
