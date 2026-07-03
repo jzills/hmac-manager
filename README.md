@@ -33,7 +33,7 @@ Add secure HMAC request authentication to ASP.NET Core APIs with lightweight, co
 
 **Kubernetes / Istio**
 
-- Envoy/Istio **ext-authz** service — enforce HMAC at the mesh edge; requests without a valid signature are rejected with `403`, no application changes required.
+- Envoy/Istio **ext-authz** service — enforce HMAC at the ingress edge or between services (ambient waypoints); requests without a valid signature are rejected with `403`, no application changes required.
 - **`HmacPolicy` CRD + operator** — declare policies as Kubernetes resources; the operator reconciles them into the ConfigMap and Secret the verifier mounts.
 - Private keys sourced from Kubernetes **Secrets**; policy and key changes **hot-reload without a pod restart**.
 - Redis bundled for replay protection — no external dependencies to provision.
@@ -75,7 +75,7 @@ See the [library documentation](src/README.md) for schemes, dynamic policies, `H
 
 ## Kubernetes (Istio ext-authz)
 
-Beyond the .NET library, HmacManager ships a containerized verification service and a Helm chart for enforcing HMAC authentication at the mesh edge. The service runs as an [Envoy ext-authz](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_authz/v3/ext_authz.proto) HTTP server: an Istio ingress gateway or ambient waypoint calls it before forwarding a request, and anything without a valid HMAC signature is rejected with `403`. Redis is bundled for replay protection — no external dependencies to provision.
+HmacManager also ships a containerized verification service and a Helm chart for enforcing HMAC authentication in a Kubernetes mesh — at the ingress edge or between services — without changing application code. The service runs as an [Envoy ext-authz](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_authz/v3/ext_authz.proto) HTTP server: an Istio ingress gateway (north-south) or an ambient waypoint (east-west, service-to-service) calls it before forwarding a request, and anything without a valid HMAC signature is rejected with `403`. Redis is bundled for replay protection — no external dependencies to provision.
 
 ```bash
 helm repo add zills https://jzills.github.io/hmac-manager
