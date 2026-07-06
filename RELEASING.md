@@ -15,6 +15,13 @@ Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whos
 | Docker image (policy operator) | `release/operator/vX.Y.Z` | `operator/vX.Y.Z` | `.github/workflows/operator-release.yml` |
 | Helm chart | `release/chart/vX.Y.Z` | `chart/vX.Y.Z` | `.github/workflows/chart-release.yml` |
 
+Each pipeline also creates a **GitHub Release** for its tag (via
+`.github/scripts/create-release.sh`): titled `HmacManager (<Kind>) vX.Y.Z`,
+marked as the latest release, with install instructions and a changelog
+auto-generated from the merged PRs since the previous release of the *same*
+artifact. Releases are notes-only — the artifacts themselves live on nuget.org,
+Docker Hub, and GHCR / the gh-pages HTTP repo.
+
 The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `HmacManager.Operator.csproj`'s `<Version>` for the operator, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion`) so that:
 
 - local/manual builds report the right version, and

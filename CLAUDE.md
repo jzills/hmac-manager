@@ -73,7 +73,7 @@ Tests mirror the source structure under `test/Unit/`. Shared test data and helpe
 
 All pipelines are defined under `.github/workflows/`. Dependabot is configured separately at `.github/dependabot.yml`.
 
-The per-artifact release pipelines (`release.yml` for the NuGet package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md).
+The per-artifact release pipelines (`release.yml` for the NuGet package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md). Each of these pipelines also creates a GitHub Release for its tag via `.github/scripts/create-release.sh` (uniform `HmacManager (<Kind>)` titles, marked latest, with install info and an auto-generated changelog scoped to the previous same-prefix tag).
 
 ---
 
@@ -139,6 +139,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `servic
 3. Installs .NET `8.0.x` and `10.0.x`.
 4. Packs the library in Release configuration with the extracted version: `dotnet pack --configuration Release -p:Version=X.Y.Z`.
 5. Pushes the `.nupkg` to NuGet Gallery using `dotnet nuget push`. The `--skip-duplicate` flag prevents failure if the version was already published (safe to re-run).
+6. Creates a GitHub Release for the tag via `.github/scripts/create-release.sh` — titled `HmacManager (NuGet) vX.Y.Z`, marked as latest, with install instructions and a changelog auto-generated since the previous `nuget/v*` tag.
 
 **Required secret**: `NUGET_API_KEY` must be set in GitHub → Settings → Secrets and variables → Actions. Obtain this from nuget.org → Account → API Keys. Scope the key to the `HmacManager` package with push-only permissions.
 
