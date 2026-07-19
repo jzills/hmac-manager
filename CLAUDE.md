@@ -83,7 +83,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 
 **Trigger**: Any pull request opened or updated targeting `main` or `develop`.
 
-**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
+**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, CI-script, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
 
 **Jobs**:
 
@@ -101,6 +101,11 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 4. Builds `test/Operator`.
 5. Runs the operator test suite via `dotnet test` (rendering, mapping, validation, and status reconciliation for the `HmacPolicy` CRD controller under `kubernetes/operator/`).
 
+#### `ci-script-tests`
+1. Checks out the repository.
+2. Runs `shellcheck` over `.github/scripts/*.sh`.
+3. Runs the offline shell test suites for the release helpers: `previous-tag.test.sh` and `create-release.test.sh` (stubbed `gh`, no network).
+
 #### `integration-tests`
 1. Checks out the repository.
 2. Starts a Redis 7 instance using `supercharge/redis-github-action`.
@@ -110,7 +115,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 6. Builds `test/Integration`.
 7. Runs the integration test suite via `dotnet test`.
 
-**Branch protection**: The `Unit Tests`, `Operator Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
+**Branch protection**: The `Unit Tests`, `Operator Tests`, `CI Script Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
 
 ---
 
