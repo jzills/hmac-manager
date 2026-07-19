@@ -14,10 +14,12 @@ jobs:
     name: Package and Push Helm Chart
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Extract version from tag
         id: version
@@ -58,6 +60,21 @@ jobs:
         run: |
           helm push hmac-manager-${{ steps.version.outputs.value }}.tgz \
             oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+
+      # Notes-only GitHub Release (no .tgz asset): the chart is served via GHCR
+      # (OCI) and the gh-pages HTTP repo, and immutable releases also reject a
+      # post-create asset upload. The release exists purely for repo visibility.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash .github/scripts/create-release.sh "$GITHUB_REF_NAME" "HmacManager (Helm Chart) v${{ steps.version.outputs.value }}" <<'BODY'
+          **HmacManager (Helm Chart)** — Helm chart for deploying HmacManager on Kubernetes.
+
+          Install: `helm install hmac-manager oci://ghcr.io/${{ github.repository_owner }}/charts/hmac-manager --version ${{ steps.version.outputs.value }}`
+
+          Also available from the HTTP repo: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          BODY
 
   pages:
     name: Publish HTTP repo (GitHub Pages)

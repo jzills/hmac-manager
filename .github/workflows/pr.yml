@@ -55,6 +55,21 @@ jobs:
         working-directory: ./test/Operator
         run: dotnet test --no-build --verbosity normal
 
+  ci-script-tests:
+    name: CI Script Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Shellcheck
+        run: shellcheck .github/scripts/*.sh
+
+      - name: Test previous-tag.sh
+        run: bash .github/scripts/previous-tag.test.sh
+
+      - name: Test create-release.sh
+        run: bash .github/scripts/create-release.test.sh
+
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest

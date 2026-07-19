@@ -1,6 +1,6 @@
 # Releasing
 
-This project has four independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
+This project has five independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
 
 Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whose head branch starts with `release/` is merged into `main`, extracts the artifact and version from the branch name (`.github/scripts/extract-version.sh`), and pushes the matching prefixed tag. That tag push — and the follow-up back-merge PR it opens into `develop` — use the **`RELEASE_PAT`** secret, not the built-in `GITHUB_TOKEN`: tags pushed with `GITHUB_TOKEN` are deliberately blocked from triggering the per-artifact release workflows, and `GITHUB_TOKEN` cannot enable auto-merge (nor do its bot-authored PRs run checks without a manual approval). Merging into `main` with a direct `git push` (bypassing a PR) will **not** trigger a release — the merge must go through a PR for `tag.yml` to fire.
 
@@ -14,8 +14,16 @@ Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whos
 | Docker image (ext-authz service) | `release/service/vX.Y.Z` | `service/vX.Y.Z` | `.github/workflows/service-release.yml` |
 | Docker image (policy operator) | `release/operator/vX.Y.Z` | `operator/vX.Y.Z` | `.github/workflows/operator-release.yml` |
 | Helm chart | `release/chart/vX.Y.Z` | `chart/vX.Y.Z` | `.github/workflows/chart-release.yml` |
+| npm package (TypeScript client) | `release/npm/vX.Y.Z` | `npm/vX.Y.Z` | `.github/workflows/npm-release.yml` |
 
-The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `HmacManager.Operator.csproj`'s `<Version>` for the operator, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion`) so that:
+Each pipeline also creates a **GitHub Release** for its tag (via
+`.github/scripts/create-release.sh`): titled `HmacManager (<Kind>) vX.Y.Z`,
+marked as the latest release, with install instructions and a changelog
+auto-generated from the merged PRs since the previous release of the *same*
+artifact. Releases are notes-only — the artifacts themselves live on nuget.org,
+npmjs.com, Docker Hub, and GHCR / the gh-pages HTTP repo.
+
+The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `HmacManager.Operator.csproj`'s `<Version>` for the operator, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion` — and `client/lib/package.json`'s `version` for npm) so that:
 
 - local/manual builds report the right version, and
 - the release branch has a real commit to bring back into `develop`. If a release branch has no changes vs `develop` at merge time, `tag.yml`'s `merge-back` job fails loudly with an error telling you to bump the version — it does not silently skip.
@@ -186,6 +194,38 @@ helm install hmac-manager oci://ghcr.io/jzills/charts/hmac-manager --version 1.5
 
 ---
 
+## NPM Package (TypeScript client) {#npm-package}
+
+Covers changes to the TypeScript client library under `client/lib/`.
+
+```bash
+# 1. Cut a release branch from develop
+git checkout develop && git pull origin develop
+git checkout -b release/npm/v2.7.0
+
+# 2. Bump the version and stabilize
+#    Edit client/lib/package.json: "version": "2.7.0"
+git commit -am "chore: bump npm client version to 2.7.0"
+git push origin release/npm/v2.7.0
+
+# 3. Open a PR release/npm/v2.7.0 -> main and merge it once checks pass.
+#    Merging the PR automatically:
+#      - tags main as npm/v2.7.0 (triggers npm-release.yml: test, build, publish)
+#      - opens and auto-merges a PR to back-merge release/npm/v2.7.0 into develop
+gh pr create --base main --head release/npm/v2.7.0 --title "release: npm v2.7.0" --fill
+gh pr merge --merge --auto
+
+# 4. Once the back-merge PR has merged, delete the release branch
+git push origin --delete release/npm/v2.7.0
+git branch -d release/npm/v2.7.0
+```
+
+The pipeline sets the published version from the tag (`npm version --no-git-tag-version`), builds with Vite, and publishes to npmjs.com as [`hmac-manager`](https://www.npmjs.com/package/hmac-manager). Publishing is idempotent: if the version already exists on the registry, the publish step skips instead of failing.
+
+**Required secret:** `NPM_TOKEN` (Settings → Secrets → Actions).
+
+---
+
 ## Releasing Multiple Artifacts Together
 
 When a service change also requires chart changes (e.g., new env var in values.yaml), release them in order:
@@ -202,6 +242,7 @@ This ensures the Docker image exists on Docker Hub before the chart that referen
 | Secret | Used by | Where to obtain |
 |---|---|---|
 | `NUGET_API_KEY` | `release.yml` | nuget.org → Account → API Keys (push-only, scoped to HmacManager) |
+| `NPM_TOKEN` | `npm-release.yml` | npmjs.com → Access Tokens (granular, publish-only, scoped to `hmac-manager`) |
 | `DOCKERHUB_USERNAME` | `service-release.yml`, `operator-release.yml` | Your Docker Hub username |
 | `DOCKERHUB_TOKEN` | `service-release.yml`, `operator-release.yml` | Docker Hub → Account Settings → Security → Access Tokens |
 | `RELEASE_PAT` | `tag.yml` | GitHub → Settings → Developer settings → Personal access tokens. Needs `repo` scope (Contents: write to push release tags, Pull requests: write to open + auto-merge the back-merge PR). Required because `GITHUB_TOKEN` can neither trigger the per-artifact release workflows via a tag push nor enable auto-merge. |

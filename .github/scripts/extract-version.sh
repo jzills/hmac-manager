@@ -17,12 +17,16 @@ case "$BRANCH" in
     PREFIX="operator"
     VERSION="${BRANCH#release/operator/v}"
     ;;
+  release/npm/v*)
+    PREFIX="npm"
+    VERSION="${BRANCH#release/npm/v}"
+    ;;
   release/v*)
     PREFIX="nuget"
     VERSION="${BRANCH#release/v}"
     ;;
   *)
-    echo "Unrecognized release branch: $BRANCH (expected release/vX.Y.Z, release/service/vX.Y.Z, release/operator/vX.Y.Z, or release/chart/vX.Y.Z)" >&2
+    echo "Unrecognized release branch: $BRANCH (expected release/vX.Y.Z, release/service/vX.Y.Z, release/operator/vX.Y.Z, release/chart/vX.Y.Z, or release/npm/vX.Y.Z)" >&2
     exit 1
     ;;
 esac
