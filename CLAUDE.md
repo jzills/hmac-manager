@@ -73,7 +73,7 @@ Tests mirror the source structure under `test/Unit/`. Shared test data and helpe
 
 All pipelines are defined under `.github/workflows/`. Dependabot is configured separately at `.github/dependabot.yml`.
 
-The per-artifact release pipelines (`release.yml` for the NuGet package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md). Each of these pipelines also creates a GitHub Release for its tag via `.github/scripts/create-release.sh` (uniform `HmacManager (<Kind>)` titles, marked latest, with install info and an auto-generated changelog scoped to the previous same-prefix tag).
+The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-release.yml` for the TypeScript client npm package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md). Each of these pipelines also creates a GitHub Release for its tag via `.github/scripts/create-release.sh` (uniform `HmacManager (<Kind>)` titles, marked latest, with install info and an auto-generated changelog scoped to the previous same-prefix tag).
 
 ---
 
@@ -152,6 +152,29 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `servic
 git checkout -b release/v2.7.0
 # bump <Version>, commit, push, then: gh pr create --base main ... && gh pr merge
 ```
+
+---
+
+### `npm-release.yml` — Build and Publish to npm
+
+**File**: `.github/workflows/npm-release.yml`
+
+**Trigger**: Push of a tag matching `npm/v*`, created by `tag.yml` when a `release/npm/vX.Y.Z` PR is merged into `main` (see [RELEASING.md](RELEASING.md)).
+
+**Purpose**: Test, build, and publish the TypeScript client library (`client/lib/`) to npmjs.com as `hmac-manager`.
+
+**Jobs**:
+
+#### `test`
+1. Checks out the repository and installs Node `24.x` (with npm cache keyed to `client/lib/package-lock.json`).
+2. `npm ci`, `npm run build` (Vite), and `vitest run` in `client/lib`.
+
+#### `publish` (runs only if `test` passes)
+1. Extracts the semantic version by stripping the `npm/v` tag prefix (fails if not `X.Y.Z`).
+2. Sets the package version from the tag (`npm version --no-git-tag-version`), builds, and publishes to https://registry.npmjs.org. If the version already exists on the registry, the publish is skipped (safe to re-run).
+3. Creates a GitHub Release for the tag via `.github/scripts/create-release.sh` — titled `HmacManager (NPM) vX.Y.Z`, with install instructions and a changelog scoped to the previous `npm/v*` tag.
+
+**Required secret**: `NPM_TOKEN` — an npmjs.com publish token for the `hmac-manager` package.
 
 ---
 
