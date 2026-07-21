@@ -1,5 +1,6 @@
 using System.Text;
 using HmacManager.Components;
+using HmacManager.Kubernetes.Diagnostics;
 
 namespace HmacManager.Kubernetes;
 
@@ -16,13 +17,16 @@ internal record SignRequest(
     Dictionary<string, string>? Headers = null
 );
 
-internal class SignHandler(IHmacManagerFactory factory)
+internal class SignHandler(IHmacManagerFactory factory, ILogger<SignHandler> logger)
 {
     public async Task<IResult> SignAsync(SignRequest signRequest)
     {
         var manager = factory.Create(signRequest.Policy, signRequest.Scheme);
         if (manager is null)
+        {
+            ServiceLog.SignPolicyNotFound(logger, signRequest.Policy);
             return Results.NotFound($"Policy '{signRequest.Policy}' not found.");
+        }
 
         var httpRequest = new HttpRequestMessage(new HttpMethod(signRequest.Method), signRequest.Uri);
 
@@ -37,7 +41,12 @@ internal class SignHandler(IHmacManagerFactory factory)
 
         var result = await manager.SignAsync(httpRequest);
         if (!result.IsSuccess)
+        {
+            ServiceLog.SignFailed(logger, signRequest.Policy);
             return Results.Problem("Signing failed.");
+        }
+
+        ServiceLog.SignRequestCompleted(logger, signRequest.Method, signRequest.Policy, signRequest.Scheme);
 
         var headers = httpRequest.Headers
             .Concat(httpRequest.Content?.Headers ?? Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>())

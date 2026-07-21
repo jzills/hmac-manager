@@ -48,6 +48,38 @@ Signature computation lives in `HmacSignatureProvider` → `HmacFactory` → has
 
 `INonceCache` (`src/Caching/`) prevents replay attacks by storing used nonces with a TTL. Two implementations exist: `MemoryNonceCache` (in-process) and `DistributedNonceCache` (Redis). The `Nonce` config on a policy selects which to use.
 
+### Logging
+
+Every log message the library can emit is declared in one place: `src/Diagnostics/HmacLog.cs`, an
+`internal static partial class` of `[LoggerMessage]` source-generated methods. The two container
+projects have their own equivalents — `kubernetes/operator/Diagnostics/OperatorLog.cs` and
+`kubernetes/service/Diagnostics/ServiceLog.cs`.
+
+Rules when adding a message:
+
+- **Declare it in the catalogue, never inline.** Call sites stay one line (`HmacLog.X(Logger, …)`),
+  and the catalogue stays reviewable as a whole — which is what makes "no message can leak a key"
+  checkable rather than aspirational.
+- **Event ids are a contract.** Take the next free id in the right range (documented at the top of
+  each catalogue); never reuse an id for a different event. The library's ids are published in
+  `src/README.md`.
+- **Never log a private key.** `test/Unit/Diagnostics/` asserts this over the full sign/verify path
+  with all levels enabled.
+- **Levels**: `Information` only for events an operator needs unprompted (the live policy set
+  changing), `Warning` for rejected requests and failed reloads, `Debug` for per-request outcomes,
+  `Trace` for signing content and signatures.
+
+Loggers are never required. Public types (`HmacManager`, `HmacManagerFactory`,
+`HmacDelegatingHandler`, `HmacAuthenticationContextProvider`) keep their original constructor and
+gain an overload that takes a logger; the original delegates with `NullLogger`. DI prefers the
+logging overload, so applications get logging without opting in and binary compatibility is
+preserved.
+
+`HmacPolicyCollectionReloader` is the exception to normal DI: it is constructed during
+`AddHmacManager` so no configuration change is missed before the first request, which is before any
+`IServiceProvider` exists. It is registered as an `IHostedService` purely so the container can hand
+it the real logger (`UseLogger`) and so it can report the live policy set at startup.
+
 ### DI wiring
 
 `IServiceCollectionExtensions.AddHmacManager()` (`src/Mvc/Extensions/`) registers all internal services. `IHmacManagerFactory` is the DI-resolvable entry point to obtain an `IHmacManager` for a named policy at runtime.

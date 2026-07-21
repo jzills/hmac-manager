@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Components;
 
 namespace HmacManager.Mvc.Extensions;
@@ -70,6 +72,11 @@ public static class IHttpClientBuilderExtensions
 
         ArgumentNullException.ThrowIfNull(hmacManager, nameof(hmacManager));
 
-        return new HmacDelegatingHandler(hmacManager);
+        // Logging is a convenience here, not a dependency: a container that never called AddLogging
+        // must still be able to sign requests.
+        var logger = serviceProvider.GetService<ILogger<HmacDelegatingHandler>>()
+            ?? NullLogger<HmacDelegatingHandler>.Instance;
+
+        return new HmacDelegatingHandler(hmacManager, logger);
     }
 }

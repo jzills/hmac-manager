@@ -1,11 +1,13 @@
 using HmacManager.Operator;
 using HmacManager.Operator.Controllers;
+using HmacManager.Operator.Diagnostics;
 using HmacManager.Operator.Entities;
 using KubeOps.Abstractions.Builder;
 using KubeOps.Operator;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -26,4 +28,13 @@ builder.Services
     })
     .AddController<HmacPolicyController, V1HmacPolicy>();
 
-builder.Build().Run();
+var host = builder.Build();
+
+OperatorLog.OperatorStarting(
+    host.Services.GetRequiredService<ILogger<Program>>(),
+    string.IsNullOrWhiteSpace(operatorOptions.WatchNamespace) ? "(the resource's own)" : operatorOptions.WatchNamespace!,
+    operatorOptions.ConfigMapName,
+    operatorOptions.SecretName,
+    operatorOptions.NonceCacheType);
+
+host.Run();

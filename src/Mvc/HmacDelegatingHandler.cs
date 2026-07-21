@@ -1,4 +1,7 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Components;
+using HmacManager.Diagnostics;
 using HmacManager.Exceptions;
 
 namespace HmacManager.Mvc;
@@ -9,12 +12,27 @@ namespace HmacManager.Mvc;
 public class HmacDelegatingHandler : DelegatingHandler
 {
     private readonly IHmacManager _hmacManager;
+    private readonly ILogger _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HmacDelegatingHandler"/> class that does not log.
+    /// </summary>
+    /// <param name="hmacManager">An instance of <see cref="IHmacManager"/> to sign the request.</param>
+    public HmacDelegatingHandler(IHmacManager hmacManager)
+        : this(hmacManager, NullLogger<HmacDelegatingHandler>.Instance)
+    {
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HmacDelegatingHandler"/> class.
     /// </summary>
     /// <param name="hmacManager">An instance of <see cref="IHmacManager"/> to sign the request.</param>
-    public HmacDelegatingHandler(IHmacManager hmacManager) => _hmacManager = hmacManager;
+    /// <param name="logger">The <see cref="ILogger"/> to record unsent requests to.</param>
+    public HmacDelegatingHandler(IHmacManager hmacManager, ILogger<HmacDelegatingHandler> logger)
+    {
+        _hmacManager = hmacManager;
+        _logger = logger;
+    }
 
     /// <summary>
     /// Sends the HTTP request synchronously, signing it before sending.
@@ -47,9 +65,12 @@ public class HmacDelegatingHandler : DelegatingHandler
         {
             return await base.SendAsync(request, cancellationToken);
         }
-        else
-        {
-            throw new HmacSigningException(signingResult);  
-        }
+
+        // The exception carries the result, but it is thrown into the caller's HttpClient call —
+        // which may be swallowed, retried by a resilience policy, or surfaced far from here. Record
+        // the abandoned request against this handler's category so it is traceable either way.
+        HmacLog.OutboundRequestNotSent(_logger, request.Method, request.RequestUri);
+
+        throw new HmacSigningException(signingResult);
     }
 }
