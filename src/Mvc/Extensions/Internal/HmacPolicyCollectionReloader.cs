@@ -19,7 +19,11 @@ internal sealed class HmacPolicyCollectionReloader : IHostedService
     private readonly IConfigurationSection ConfigurationSection;
     private readonly ReloadableHmacPolicyCollection Collection;
 
-    private ILogger Logger = NullLogger.Instance;
+    // Written once by the thread that starts the host (see UseLogger) and read by the configuration
+    // reload thread. Volatile for the same reason ReloadableHmacPolicyCollection's inner reference
+    // is: a stale read here would only cost a log line, but the field crossing threads is the point
+    // worth stating in the declaration rather than in a comment somewhere else.
+    private volatile ILogger Logger = NullLogger.Instance;
 
     /// <summary>
     /// Creates an <see cref="HmacPolicyCollectionReloader"/> and immediately subscribes
