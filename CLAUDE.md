@@ -66,8 +66,12 @@ Rules when adding a message:
 - **Never log a private key.** `test/Unit/Diagnostics/` asserts this over the full sign/verify path
   with all levels enabled.
 - **Levels**: `Information` only for events an operator needs unprompted (the live policy set
-  changing), `Warning` for rejected requests and failed reloads, `Debug` for per-request outcomes,
-  `Trace` for signing content and signatures.
+  changing); `Warning` for a recognized signing attempt that was rejected (expired, replayed,
+  mismatched) and for server-side faults (failed reloads, an unregistered cache); `Debug` for
+  per-request outcomes and for unrecognized input a caller can send unbounded (no header,
+  unparseable headers, an unknown policy name); `Trace` for signing content and signatures. Do not
+  put caller-controlled rejections at `Warning` — an edge deployment must not be drivable to
+  unbounded `Warning` volume.
 
 Loggers are never required. Public types (`HmacManager`, `HmacManagerFactory`,
 `HmacDelegatingHandler`, `HmacAuthenticationContextProvider`) keep their original constructor and

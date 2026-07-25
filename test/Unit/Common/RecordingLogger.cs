@@ -35,3 +35,17 @@ public sealed class RecordingLogger<T> : ILogger<T>
         Func<TState, Exception?, string> formatter
     ) => _entries.Add(new RecordedLog(logLevel, eventId, formatter(state, exception), exception));
 }
+
+/// <summary>
+/// An <see cref="ILoggerFactory"/> that hands out one supplied <see cref="ILogger"/> for every
+/// category, so a component that builds its own loggers from an injected factory (like
+/// <see cref="HmacManager.Components.HmacManagerFactory"/>) can still be observed in a test.
+/// </summary>
+public sealed class RecordingLoggerFactory(ILogger logger) : ILoggerFactory
+{
+    public ILogger CreateLogger(string categoryName) => logger;
+
+    public void AddProvider(ILoggerProvider provider) { }
+
+    public void Dispose() { }
+}

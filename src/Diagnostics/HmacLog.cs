@@ -31,9 +31,11 @@ namespace HmacManager.Diagnostics;
 ///     <para>
 ///         Levels follow the convention that a library is a guest in someone else's log stream:
 ///         <c>Information</c> is reserved for events an operator would want in production without
-///         opting in (a policy set changing underneath a running process), <c>Warning</c> for
-///         requests that were rejected, <c>Debug</c> for per-request outcomes, and <c>Trace</c> for
-///         the signing material needed to diagnose a signature mismatch.
+///         opting in (a policy set changing underneath a running process), <c>Warning</c> for a
+///         recognized signing attempt that was rejected (expired, replayed, mismatched) and for
+///         server-side faults, <c>Debug</c> for per-request outcomes and for unrecognized input a
+///         caller can send unbounded (no header, unparseable headers, an unknown policy name), and
+///         <c>Trace</c> for the signing material needed to diagnose a signature mismatch.
 ///     </para>
 /// </remarks>
 internal static partial class HmacLog
@@ -163,9 +165,16 @@ internal static partial class HmacLog
     /// <summary>
     /// Records a request for a policy name that is not registered.
     /// </summary>
+    /// <remarks>
+    /// Debug, not Warning: the policy name is caller-supplied — in the ext-authz service it comes
+    /// straight off a request header — so an unknown name is routine, unbounded input (a probe or a
+    /// misconfigured client), not a server-side fault. Logging it at Warning would let a caller drive
+    /// unbounded Warning volume. The real outcome is the null manager the caller already handles (or
+    /// the exception a DI-wired consumer already throws), so this line is diagnostic only.
+    /// </remarks>
     [LoggerMessage(
         EventId = 1200,
-        Level = LogLevel.Warning,
+        Level = LogLevel.Debug,
         Message = "No HMAC policy named \"{Policy}\" is registered.")]
     public static partial void PolicyNotFound(ILogger logger, string policy);
 
@@ -258,12 +267,13 @@ internal static partial class HmacLog
 
     /// <summary>
     /// Records that a caller named a policy this host does not have. Distinct from
-    /// <see cref="PolicyNotFound"/>: this one is caller-supplied and is a strong signal of a
-    /// misconfigured client or a probe.
+    /// <see cref="PolicyNotFound"/> only in vantage point — this fires from the authentication
+    /// context provider — but the same reasoning applies: the policy name is caller-supplied and
+    /// unbounded, so it is Debug, not Warning, and the caller receives a rejection either way.
     /// </summary>
     [LoggerMessage(
         EventId = 1310,
-        Level = LogLevel.Warning,
+        Level = LogLevel.Debug,
         Message = "A request presented HMAC policy \"{Policy}\", which is not registered on this host.")]
     public static partial void RequestedPolicyNotRegistered(ILogger logger, string policy);
 }

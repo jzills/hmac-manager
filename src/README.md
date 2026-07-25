@@ -321,8 +321,8 @@ Everything is under the `HmacManager` prefix, so the whole library can be turned
 | Level | Used for |
 | ----- | -------- |
 | `Information` | The live policy set, at startup and whenever a configuration change replaces it. On by default. |
-| `Warning` | A rejected request, and a configuration change that could not be applied. |
-| `Debug` | Per-request outcomes — signed, verified, skipped. |
+| `Warning` | A recognized signing attempt that was rejected — expired, replayed, or a mismatched signature — and server-side faults such as a configuration change that could not be applied. |
+| `Debug` | Per-request outcomes (signed, verified, skipped) and unrecognized requests — no HMAC header, unparseable headers, or an unknown policy name. |
 | `Trace` | The signing content and both signatures behind a mismatch. |
 
 ### Events
@@ -339,7 +339,7 @@ Everything is under the `HmacManager` prefix, so the whole library can be turned
 | 1103 | Warning | Nonce replayed |
 | 1104 | Warning | Signature mismatch |
 | 1105 | Trace | Signature mismatch detail |
-| 1200 | Warning | Policy not found |
+| 1200 | Debug | Policy not found |
 | 1201 | Warning | Nonce cache not registered |
 | 1210 | Information | Watching configuration for policy changes |
 | 1211 | Information | Policies reloaded |
@@ -348,7 +348,7 @@ Everything is under the `HmacManager` prefix, so the whole library can be turned
 | 1301 | Warning | `OnValidateKeys` rejected the credentials |
 | 1302 | Debug | Authentication succeeded |
 | 1303 | Warning | Authentication failed |
-| 1310 | Warning | Requested policy not registered |
+| 1310 | Debug | Requested policy not registered |
 
 Event ids are stable across releases — an id is never reused for a different event.
 

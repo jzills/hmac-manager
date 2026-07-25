@@ -64,7 +64,7 @@
         "level": {
           "type": "string",
           "enum": ["Trace", "Debug", "Information", "Warning", "Error", "Critical", "None"],
-          "description": "Verbosity of HmacManager's own log messages (server and operator). Framework/dependency logging (ASP.NET Core, KubeOps, etc.) is disabled entirely regardless of this value."
+          "description": "Verbosity of HmacManager's own log messages (server and operator). Framework/dependency logging (ASP.NET Core, KubeOps, etc.) is suppressed below Error regardless of this value, so genuine framework errors still surface while routine chatter does not."
         }
       },
       "required": ["level"]

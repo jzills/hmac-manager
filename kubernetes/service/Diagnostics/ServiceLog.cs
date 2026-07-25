@@ -58,18 +58,28 @@ internal static partial class ServiceLog
     /// missing header, or a malformed one.
     /// </summary>
     /// <remarks>
-    /// Takes the exception's message rather than the exception itself: the three exception types
-    /// caught here (<see cref="HmacManager.Exceptions.HmacPolicyNotFoundException"/>,
-    /// <see cref="HmacManager.Exceptions.MissingHeaderException"/>,
-    /// <see cref="HmacManager.Exceptions.BadHeaderFormatException"/>) are the expected, anticipated
-    /// outcome of a caller sending bad headers — precisely why this catch clause exists to convert
-    /// them into a 403 — not a bug. Logging the <see cref="Exception"/> object would print a full
-    /// stack trace for something that isn't exceptional from the service's point of view; the
-    /// message already says what was wrong with the request.
+    ///     <para>
+    ///         Debug, not Warning, and for the same reason <see cref="RequestUnauthenticated"/> is:
+    ///         these are unrecognizable requests built entirely from caller-controlled headers, so
+    ///         they are routine, unbounded input at the edge — a probe or a broken client — and must
+    ///         not let a caller drive unbounded Warning volume. A recognized signing attempt that
+    ///         fails a security check is reported at Warning instead (see
+    ///         <see cref="RequestVerificationFailed"/> and the library's own verification events).
+    ///     </para>
+    ///     <para>
+    ///         Takes the exception's message rather than the exception itself: the three exception
+    ///         types caught here (<see cref="HmacManager.Exceptions.HmacPolicyNotFoundException"/>,
+    ///         <see cref="HmacManager.Exceptions.MissingHeaderException"/>,
+    ///         <see cref="HmacManager.Exceptions.BadHeaderFormatException"/>) are the expected,
+    ///         anticipated outcome of a caller sending bad headers — precisely why this catch clause
+    ///         exists to convert them into a 403 — not a bug. Logging the <see cref="Exception"/>
+    ///         object would print a full stack trace for something that isn't exceptional from the
+    ///         service's point of view; the message already says what was wrong with the request.
+    ///     </para>
     /// </remarks>
     [LoggerMessage(
         EventId = 3003,
-        Level = LogLevel.Warning,
+        Level = LogLevel.Debug,
         Message = "Denying {Method} {Path}: the request's HMAC headers could not be interpreted ({Reason}).")]
     public static partial void RequestHeadersRejected(
         ILogger logger, string method, string path, string reason);
