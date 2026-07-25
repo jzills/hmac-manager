@@ -57,6 +57,18 @@
       },
       "required": ["port"]
     },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["Trace", "Debug", "Information", "Warning", "Error", "Critical", "None"],
+          "description": "Verbosity of HmacManager's own log messages (server and operator). Framework/dependency logging is unaffected."
+        }
+      },
+      "required": ["level"]
+    },
     "policies": {
       "type": "array",
       "minItems": 1,
@@ -197,5 +209,5 @@
       "required": ["enabled", "meshConfig", "ingressGateway", "waypoint"]
     }
   },
-  "required": ["image", "operator", "replicaCount", "namespace", "environment", "service", "policies", "istio"]
+  "required": ["image", "operator", "replicaCount", "namespace", "environment", "service", "logging", "policies", "istio"]
 }

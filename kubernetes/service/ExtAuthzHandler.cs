@@ -62,7 +62,7 @@ internal class ExtAuthzHandler(
         }
         catch (Exception e) when (e is HmacPolicyNotFoundException or MissingHeaderException or BadHeaderFormatException)
         {
-            ServiceLog.RequestHeadersRejected(logger, method, path, e);
+            ServiceLog.RequestHeadersRejected(logger, method, path, e.Message);
             return Results.StatusCode(StatusCodes.Status403Forbidden);
         }
     }

@@ -25,6 +25,14 @@ environment: Production
 service:
   port: 8080
 
+# Verbosity of HmacManager's own log messages — signing, verification, policy reload
+# (server) and reconciliation (operator). Does not affect framework/dependency logging
+# (ASP.NET Core, KubeOps, etc.), which stays quiet at its own default regardless of this
+# setting.
+# Allowed values: Trace | Debug | Information | Warning | Error | Critical | None
+logging:
+  level: Information
+
 # HMAC authentication policies. At least one policy is required.
 #
 # Each policy needs a name, a public key (UUID), and a reference to a Kubernetes

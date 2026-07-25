@@ -96,6 +96,37 @@ tests:
             name: DOTNET_USE_POLLING_FILE_WATCHER
             value: "true"
 
+  - it: defaults Logging__LogLevel__HmacManager to Information
+    set:
+      policies:
+        - name: my-policy
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: my-secret
+            key: private-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Logging__LogLevel__HmacManager
+            value: "Information"
+
+  - it: sets Logging__LogLevel__HmacManager from logging.level without any dotnet-specific values
+    set:
+      logging.level: Debug
+      policies:
+        - name: my-policy
+          publicKey: "00000000-0000-0000-0000-000000000001"
+          privateKeySecret:
+            name: my-secret
+            key: private-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Logging__LogLevel__HmacManager
+            value: "Debug"
+
   - it: injects ConnectionStrings__Redis when redis is enabled
     set:
       policies:

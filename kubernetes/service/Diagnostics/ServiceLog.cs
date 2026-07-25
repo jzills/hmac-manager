@@ -57,12 +57,22 @@ internal static partial class ServiceLog
     /// Records a request rejected because its HMAC headers were unusable — an unknown policy, a
     /// missing header, or a malformed one.
     /// </summary>
+    /// <remarks>
+    /// Takes the exception's message rather than the exception itself: the three exception types
+    /// caught here (<see cref="HmacManager.Exceptions.HmacPolicyNotFoundException"/>,
+    /// <see cref="HmacManager.Exceptions.MissingHeaderException"/>,
+    /// <see cref="HmacManager.Exceptions.BadHeaderFormatException"/>) are the expected, anticipated
+    /// outcome of a caller sending bad headers — precisely why this catch clause exists to convert
+    /// them into a 403 — not a bug. Logging the <see cref="Exception"/> object would print a full
+    /// stack trace for something that isn't exceptional from the service's point of view; the
+    /// message already says what was wrong with the request.
+    /// </remarks>
     [LoggerMessage(
         EventId = 3003,
         Level = LogLevel.Warning,
-        Message = "Denying {Method} {Path}: the request's HMAC headers could not be interpreted.")]
+        Message = "Denying {Method} {Path}: the request's HMAC headers could not be interpreted ({Reason}).")]
     public static partial void RequestHeadersRejected(
-        ILogger logger, string method, string path, Exception exception);
+        ILogger logger, string method, string path, string reason);
 
     // ---------------------------------------------------------------------------------------------
     // Development signing helper — 3100–3199

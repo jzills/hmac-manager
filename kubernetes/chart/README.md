@@ -156,6 +156,7 @@ When `redis.enabled=false` the chart refuses `replicaCount > 1` — the in-proce
 | `operator.image.repository` | `zills/hmac-manager-operator` | Operator (policy controller) image repository. |
 | `operator.image.tag` | `0.1.0` | Operator image tag. |
 | `service.port` | `8080` | Port the ext-authz service listens on. |
+| `logging.level` | `Information` | Verbosity of HmacManager's own log messages (signing, verification, policy reload, reconciliation) on both the server and the operator. `Trace` and `Debug` are per-request; `Information` covers policy/config changes only. Framework and dependency logging (ASP.NET Core, KubeOps) is unaffected and stays quiet regardless of this setting. |
 | `istio.enabled` | `true` | Master switch for Istio integration and the NOTES MeshConfig instructions. |
 | `istio.ingressGateway.enabled` | `false` | Enforce inbound (ingress gateway) traffic. Requires `name` + `namespace`. |
 | `istio.ingressGateway.name` | `""` | Name of the existing Gateway to target. Required when enabled. |
