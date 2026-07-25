@@ -204,7 +204,7 @@ curl -s -X POST http://localhost:9090/sign \
   -d '{"policy":"my-policy","method":"GET","uri":"http://echo.default.svc.cluster.local/"}'
 ```
 
-Returns the HMAC headers to attach to your request. Never use `Development` in a production cluster.
+`policy`, `method` and `uri` are required; `body` is optional — omit it to sign a request with no body (such as a GET). Returns the HMAC headers to attach to your request. Never use `Development` in a production cluster.
 
 ## Source
 

@@ -115,4 +115,18 @@ internal static partial class ServiceLog
         Level = LogLevel.Warning,
         Message = "Cannot sign: policy \"{Policy}\" resolved but produced no signature.")]
     public static partial void SignFailed(ILogger logger, string policy);
+
+    /// <summary>
+    /// Records a sign request rejected for omitting one of the required fields (policy, method, uri).
+    /// </summary>
+    /// <remarks>
+    /// Debug: it is caller-supplied input to a helper endpoint, and the 400 response already tells
+    /// the caller what was wrong. Note that an absent <c>Body</c> is not an error — a signed GET has
+    /// none — so it is never a reason for this event.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 3103,
+        Level = LogLevel.Debug,
+        Message = "Rejecting a sign request: 'Policy', 'Method' and 'Uri' are all required.")]
+    public static partial void SignRequestInvalid(ILogger logger);
 }

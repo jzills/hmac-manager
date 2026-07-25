@@ -21,6 +21,20 @@ internal class SignHandler(IHmacManagerFactory factory, ILogger<SignHandler> log
 {
     public async Task<IResult> SignAsync(SignRequest signRequest)
     {
+        // Policy, Method and Uri are the irreducible inputs: without them there is nothing to sign.
+        // Body is deliberately optional — a signed GET (or any bodyless request) omits it — as are
+        // Scheme and Headers. Reject a malformed envelope with a 400 here rather than letting a null
+        // required field surface as an unhandled 500 deeper in (e.g. factory.Create throwing on a
+        // null policy).
+        if (string.IsNullOrWhiteSpace(signRequest.Policy) ||
+            string.IsNullOrWhiteSpace(signRequest.Method) ||
+            string.IsNullOrWhiteSpace(signRequest.Uri))
+        {
+            ServiceLog.SignRequestInvalid(logger);
+            return Results.BadRequest(
+                "A sign request requires 'Policy', 'Method' and 'Uri'. 'Body' is optional — omit it to sign a request with no body.");
+        }
+
         var manager = factory.Create(signRequest.Policy, signRequest.Scheme);
         if (manager is null)
         {
