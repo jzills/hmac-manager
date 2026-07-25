@@ -1,6 +1,8 @@
 using HmacManager.Kubernetes;
 using HmacManager.Mvc.Extensions;
 
+Banner.Print();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Load the chart-generated policy config mounted at a well-known path.

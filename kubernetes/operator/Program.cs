@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+Banner.Print();
+
 var builder = Host.CreateApplicationBuilder(args);
 
 var operatorSection = builder.Configuration.GetSection(OperatorOptions.SectionName);
