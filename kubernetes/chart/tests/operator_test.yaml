@@ -109,3 +109,23 @@ tests:
           content:
             name: Operator__NonceCacheType
             value: "Memory"
+
+  - it: defaults the operator Logging__LogLevel__HmacManager to Information
+    documentIndex: 3
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Logging__LogLevel__HmacManager
+            value: "Information"
+
+  - it: sets the operator Logging__LogLevel__HmacManager from the shared logging.level value
+    documentIndex: 3
+    set:
+      logging.level: Debug
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Logging__LogLevel__HmacManager
+            value: "Debug"

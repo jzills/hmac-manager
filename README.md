@@ -29,6 +29,7 @@ Add secure HMAC request authentication to ASP.NET Core APIs with lightweight, co
 - Built-in nonce management for replay protection, in-memory or Redis-backed.
 - Dynamic policies — a singleton collection, or pulled at runtime from a database or other store.
 - First-class ASP.NET Core authentication/authorization integration, plus client-side request signing via an `HttpClient` handler.
+- Structured `ILogger` diagnostics with stable event ids — every rejection reports *which* check failed, and no message can carry a private key.
 - Targets `net8.0` and `net10.0`.
 
 **Kubernetes / Istio**
@@ -71,7 +72,7 @@ builder.Services
     .AddHmacHttpMessageHandler("MyPolicy");
 ```
 
-See the [library documentation](src/README.md) for schemes, dynamic policies, `HmacEvents`, `IConfiguration` binding, and custom signing content.
+See the [library documentation](src/README.md) for schemes, dynamic policies, `HmacEvents`, `IConfiguration` binding, custom signing content, and logging.
 
 ## Kubernetes (Istio ext-authz)
 

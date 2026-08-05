@@ -156,6 +156,7 @@ When `redis.enabled=false` the chart refuses `replicaCount > 1` — the in-proce
 | `operator.image.repository` | `zills/hmac-manager-operator` | Operator (policy controller) image repository. |
 | `operator.image.tag` | `0.1.0` | Operator image tag. |
 | `service.port` | `8080` | Port the ext-authz service listens on. |
+| `logging.level` | `Information` | Verbosity of HmacManager's own log messages (signing, verification, policy reload, reconciliation) on both the server and the operator. `Trace` and `Debug` are per-request; `Information` covers policy/config changes only. Framework and dependency logging (ASP.NET Core, KubeOps, etc.) is suppressed below `Error` regardless of this setting — routine chatter stays out, but genuine framework errors and crashes still surface. |
 | `istio.enabled` | `true` | Master switch for Istio integration and the NOTES MeshConfig instructions. |
 | `istio.ingressGateway.enabled` | `false` | Enforce inbound (ingress gateway) traffic. Requires `name` + `namespace`. |
 | `istio.ingressGateway.name` | `""` | Name of the existing Gateway to target. Required when enabled. |
@@ -203,7 +204,7 @@ curl -s -X POST http://localhost:9090/sign \
   -d '{"policy":"my-policy","method":"GET","uri":"http://echo.default.svc.cluster.local/"}'
 ```
 
-Returns the HMAC headers to attach to your request. Never use `Development` in a production cluster.
+`policy`, `method` and `uri` are required; `body` is optional — omit it to sign a request with no body (such as a GET). Returns the HMAC headers to attach to your request. Never use `Development` in a production cluster.
 
 ## Source
 

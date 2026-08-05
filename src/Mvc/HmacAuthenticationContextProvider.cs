@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Components;
+using HmacManager.Diagnostics;
 using HmacManager.Exceptions;
 using HmacManager.Policies;
 using HmacManager.Policies.Extensions;
-using Microsoft.AspNetCore.Http;
 
 namespace HmacManager.Mvc;
 
@@ -28,7 +31,12 @@ public class HmacAuthenticationContextProvider : IHmacAuthenticationContextProvi
     protected readonly IHmacHeaderParserFactory HeaderParserFactory;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="HmacAuthenticationContextProvider"/> class.
+    /// The <see cref="ILogger"/> unresolvable policies are recorded to.
+    /// </summary>
+    protected readonly ILogger Logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HmacAuthenticationContextProvider"/> class that does not log.
     /// </summary>
     /// <param name="factory">The factory used to create HMAC managers.</param>
     /// <param name="policies">The collection of HMAC policies.</param>
@@ -37,11 +45,28 @@ public class HmacAuthenticationContextProvider : IHmacAuthenticationContextProvi
         IHmacManagerFactory factory,
         IHmacPolicyCollection policies,
         IHmacHeaderParserFactory headerParserFactory
+    ) : this(factory, policies, headerParserFactory, NullLogger<HmacAuthenticationContextProvider>.Instance)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HmacAuthenticationContextProvider"/> class.
+    /// </summary>
+    /// <param name="factory">The factory used to create HMAC managers.</param>
+    /// <param name="policies">The collection of HMAC policies.</param>
+    /// <param name="headerParserFactory">The factory used to create header parsers.</param>
+    /// <param name="logger">The <see cref="ILogger"/> to record unresolvable policies to.</param>
+    public HmacAuthenticationContextProvider(
+        IHmacManagerFactory factory,
+        IHmacPolicyCollection policies,
+        IHmacHeaderParserFactory headerParserFactory,
+        ILogger<HmacAuthenticationContextProvider> logger
     )
     {
         Factory = factory;
         Policies = policies;
         HeaderParserFactory = headerParserFactory;
+        Logger = logger;
     }
 
     /// <summary>
@@ -71,6 +96,10 @@ public class HmacAuthenticationContextProvider : IHmacAuthenticationContextProvi
                 }
                 else
                 {
+                    // Thrown, but log first: this exception is caught and flattened to a 403 by the
+                    // ext-authz service, where the policy name would otherwise be lost.
+                    HmacLog.RequestedPolicyNotRegistered(Logger, hmacPartial.Policy);
+
                     throw new HmacPolicyNotFoundException(hmacPartial.Policy);
                 }
 

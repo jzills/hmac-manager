@@ -1,4 +1,5 @@
 using System.Text;
+using HmacManager.Operator.Diagnostics;
 using HmacManager.Operator.Entities;
 using HmacManager.Operator.Rendering;
 using k8s.Models;
@@ -39,14 +40,22 @@ public sealed class HmacPolicyController : IEntityController<V1HmacPolicy>
 
     public async Task<ReconciliationResult<V1HmacPolicy>> ReconcileAsync(V1HmacPolicy entity, CancellationToken cancellationToken)
     {
-        await RebuildAsync(ResolveNamespace(entity), cancellationToken);
+        var @namespace = ResolveNamespace(entity);
+
+        OperatorLog.ReconcileTriggered(_logger, @namespace, "an update", entity.Metadata.Name);
+        await RebuildAsync(@namespace, cancellationToken);
+
         return ReconciliationResult<V1HmacPolicy>.Success(entity);
     }
 
     public async Task<ReconciliationResult<V1HmacPolicy>> DeletedAsync(V1HmacPolicy entity, CancellationToken cancellationToken)
     {
+        var @namespace = ResolveNamespace(entity);
+
         // The deleted policy is already absent from the list, so rebuilding drops it from the aggregate.
-        await RebuildAsync(ResolveNamespace(entity), cancellationToken);
+        OperatorLog.ReconcileTriggered(_logger, @namespace, "the deletion", entity.Metadata.Name);
+        await RebuildAsync(@namespace, cancellationToken);
+
         return ReconciliationResult<V1HmacPolicy>.Success(entity);
     }
 
@@ -71,6 +80,10 @@ public sealed class HmacPolicyController : IEntityController<V1HmacPolicy>
             {
                 resolved.Add(PolicyMapper.ToResolvedPolicy(policy, privateKey!));
             }
+            else
+            {
+                OperatorLog.PolicyInvalid(_logger, policy.Metadata.Name, @namespace, message);
+            }
 
             await UpdateStatusIfChangedAsync(policy, isValid ? "Ready" : "Invalid", isValid ? null : message, cancellationToken);
         }
@@ -79,22 +92,32 @@ public sealed class HmacPolicyController : IEntityController<V1HmacPolicy>
         await SaveConfigMapAsync(@namespace, rendered.ConfigJson, cancellationToken);
         await SaveSecretAsync(@namespace, rendered.KeyFiles, cancellationToken);
 
-        _logger.LogInformation(
-            "Reconciled aggregate config for namespace {Namespace}: {ValidCount}/{TotalCount} policies valid.",
-            @namespace, resolved.Count, policies.Count);
+        OperatorLog.ReconcileCompleted(
+            _logger, @namespace, resolved.Count, policies.Count, _options.ConfigMapName, _options.SecretName);
+
+        if (resolved.Count == 0)
+        {
+            OperatorLog.ReconciledToEmptyPolicySet(_logger, @namespace);
+        }
     }
 
     private async Task<string?> ResolvePrivateKeyAsync(V1HmacPolicy policy, string @namespace, CancellationToken cancellationToken)
     {
+        // Both failures below end up as the same "no private key available" status message, so each
+        // is logged with the detail the status cannot carry — which reference, and which key.
         var reference = policy.Spec.PrivateKeySecretRef;
         if (reference is null || string.IsNullOrEmpty(reference.Name) || string.IsNullOrEmpty(reference.Key))
         {
+            OperatorLog.PrivateKeyReferenceMissing(_logger, policy.Metadata.Name, @namespace);
             return null;
         }
 
         var secret = await _client.GetAsync<V1Secret>(reference.Name, @namespace, cancellationToken);
         if (secret?.Data is null || !secret.Data.TryGetValue(reference.Key, out var value))
         {
+            OperatorLog.PrivateKeyNotResolved(
+                _logger, policy.Metadata.Name, @namespace, reference.Name, reference.Key);
+
             return null;
         }
 
@@ -116,6 +139,8 @@ public sealed class HmacPolicyController : IEntityController<V1HmacPolicy>
         }
 
         await _client.UpdateStatusAsync(policy, cancellationToken);
+
+        OperatorLog.StatusUpdated(_logger, policy.Metadata.Name, phase, policy.Status.ObservedGeneration);
     }
 
     /// <summary>

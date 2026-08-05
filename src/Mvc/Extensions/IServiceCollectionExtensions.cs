@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using HmacManager.Mvc.Extensions.Internal;
 
 namespace HmacManager.Mvc.Extensions;
@@ -51,8 +52,16 @@ public static class IServiceCollectionExtensions
     )
     {
         var policies = new ReloadableHmacPolicyCollection(configurationSection.GetPolicySection());
-        _ = new HmacPolicyCollectionReloader(configurationSection, policies);
+        var reloader = new HmacPolicyCollectionReloader(configurationSection, policies);
 
-        return services.AddHmacManager(new HmacManagerOptions(policies));
+        services.AddHmacManager(new HmacManagerOptions(policies));
+
+        // The reloader is already watching — see HmacPolicyCollectionReloader.UseLogger for why it
+        // has to be. Registering it as a hosted service is how it gets a real logger, and how it
+        // gets to report the live policy set once the host is up.
+        services.AddHostedService(provider =>
+            reloader.UseLogger(provider.GetRequiredService<ILogger<HmacPolicyCollectionReloader>>()));
+
+        return services;
     }
 }

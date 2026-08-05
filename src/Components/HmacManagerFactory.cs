@@ -1,6 +1,9 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Caching;
 using HmacManager.Common;
 using HmacManager.Common.Extensions;
+using HmacManager.Diagnostics;
 using HmacManager.Policies;
 using HmacManager.Policies.Extensions;
 using HmacManager.Schemes;
@@ -33,7 +36,18 @@ public class HmacManagerFactory : IHmacManagerFactory
     protected readonly IHmacHeaderBuilderFactory HeaderBuilderFactory;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="HmacManagerFactory"/> class with specified dependencies.
+    /// The <see cref="ILoggerFactory"/> used to build the logger handed to every
+    /// <see cref="HmacManager"/> this factory creates.
+    /// </summary>
+    protected readonly ILoggerFactory LoggerFactory;
+
+    /// <summary>
+    /// The <see cref="ILogger"/> policy resolution failures are recorded to.
+    /// </summary>
+    protected readonly ILogger Logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HmacManagerFactory"/> class that does not log.
     /// </summary>
     /// <param name="policies">The collection of HMAC policies.</param>
     /// <param name="caches">The cache for storing nonces to prevent replay attacks.</param>
@@ -44,12 +58,36 @@ public class HmacManagerFactory : IHmacManagerFactory
         IComponentCollection<INonceCache> caches,
         IHmacHeaderParserFactory headerParserFactory,
         IHmacHeaderBuilderFactory headerBuilderFactory
+    ) : this(policies, caches, headerParserFactory, headerBuilderFactory, NullLoggerFactory.Instance)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HmacManagerFactory"/> class with specified dependencies.
+    /// </summary>
+    /// <param name="policies">The collection of HMAC policies.</param>
+    /// <param name="caches">The cache for storing nonces to prevent replay attacks.</param>
+    /// <param name="headerParserFactory">Factory to create HMAC header parsers.</param>
+    /// <param name="headerBuilderFactory">Factory to create HMAC header builders.</param>
+    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> used by this factory and by every manager it creates.</param>
+    /// <remarks>
+    /// Resolved through dependency injection in preference to the logger-less overload, so an
+    /// application that registers HmacManager the normal way gets logging without asking for it.
+    /// </remarks>
+    public HmacManagerFactory(
+        IHmacPolicyCollection policies,
+        IComponentCollection<INonceCache> caches,
+        IHmacHeaderParserFactory headerParserFactory,
+        IHmacHeaderBuilderFactory headerBuilderFactory,
+        ILoggerFactory loggerFactory
     )
     {
         Policies = policies;
         Caches = caches;
         HeaderParserFactory = headerParserFactory;
         HeaderBuilderFactory = headerBuilderFactory;
+        LoggerFactory = loggerFactory;
+        Logger = loggerFactory.CreateLogger<HmacManagerFactory>();
     }
 
     /// <inheritdoc/>
@@ -98,7 +136,8 @@ public class HmacManagerFactory : IHmacManagerFactory
             CreateOptions(options.Name!, options.Nonce.MaxAgeInSeconds),
             CreateFactory(options.Keys, options.Algorithms, options.SigningContentBuilder),
             CreateResultFactory(options.Name!),
-            cache
+            cache,
+            LoggerFactory.CreateLogger<HmacManager>()
         );
 
     /// <summary>
@@ -117,7 +156,8 @@ public class HmacManagerFactory : IHmacManagerFactory
             ),
             CreateFactory(options.Keys, options.Algorithms, options.SigningContentBuilder),
             CreateResultFactory(options.Name!, scheme),
-            cache
+            cache,
+            LoggerFactory.CreateLogger<HmacManager>()
         );
 
     /// <summary>
@@ -200,8 +240,27 @@ public class HmacManagerFactory : IHmacManagerFactory
     /// <param name="options">The output policy options if the policy is found.</param>
     /// <param name="cache">The output nonce cache if found.</param>
     /// <returns><c>true</c> if the policy and cache are found; otherwise, <c>false</c>.</returns>
-    private bool TryGetPolicyCache(string policy, out HmacPolicy options, out INonceCache cache) => 
-        Policies.TryGetValue(policy, out options) &&
-          Caches.TryGetValue(Enum.GetName(options.Nonce.CacheType)!, out cache) || 
-            (cache = default!) != default!;
+    /// <remarks>
+    /// Both lookups fail the same way from the caller's perspective — a null manager — so each one
+    /// says which it was. A missing nonce cache in particular is a registration mistake that is
+    /// otherwise indistinguishable from a typo in a policy name.
+    /// </remarks>
+    private bool TryGetPolicyCache(string policy, out HmacPolicy options, out INonceCache cache)
+    {
+        cache = default!;
+
+        if (!Policies.TryGetValue(policy, out options))
+        {
+            HmacLog.PolicyNotFound(Logger, policy);
+            return false;
+        }
+
+        if (!Caches.TryGetValue(Enum.GetName(options.Nonce.CacheType)!, out cache))
+        {
+            HmacLog.NonceCacheNotFound(Logger, policy, options.Nonce.CacheType);
+            return false;
+        }
+
+        return true;
+    }
 }
