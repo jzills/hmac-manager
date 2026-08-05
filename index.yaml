@@ -2,8 +2,18 @@ apiVersion: v1
 entries:
   hmac-manager:
   - apiVersion: v2
+    appVersion: 0.3.0
+    created: "2026-08-05T16:51:10.820811259Z"
+    description: Istio ext-authz HTTP server for HMAC request authentication
+    digest: e4e9ff91d2ec759286f6c0070dece066d3801ae39498b083b4d8390f853ac81f
+    name: hmac-manager
+    type: application
+    urls:
+    - https://jzills.github.io/hmac-manager/hmac-manager-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 0.2.0
-    created: "2026-07-03T02:15:57.487217815Z"
+    created: "2026-08-05T16:51:10.82014746Z"
     description: Istio ext-authz HTTP server for HMAC request authentication
     digest: 697a885951c9d681938971cbc95df6f1230b8c0791a1fd4cfd1ebbcb8eb14076
     name: hmac-manager
@@ -13,7 +23,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2026-07-03T02:15:57.486279425Z"
+    created: "2026-08-05T16:51:10.819476632Z"
     description: Istio ext-authz HTTP server for HMAC request authentication
     digest: 82536167b05f75a53e7292f01690e590169902a87433e04e8048c3593a8f494d
     name: hmac-manager
@@ -23,7 +33,7 @@ entries:
     version: 0.1.0
   - apiVersion: v2
     appVersion: 0.0.1
-    created: "2026-07-03T02:15:57.485843715Z"
+    created: "2026-08-05T16:51:10.818899071Z"
     description: Istio ext-authz HTTP server for HMAC request authentication
     digest: ffadb37b5fa2f0f6315f4ebccc3f1fa092c1f45f859696baa08dc13e44a8918a
     name: hmac-manager
@@ -31,4 +41,4 @@ entries:
     urls:
     - https://jzills.github.io/hmac-manager/hmac-manager-0.0.1.tgz
     version: 0.0.1
-generated: "2026-07-03T02:15:57.485409858Z"
+generated: "2026-08-05T16:51:10.818332716Z"
