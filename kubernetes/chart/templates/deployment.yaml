@@ -60,6 +60,8 @@ spec:
             # what makes the operator's reconcile take effect without a pod restart.
             - name: DOTNET_USE_POLLING_FILE_WATCHER
               value: "true"
+            - name: Logging__LogLevel__HmacManager
+              value: {{ .Values.logging.level | quote }}
             {{- if .Values.redis.enabled }}
             - name: ConnectionStrings__Redis
               value: {{ include "hmac-manager.redisAddress" . | quote }}

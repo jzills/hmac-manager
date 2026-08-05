@@ -1,11 +1,15 @@
 using HmacManager.Operator;
 using HmacManager.Operator.Controllers;
+using HmacManager.Operator.Diagnostics;
 using HmacManager.Operator.Entities;
 using KubeOps.Abstractions.Builder;
 using KubeOps.Operator;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+Banner.Print();
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -26,4 +30,19 @@ builder.Services
     })
     .AddController<HmacPolicyController, V1HmacPolicy>();
 
-builder.Build().Run();
+var host = builder.Build();
+
+// Not ILogger<Program>: top-level statements compile Program into the global namespace, so that
+// category would be the bare string "Program" — outside the "HmacManager" prefix every log-level
+// filter in this codebase (and appsettings.json's Default: None) is written against, which would
+// silence this message along with everything we don't own.
+var startupLogger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HmacManager.Operator");
+
+OperatorLog.OperatorStarting(
+    startupLogger,
+    string.IsNullOrWhiteSpace(operatorOptions.WatchNamespace) ? "(the resource's own)" : operatorOptions.WatchNamespace!,
+    operatorOptions.ConfigMapName,
+    operatorOptions.SecretName,
+    operatorOptions.NonceCacheType);
+
+host.Run();

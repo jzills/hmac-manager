@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using HmacManager.Components;
+using HmacManager.Diagnostics;
 using HmacManager.Exceptions;
 using HmacManager.Extensions;
 using HmacManager.Mvc.Extensions.Internal;
@@ -46,35 +47,42 @@ internal class HmacAuthenticationHandler : AuthenticationHandler<HmacAuthenticat
     /// <returns>A <see cref="Task{AuthenticateResult}"/> representing the authentication outcome.</returns>
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (ContextProvider.TryGetAuthenticationContext(Request.Headers, out var hmacAuthenticationContext))
+        if (!ContextProvider.TryGetAuthenticationContext(Request.Headers, out var hmacAuthenticationContext))
         {
-            var hasValidKeys = await Options.Events.OnValidateKeysAsync(Context, hmacAuthenticationContext.Policy!.Keys);
-            if (!hasValidKeys)
-            {
-                return AuthenticateResult.Fail(new HmacAuthenticationException());
-            }
-
-            EnableBufferingIfContentExists();
-
-            var result = await GetResultAsync(hmacAuthenticationContext);
-
-            RewindIfContentExists();
-
-            if (result.IsSuccess)
-            {
-                var claims = await CreateClaimsAsync(result);
-                return AuthenticateResult.Success(CreateSuccessTicket(claims, result));
-            }
-            else
-            {
-                var failure = await Options.Events.OnAuthenticationFailureAsync(Request.HttpContext, result);
-                return AuthenticateResult.Fail(failure);
-            }
-        }
-        else
-        {
+            HmacLog.AuthenticationSkipped(Logger, Request.Method, Request.Path.ToString());
             return AuthenticateResult.NoResult();
         }
+
+        var policy = hmacAuthenticationContext.Policy!;
+
+        var hasValidKeys = await Options.Events.OnValidateKeysAsync(Context, policy.Keys);
+        if (!hasValidKeys)
+        {
+            HmacLog.KeyValidationRejected(Logger, policy.Name!);
+            return AuthenticateResult.Fail(new HmacAuthenticationException());
+        }
+
+        EnableBufferingIfContentExists();
+
+        var result = await GetResultAsync(hmacAuthenticationContext);
+
+        RewindIfContentExists();
+
+        if (!result.IsSuccess)
+        {
+            // Why it failed was already recorded against the HmacManager category by VerifyAsync;
+            // this pairs that with the policy as the pipeline saw it.
+            HmacLog.AuthenticationFailed(Logger, policy.Name!);
+
+            var failure = await Options.Events.OnAuthenticationFailureAsync(Request.HttpContext, result);
+            return AuthenticateResult.Fail(failure);
+        }
+
+        var claims = await CreateClaimsAsync(result);
+
+        HmacLog.AuthenticationSucceeded(Logger, result.Hmac!.Policy, result.Hmac.Scheme, claims.Count());
+
+        return AuthenticateResult.Success(CreateSuccessTicket(claims, result));
     }
 
     /// <summary>

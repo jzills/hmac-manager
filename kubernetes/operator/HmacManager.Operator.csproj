@@ -24,4 +24,13 @@
     <InternalsVisibleTo Include="HmacManager.Operator.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Microsoft.NET.Sdk (unlike Sdk.Web) does not auto-include appsettings.json as content,
+         so without this the file is never published and Generic Host falls back to its
+         unfiltered default log levels. -->
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -30,10 +30,10 @@
         "test": "vitest"
     },
     "devDependencies": {
-        "@types/node": "^26.0.1",
-        "vite": "^8.1.2",
+        "@types/node": "^26.1.2",
+        "vite": "^8.2.0",
         "vite-plugin-dts": "^5.0.3",
-        "vitest": "^4.1.9"
+        "vitest": "^4.1.10"
     },
     "dependencies": {
         "node-fetch": "^3.3.1"

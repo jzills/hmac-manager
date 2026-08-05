@@ -1,6 +1,9 @@
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Caching;
 using HmacManager.Caching.Extensions;
+using HmacManager.Diagnostics;
 using HmacManager.Extensions;
 
 namespace HmacManager.Components;
@@ -29,9 +32,14 @@ public class HmacManager : IHmacManager
     protected readonly INonceCache Cache;
 
     /// <summary>
-    /// Creates a <see cref="HmacManager"/> object.
+    /// The <see cref="ILogger"/> signing and verification outcomes are recorded to.
     /// </summary>
-    /// <param name="options"><see cref="HmacManagerOptions"/></param> 
+    protected readonly ILogger Logger;
+
+    /// <summary>
+    /// Creates a <see cref="HmacManager"/> object that does not log.
+    /// </summary>
+    /// <param name="options"><see cref="HmacManagerOptions"/></param>
     /// <param name="factory"><see cref="IHmacFactory"/></param>
     /// <param name="resultFactory"><see cref="IHmacResultFactory"/></param>
     /// <param name="cache"><see cref="INonceCache"/></param>
@@ -41,63 +49,107 @@ public class HmacManager : IHmacManager
         IHmacFactory factory,
         IHmacResultFactory resultFactory,
         INonceCache cache
+    ) : this(options, factory, resultFactory, cache, NullLogger<HmacManager>.Instance)
+    {
+    }
+
+    /// <summary>
+    /// Creates a <see cref="HmacManager"/> object that records signing and verification outcomes
+    /// to <paramref name="logger"/>.
+    /// </summary>
+    /// <param name="options"><see cref="HmacManagerOptions"/></param>
+    /// <param name="factory"><see cref="IHmacFactory"/></param>
+    /// <param name="resultFactory"><see cref="IHmacResultFactory"/></param>
+    /// <param name="cache"><see cref="INonceCache"/></param>
+    /// <param name="logger">The <see cref="ILogger"/> to record outcomes to.</param>
+    /// <returns>A <see cref="HmacManager"/> object.</returns>
+    public HmacManager(
+        HmacManagerOptions options,
+        IHmacFactory factory,
+        IHmacResultFactory resultFactory,
+        INonceCache cache,
+        ILogger<HmacManager> logger
     )
     {
         Options = options;
         Factory = factory;
         ResultFactory = resultFactory;
         Cache = cache;
+        Logger = logger;
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Each way a request can fail verification is rejected — and logged — separately. A single
+    /// "verification failed" would be true but useless: an expired signature, a replayed nonce and
+    /// a genuine signature mismatch have entirely different causes and entirely different fixes.
+    /// </remarks>
     public async Task<HmacResult> VerifyAsync(HttpRequestMessage request)
     {
-        if (TryParseHmac(request.Headers, out var incomingHmac))
+        if (!TryParseHmac(request.Headers, out var incomingHmac) || incomingHmac is null)
         {
-            if (await IsValidAsync(incomingHmac))
-            {   
-                var hmacVerification = await Factory.CreateAsync(request, incomingHmac);
-                if (hmacVerification.IsVerified(incomingHmac))
-                {
-                    return ResultFactory.Success(hmacVerification);
-                }
-            }
+            HmacLog.VerificationHeadersMissing(
+                Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name);
+
+            return ResultFactory.Failure();
         }
-        
-        return ResultFactory.Failure();
+
+        if (!incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds))
+        {
+            HmacLog.VerificationRequestExpired(
+                Logger, Options.Policy, incomingHmac.DateRequested, Options.MaxAgeInSeconds);
+
+            return ResultFactory.Failure();
+        }
+
+        if (!await Cache.IsValidNonceAsync(incomingHmac.Nonce, incomingHmac.DateRequested))
+        {
+            HmacLog.VerificationNonceReplayed(Logger, Options.Policy, incomingHmac.Nonce);
+
+            return ResultFactory.Failure();
+        }
+
+        var hmacVerification = await Factory.CreateAsync(request, incomingHmac);
+        if (!hmacVerification.IsVerified(incomingHmac))
+        {
+            HmacLog.VerificationSignatureMismatch(Logger, Options.Policy, Options.Scheme?.Name);
+            HmacLog.VerificationSignatureMismatchDetail(
+                Logger,
+                Options.Policy,
+                hmacVerification.Signature,
+                hmacVerification.SigningContent,
+                incomingHmac.Signature);
+
+            return ResultFactory.Failure();
+        }
+
+        HmacLog.RequestVerified(
+            Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name);
+
+        return ResultFactory.Success(hmacVerification);
     }
 
     /// <inheritdoc/>
     public async Task<HmacResult> SignAsync(HttpRequestMessage request)
     {
         var hmac = await Factory.CreateAsync(request, Options.Policy, Options.Scheme);
-        if (hmac is not null)
+        if (hmac is null)
         {
-            var headers = Options.HeaderBuilder.CreateBuilder(Options, hmac).Build();
-            request.Headers.AddRange(headers);
-            
-            return ResultFactory.Success(hmac);
-        }
-        else
-        {
+            HmacLog.SigningFailed(
+                Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name);
+
             return ResultFactory.Failure();
         }
-    }
 
-    /// <summary>
-    /// Validates the provided HMAC partial object asynchronously to ensure it meets the criteria specified in the options.
-    /// </summary>
-    /// <param name="incomingHmac">The incoming <see cref="HmacPartial"/> to validate.</param>
-    /// <returns>
-    /// A <see cref="Task{TResult}"/> representing the asynchronous operation, with a result of <c>true</c> if the HMAC is valid; otherwise, <c>false</c>.
-    /// </returns>
-    private async Task<bool> IsValidAsync(HmacPartial? incomingHmac) =>
-        incomingHmac is not null && 
-        incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds) &&
-            await Cache.IsValidNonceAsync(
-                incomingHmac.Nonce,
-                incomingHmac.DateRequested
-            );
+        var headers = Options.HeaderBuilder.CreateBuilder(Options, hmac).Build();
+        request.Headers.AddRange(headers);
+
+        HmacLog.RequestSigned(
+            Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name, hmac.Nonce);
+        HmacLog.SigningContentComputed(Logger, Options.Policy, hmac.SigningContent);
+
+        return ResultFactory.Success(hmac);
+    }
 
     /// <summary>
     /// Attempts to parse the provided HTTP request headers into an <see cref="Hmac"/> object.

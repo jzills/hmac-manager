@@ -18,3 +18,5 @@ kubernetes/chart/charts/
 kubernetes/chart/*.lock
 
 memory/
+
+docs/superpowers/

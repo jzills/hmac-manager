@@ -286,3 +286,90 @@ The signing content for an `Hmac` can be configured per policy. This allows user
         var suffix = $"{context.DateRequested}:{context.Nonce}";
         return $"{method}:{suffix}";
     });
+## Logging
+
+`HmacManager` writes to `ILogger` and requires no configuration to do so: register the library the
+usual way and every component picks up the host's logger. Nothing is written when logging is not
+configured — each type falls back to `NullLogger`, so the library never depends on a logging stack
+being present.
+
+### Categories
+
+| Category | What it records |
+| -------- | --------------- |
+| `HmacManager.Components.HmacManager` | The outcome of every sign and verify, and the specific reason a verification was rejected. |
+| `HmacManager.Components.HmacManagerFactory` | Policies and nonce caches that could not be resolved. |
+| `HmacManager.Mvc.HmacAuthenticationHandler` | The authentication pipeline's view of a request. |
+| `HmacManager.Mvc.HmacAuthenticationContextProvider` | Requests naming a policy this host does not have. |
+| `HmacManager.Mvc.HmacDelegatingHandler` | Outgoing requests abandoned because they could not be signed. |
+| `HmacManager.Mvc.Extensions.Internal.HmacPolicyCollectionReloader` | Policy sets loaded and reloaded from configuration. |
+
+Everything is under the `HmacManager` prefix, so the whole library can be turned up or down at once:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "HmacManager": "Debug"
+    }
+  }
+}
+```
+
+### Levels
+
+| Level | Used for |
+| ----- | -------- |
+| `Information` | The live policy set, at startup and whenever a configuration change replaces it. On by default. |
+| `Warning` | A recognized signing attempt that was rejected — expired, replayed, or a mismatched signature — and server-side faults such as a configuration change that could not be applied. |
+| `Debug` | Per-request outcomes (signed, verified, skipped) and unrecognized requests — no HMAC header, unparseable headers, or an unknown policy name. |
+| `Trace` | The signing content and both signatures behind a mismatch. |
+
+### Events
+
+| Id | Level | Event |
+| -- | ----- | ----- |
+| 1000 | Debug | Request signed |
+| 1001 | Warning | Signing produced no HMAC |
+| 1002 | Trace | Signing content computed |
+| 1003 | Warning | Outgoing request not sent |
+| 1100 | Debug | Request verified |
+| 1101 | Warning | Scheme headers missing |
+| 1102 | Warning | Request outside the max-age window |
+| 1103 | Warning | Nonce replayed |
+| 1104 | Warning | Signature mismatch |
+| 1105 | Trace | Signature mismatch detail |
+| 1200 | Debug | Policy not found |
+| 1201 | Warning | Nonce cache not registered |
+| 1210 | Information | Watching configuration for policy changes |
+| 1211 | Information | Policies reloaded |
+| 1212 | Warning | Policy reload failed, previous set retained |
+| 1300 | Debug | No HMAC header; authentication skipped |
+| 1301 | Warning | `OnValidateKeys` rejected the credentials |
+| 1302 | Debug | Authentication succeeded |
+| 1303 | Warning | Authentication failed |
+| 1310 | Debug | Requested policy not registered |
+
+Event ids are stable across releases — an id is never reused for a different event.
+
+### Diagnosing a signature mismatch
+
+A mismatch (1104) almost always means the two sides built different signing content: a relative
+request URI, a proxy rewriting the host, or a request body read before signing. Turn on `Trace` for
+the `HmacManager` category on both the signer and the verifier and compare the two signing content
+strings from event 1002 and event 1105 — the first differing segment is the cause.
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "HmacManager.Components.HmacManager": "Trace"
+    }
+  }
+}
+```
+
+> [!CAUTION]
+> Private keys are never logged at any level. Signing content is not a secret — it travels with the
+> request — but it does contain the public key, the nonce and any scheme header values, which may
+> identify a user. `Trace` is off by default for that reason and is not intended for production.

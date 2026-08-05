@@ -1,0 +1,101 @@
+name: NPM Release
+
+on:
+  push:
+    tags:
+      - "npm/v*"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: client/lib/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./client/lib
+        run: npm ci
+
+      - name: Build
+        working-directory: ./client/lib
+        run: npm run build
+
+      - name: Run tests
+        working-directory: ./client/lib
+        run: npx vitest run
+
+  publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#npm/v}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid tag format: $GITHUB_REF_NAME (expected npm/vX.Y.Z)" >&2
+            exit 1
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: client/lib/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./client/lib
+        run: npm ci
+
+      # The published version always comes from the tag, matching the other
+      # pipelines (package.json is bumped on the release branch for local builds).
+      - name: Set package version from tag
+        working-directory: ./client/lib
+        run: npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+
+      - name: Build
+        working-directory: ./client/lib
+        run: npm run build
+
+      # npm publish has no --skip-duplicate; check the registry first so
+      # re-runs are no-ops like the other pipelines' publish steps.
+      - name: Publish to npm
+        working-directory: ./client/lib
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.value }}"
+          if npm view "hmac-manager@$VERSION" version >/dev/null 2>&1; then
+            echo "hmac-manager@$VERSION already on npm — skipping publish."
+          else
+            npm publish --access public
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash .github/scripts/create-release.sh "$GITHUB_REF_NAME" "HmacManager (NPM) v${{ steps.version.outputs.value }}" <<'BODY'
+          **HmacManager (NPM)** — TypeScript client library for signing requests to HmacManager-protected APIs.
+
+          Install: `npm install hmac-manager@${{ steps.version.outputs.value }}`
+
+          📦 https://www.npmjs.com/package/hmac-manager/v/${{ steps.version.outputs.value }}
+          BODY

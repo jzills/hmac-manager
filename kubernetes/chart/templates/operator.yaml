@@ -85,3 +85,5 @@ spec:
               value: {{ include "hmac-manager.fullname" . }}-keys
             - name: Operator__NonceCacheType
               value: {{ ternary "Distributed" "Memory" .Values.redis.enabled | quote }}
+            - name: Logging__LogLevel__HmacManager
+              value: {{ .Values.logging.level | quote }}

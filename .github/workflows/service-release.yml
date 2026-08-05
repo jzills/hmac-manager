@@ -18,7 +18,7 @@ jobs:
           redis-version: 7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             8.0.x
@@ -36,8 +36,12 @@ jobs:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Extract version from tag
         id: version
@@ -50,7 +54,7 @@ jobs:
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -73,9 +77,21 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/hmac-manager:latest
 
       - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ secrets.DOCKERHUB_USERNAME }}/hmac-manager
           readme-filepath: ./kubernetes/service/README.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash .github/scripts/create-release.sh "$GITHUB_REF_NAME" "HmacManager (Kubernetes Service) v${{ steps.version.outputs.value }}" <<'BODY'
+          **HmacManager (Kubernetes Service)** — ext-authz HMAC verification service image.
+
+          Pull: `docker pull ${{ secrets.DOCKERHUB_USERNAME }}/hmac-manager:${{ steps.version.outputs.value }}`
+
+          🐳 https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/hmac-manager
+          BODY
