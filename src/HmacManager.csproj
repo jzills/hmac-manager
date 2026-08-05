@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageId>HmacManager</PackageId>
-    <Version>2.7.0</Version>
+    <Version>2.8.0</Version>
     <Authors>Joshua Zillwood</Authors>
     <Description>Integrate hmac authentication seamlessly into your ASP.NET Core applications, fortifying security measures and ensuring robust authentication protocols.</Description>
     <Company></Company>
