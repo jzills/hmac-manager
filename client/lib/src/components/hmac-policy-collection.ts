@@ -38,8 +38,13 @@ export default class HmacPolicyCollection {
      * @returns A tuple containing the matching HMAC policy and scheme, or null if not found.
      */
     get(policy: string, scheme: string | null = null): [HmacPolicy | null, HmacScheme | null] {
-        const matchingPolicy = this.policies[policy];
-        const matchingScheme = this.schemes[this.concat(policy, scheme)];
+        // Normalised to null rather than returned raw. Both lookups are index
+        // accesses into a plain object, so a miss is `undefined` while this
+        // signature promises `null` — and a signature that says null while the
+        // value is undefined is what made the missing scheme check in
+        // HmacManagerFactory.create easy to overlook.
+        const matchingPolicy = this.policies[policy] ?? null;
+        const matchingScheme = this.schemes[this.concat(policy, scheme)] ?? null;
         return [matchingPolicy, matchingScheme];
     }
 

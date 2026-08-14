@@ -36,11 +36,27 @@ export default class HmacManagerFactory {
      */
     create(policy: string, scheme: string | null = null): HmacManager | null {
         const [matchingPolicy, matchingScheme] = this.policies.get(policy, scheme);
-        if (matchingPolicy) {
-            return new HmacManager(matchingPolicy, matchingScheme,
-                this.headerBuilderFactory.create());
-        } else {
+        if (!matchingPolicy) {
             return null;
         }
+
+        // A scheme that was asked for and did not resolve is a mistake, not a
+        // request to sign without one. Previously only the policy was checked,
+        // so a misspelled scheme name produced a working manager whose scheme
+        // was undefined: it signed with no Hmac-Scheme header and with none of
+        // the scheme's header values in the signing content, reported success,
+        // and every request was then rejected server-side as a signature
+        // mismatch — the least informative symptom available for a typo. It
+        // also silently dropped the property the scheme exists to provide,
+        // that those headers are covered by the signature.
+        //
+        // Guarded on `scheme !== null` so passing no scheme keeps working; the
+        // rejection is specifically "asked for one and it does not exist".
+        if (scheme !== null && !matchingScheme) {
+            return null;
+        }
+
+        return new HmacManager(matchingPolicy, matchingScheme,
+            this.headerBuilderFactory.create());
     }
 }
