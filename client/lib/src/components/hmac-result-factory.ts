@@ -14,19 +14,29 @@ export default class HmacResultFactory {
 
     /**
      * Creates a failed HMAC result.
+     * @param error - What caused the failure, so the caller can find out why.
      * @returns An HMAC result indicating failure.
      */
-    failure = () => this.create(false);
+    failure = (error?: unknown) => this.create(false, null, error);
 
     /**
      * Creates an HMAC result instance.
      * @param isSuccess - Indicates whether the result is successful.
      * @param hmac - The HMAC details, or null if the result is a failure.
+     * @param error - The cause of a failure, omitted on success.
      * @returns An HMAC result object.
      */
-    private create = (isSuccess: boolean, hmac: Hmac | null = null): HmacResult => ({
+    private create = (
+        isSuccess: boolean,
+        hmac: Hmac | null = null,
+        error?: unknown
+    ): HmacResult => ({
         hmac,
         isSuccess,
-        dateGenerated: new Date()
+        dateGenerated: new Date(),
+        // Spread rather than always setting the key: a successful result
+        // should not carry `error: undefined`, which reads as "there was an
+        // error field and it was empty" to anything enumerating the object.
+        ...(error === undefined ? {} : { error })
     });
 }
