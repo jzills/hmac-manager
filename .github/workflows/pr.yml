@@ -55,6 +55,45 @@ jobs:
         working-directory: ./test/Operator
         run: dotnet test --no-build --verbosity normal
 
+  client-tests:
+    name: Client Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Mirrors the test job in npm-release.yml, which until now was the only
+      # place these ever ran — at release time, on a tag, after the code had
+      # already been merged. A break in the TypeScript client reached develop
+      # unnoticed and surfaced only when someone tried to publish.
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: client/lib/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./client/lib
+        run: npm ci
+
+      # Not redundant with the tests below. vitest only loads the modules its
+      # tests import, so nothing exercises src/index.ts — the package's entry
+      # point, and the thing npm-release.yml publishes. A broken import there
+      # fails this step and passes the tests.
+      #
+      # It is not a typecheck, despite running vite-plugin-dts: the plugin
+      # prints tsc's errors but the build still exits 0, so a type error passes
+      # both this and vitest. `tsc --noEmit` cannot be added as a gate until
+      # client/lib/tsconfig.json is dealt with — it currently fails on its own
+      # deprecated moduleResolution before reaching any source.
+      - name: Build
+        working-directory: ./client/lib
+        run: npm run build
+
+      - name: Run tests
+        working-directory: ./client/lib
+        run: npx vitest run
+
   ci-script-tests:
     name: CI Script Tests
     runs-on: ubuntu-latest
