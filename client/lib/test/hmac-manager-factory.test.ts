@@ -115,3 +115,58 @@ test("a resolved scheme signs with its headers", async () => {
     assert.include(result!.hmac!.signingContent, "123");
     assert.include(result!.hmac!.signingContent, "my@email.com");
 });
+
+// Blank means "no scheme", matching the .NET factory's IsNullOrWhiteSpace rule. #97 guarded on
+// `scheme !== null`, which made "" a scheme name that never resolves and so refused a call that
+// had worked before it — and still works in .NET.
+
+const policyWithoutSchemes = {
+    name: "Policy-B",
+    publicKey: "eb8e9dae-08bd-4883-80fe-1d9a103b30b5",
+    privateKey: btoa("thisIsMySuperCoolPrivateKey"),
+    contentHashAlgorithm: HashAlgorithm.SHA256,
+    signatureHashAlgorithm: HashAlgorithm.SHA256,
+    schemes: []
+};
+
+test("a blank scheme means no scheme, on a policy that has one", async () => {
+    const factory = new HmacManagerFactory([policyWithScheme]);
+
+    assert.isNotNull(factory.create("Policy-A", ""));
+    assert.isNotNull(factory.create("Policy-A", "   "));
+    assert.isNotNull(factory.create("Policy-A", null));
+    assert.isNotNull(factory.create("Policy-A", undefined as unknown as null));
+});
+
+test("a blank scheme means no scheme, on a policy that has none", async () => {
+    const factory = new HmacManagerFactory([policyWithoutSchemes]);
+
+    assert.isNotNull(factory.create("Policy-B"));
+    assert.isNotNull(factory.create("Policy-B", ""));
+    assert.isNotNull(factory.create("Policy-B", "   "));
+    assert.isNotNull(factory.create("Policy-B", null));
+
+    // Asking a schemeless policy for a real name is still a mistake.
+    assert.isNull(factory.create("Policy-B", "AnyScheme"));
+});
+
+test("a blank scheme signs without one", async () => {
+    const request = new Request("https://localhost:7216/api/weatherforecast", {
+        headers: { "X-AccountId": "123", "X-Email": "my@email.com" }
+    });
+
+    const manager = new HmacManagerFactory([policyWithScheme]).create("Policy-A", "");
+    const result = await manager!.sign(request);
+
+    assert.isTrue(result.isSuccess);
+    assert.isNull(result.hmac!.scheme);
+    assert.isNull(request.headers.get("Hmac-Scheme"));
+});
+
+test("a name that is only surrounded by whitespace is still a miss", async () => {
+    // Blank is absent; a real name is not trimmed. " Scheme " is not "Scheme", in either
+    // implementation, so it must be refused rather than quietly matched.
+    const factory = new HmacManagerFactory([policyWithScheme]);
+
+    assert.isNull(factory.create("Policy-A", " Scheme "));
+});
