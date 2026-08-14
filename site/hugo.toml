@@ -1,0 +1,137 @@
+# Hugo configuration for the HmacManager site.
+#
+# A landing page at / and the documentation under /docs/. The docs layout is
+# Hextra's own — adding content/docs/ is what turns on the sidebar, the
+# right-hand table of contents and the search below.
+#
+# This site is published into the gh-pages branch alongside the Helm chart
+# repository that already lives there (index.yaml and the chart tarballs). See
+# .github/workflows/pages.yml: the sync deletes stale site output but excludes
+# those files, so `helm repo add zills https://jzills.github.io/hmac-manager`
+# keeps resolving. Changing baseURL means changing the chart URLs too.
+baseURL = "https://jzills.github.io/hmac-manager/"
+
+# The name, not a tagline. kx's site titles itself "kubectl, indexed." because
+# "kx" alone means nothing to a reader — the opposite is true here: almost
+# everyone arriving has already seen "HmacManager" on nuget.org, npm, Docker
+# Hub or Artifact Hub, and that is the string they search for. Hextra titles
+# the home page with this alone and every other page as "Page – this".
+title = "HmacManager"
+
+[languages.en]
+  label = "English"
+
+# The site is its own Hugo module. There is no Go module anywhere else in this
+# repository, so Hextra is isolated by construction — it cannot reach the .NET
+# or npm dependency graphs, and it is deliberately absent from
+# .github/dependabot.yml: the theme is pinned on purpose.
+[module]
+  [[module.imports]]
+    path = "github.com/imfing/hextra"
+
+  # Nothing is mounted from the repository root. assets/logo.svg there is the
+  # README's copy, drawn as <text>; the site carries its own vector wordmark
+  # under assets/ and mounting both would publish two marks that can disagree.
+  [[module.mounts]]
+    source = "assets"
+    target = "assets"
+  [[module.mounts]]
+    source = "static"
+    target = "static"
+  # Mounted a second time so resources.Get can read the generated favicon:
+  # head-end.html needs it as a resource, and a second copy of the file under
+  # assets/ is a copy that can go stale.
+  [[module.mounts]]
+    source = "static"
+    target = "assets"
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+  [markup.goldmark.renderer]
+    # The landing page is hand-written HTML in a markdown file: hero, install
+    # cards, feature grid. Goldmark drops raw HTML unless told otherwise.
+    unsafe = true
+
+  # The typographer stays on for quotes, but its dash substitutions are
+  # neutralised. It rewrites "--" as an en dash, and these docs are dense with
+  # flags — `--set`, `--namespace`, `--create-namespace`, `--version`,
+  # `--decode` — every one of which would render as "–set" and stop being
+  # copy-pasteable. Setting the replacements to the literal characters is
+  # narrower than disabling the extension, which would also give up the curly
+  # quotes.
+  [markup.goldmark.extensions.typographer]
+    enDash = "--"
+    emDash = "---"
+
+[params]
+  description = "Secure HMAC request authentication for ASP.NET Core — as a NuGet library, or as an Istio ext-authz service with a Kubernetes operator for declarative policies."
+
+  # Both off: layouts/_partials/navbar-title.html draws the mark itself,
+  # inlined so it takes its colour from the active theme.
+  [params.navbar]
+    displayTitle = false
+    displayLogo = false
+
+  [params.footer]
+    enable = true
+    displayCopyright = false
+    displayPoweredBy = false
+
+  [params.search]
+    enable = true
+
+    [params.search.flexsearch]
+      # Vendored rather than fetched. Hextra's default pulls the bundle from
+      # jsDelivr with resources.GetRemote and republishes it locally, so the
+      # published page is self-hosted either way — but the *build* then needs
+      # the network, and a jsDelivr blip would fail a deploy that has nothing
+      # to do with jsDelivr. The bundle is recorded in THIRD_PARTY_NOTICES.md.
+      #
+      # Setting js alone is enough to take the local-asset branch of the
+      # theme's scripts/search.html; base is only for a different CDN.
+      js = "vendor/flexsearch/flexsearch.bundle.min.js"
+
+  # Hextra's own light/dark toggle, unmodified. kx replaces this partial with a
+  # ten-palette menu because its palettes are generated from the CLI's theme
+  # registry; there is no such registry here, so two modes is the whole story
+  # and the stock control is the right one.
+  [params.theme]
+    default = "dark"
+    displayToggle = true
+
+# Docs leads, then the landing page's own sections — one per artifact, in the
+# order the landing page presents them.
+[menu]
+  [[menu.main]]
+    name = "Docs"
+    pageRef = "/docs"
+    weight = 1
+  [[menu.main]]
+    name = "Install"
+    pageRef = "/#install"
+    weight = 2
+  [[menu.main]]
+    name = ".NET"
+    pageRef = "/#dotnet"
+    weight = 3
+  [[menu.main]]
+    name = "Kubernetes"
+    pageRef = "/#kubernetes"
+    weight = 4
+  [[menu.main]]
+    name = "Client"
+    pageRef = "/#client"
+    weight = 5
+  [[menu.main]]
+    name = "Search"
+    weight = 6
+    [menu.main.params]
+      type = "search"
+  [[menu.main]]
+    identifier = "github"
+    name = "GitHub"
+    url = "https://github.com/jzills/hmac-manager"
+    weight = 7
+    [menu.main.params]
+      icon = "github"

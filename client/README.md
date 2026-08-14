@@ -1,24 +1,30 @@
+# Client library
 
-# Client Library
+[![npm Version](https://img.shields.io/npm/v/hmac-manager?logo=npm&label=npm)](https://www.npmjs.com/package/hmac-manager)
 
-[![NPM Version](https://img.shields.io/npm/v/hmac-manager)](https://www.npmjs.com/package/hmac-manager) [![NPM Downloads](https://img.shields.io/npm/d18m/hmac-manager)](https://www.npmjs.com/package/hmac-manager)
+The JavaScript and TypeScript client, published to npm as
+[`hmac-manager`](https://www.npmjs.com/package/hmac-manager). It signs requests
+so they verify against an
+[HmacManager](https://github.com/jzills/hmac-manager)-protected API.
 
-- [Summary](#summary)
-- [Installation](#installation)
-- [Documentation](lib/src/README.md)
-- [Resources](#resources)
+| Directory | What it is |
+| --- | --- |
+| [`lib/`](lib/) | The published package — source, tests, and the npm README |
+| [`sample/`](sample/) | A small Node consumer that installs the built tarball |
 
-## Summary
+```bash
+npm install hmac-manager
+```
 
-Integrate your client with ASP.NET Core applications utilizing [HmacManager](../src/README.md) for authentication.
+**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/client/)**
 
-## Installation
+## Building
 
-`hmac-manager` is available on [NPM](https://www.npmjs.com/package/hmac-manager). 
+```bash
+cd lib
+npm ci
+npm run build     # Vite -> dist/index.js, dist/index.cjs, dist/index.d.ts
+npx vitest run
+```
 
-    npm i hmac-manager
-
-## Resources
-
-- [Documentation](lib/src/)
-- [Samples](../samples/WebToApiAuthenticationWithJavaScriptClient/)
+Releasing is driven by an `npm/vX.Y.Z` tag — see [RELEASING.md](../RELEASING.md).

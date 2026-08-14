@@ -1,0 +1,532 @@
+/* HmacManager site styling.
+ *
+ * The palette lives in hm-theme.css. Nothing here hardcodes a colour; every
+ * rule reads a --hm-* property, so the two modes are defined in one place and
+ * this file describes shape only.
+ *
+ * Hextra picks this file up on its own (its head partial does a
+ * resources.Get on "css/custom.css"); hm-theme.css is linked separately, see
+ * layouts/_partials/custom/head-end.html for why it cannot be @import-ed
+ * from here.
+ */
+
+html {
+  /* Most of the navbar is fragments on the landing page — Install, .NET,
+     Kubernetes, Client, and the mark itself, which goes to the top — and the
+     docs pages have a table of contents that is nothing but fragments.
+     Without this the browser teleports, and a reader who clicks "Kubernetes"
+     arrives with no idea whether the page moved a screen or ten.
+
+     No reduced-motion guard here: Hextra's reset already forces
+     scroll-behavior: auto under that query. */
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--hm-background);
+  color: var(--hm-body);
+}
+
+/* Hero
+ * ------------------------------------------------------------------ */
+
+.hm-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+  padding: 3.5rem 1rem 2rem;
+  text-align: center;
+}
+
+.hm-hero__logo {
+  display: block;
+  color: var(--hm-accent);
+  width: 100%;
+}
+
+.hm-hero__logo svg {
+  /* The wordmark is 612x240, so it is wide before it is tall; sizing it by
+     width is what keeps it from overflowing a phone. */
+  width: clamp(17rem, 62vw, 34rem);
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.hm-hero__tagline {
+  font-size: clamp(1.25rem, 3.2vw, 1.9rem);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--hm-heading);
+  margin: 0;
+  max-width: 40rem;
+}
+
+.hm-hero__blurb {
+  max-width: 46rem;
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.1rem);
+  line-height: 1.6;
+  color: var(--hm-muted);
+}
+
+.hm-hero__blurb code,
+.hm-section__lede code {
+  /* A code chip breaking mid-token splits its own pill background across two
+     lines. Keeping each chip whole is what a container-width fix cannot
+     guarantee at every viewport. */
+  white-space: nowrap;
+}
+
+/* The row of registry links under the hero. */
+.hm-hero__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+}
+
+.hm-hero__links a {
+  display: inline-block;
+  border: 1px solid var(--hm-border);
+  border-radius: 999px;
+  background-color: var(--hm-surface);
+  color: var(--hm-muted);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.hm-hero__links a:hover {
+  color: var(--hm-accent);
+  border-color: var(--hm-accent);
+}
+
+/* Sections
+ * ------------------------------------------------------------------ */
+
+.hm-section {
+  padding: 2.5rem 1rem;
+  /* The navbar is sticky, so a section jumped to from the menu would start
+     underneath it with its heading hidden. */
+  scroll-margin-top: 5rem;
+}
+
+.hm-section__title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 650;
+  color: var(--hm-heading);
+  margin: 0 0 0.5rem;
+}
+
+.hm-section__lede {
+  text-align: center;
+  color: var(--hm-muted);
+  max-width: 46rem;
+  margin: 0 auto 1.75rem;
+  line-height: 1.6;
+}
+
+/* A landing-page code sample. These are real markdown fences inside the
+   section's HTML, so chroma highlights them; only the frame is ours. */
+.hm-section pre {
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.hm-section__more {
+  text-align: center;
+  margin: 1.25rem 0 0;
+  font-size: 0.92rem;
+}
+
+/* Install cards
+ * ------------------------------------------------------------------ */
+
+.hm-install {
+  display: grid;
+  gap: 0.75rem;
+  /* Wide enough for the longest command on a card — the helm repo URL — which
+     clipped mid-word at narrower minimums. A command a reader cannot see all
+     of is worse than a grid that wraps to fewer columns. */
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  max-width: 66rem;
+  margin: 0 auto;
+}
+
+.hm-install__card {
+  border: 1px solid var(--hm-border);
+  border-radius: 0.5rem;
+  background-color: var(--hm-surface);
+  padding: 0.9rem 1rem;
+}
+
+.hm-install__label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--hm-muted);
+  margin-bottom: 0.35rem;
+}
+
+.hm-install__command {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  color: var(--hm-body);
+  /* Wrap rather than scroll. A card is a third of the grid and
+     "helm repo add zills https://jzills.github.io/hmac-manager" is wider than
+     that at any font size the card can afford; clipped mid-URL it reads as
+     broken, and a horizontal scrollbar inside a card is worse than a second
+     line. The hanging indent is what keeps a wrapped line from looking like a
+     second command — only the first line gets the "$". */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-inline-start: 1.15em;
+  text-indent: -1.15em;
+}
+
+.hm-install__command + .hm-install__command {
+  margin-top: 0.3rem;
+}
+
+.hm-install__command::before {
+  content: "$ ";
+  color: var(--hm-accent);
+}
+
+/* Feature cards
+ * ------------------------------------------------------------------ */
+
+.hm-features {
+  display: grid;
+  gap: 1rem;
+  /* 20rem, not 17: there are six cards, and a minimum narrow enough to fit
+     four across leaves the second row half empty. This holds them to three
+     and three at desktop width. */
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.hm-feature {
+  border: 1px solid var(--hm-border);
+  border-radius: 0.6rem;
+  background-color: var(--hm-surface);
+  padding: 1.1rem 1.2rem;
+}
+
+.hm-feature__title {
+  font-weight: 600;
+  color: var(--hm-accent);
+  margin: 0 0 0.4rem;
+}
+
+/* Each card's heading links to that feature's page. The whole card is not the
+   link target: the body text names types and commands, and a card-wide anchor
+   would swallow any link put in one later. */
+.hm-feature__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hm-feature__title a:hover {
+  text-decoration: underline;
+}
+
+.hm-feature__body {
+  margin: 0;
+  color: var(--hm-muted);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+/* Request-flow diagram
+ * ------------------------------------------------------------------ */
+
+.hm-flow {
+  display: block;
+  width: 100%;
+  max-width: 44rem;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  color: var(--hm-muted);
+}
+
+.hm-flow .hm-flow__box {
+  fill: var(--hm-surface);
+  stroke: var(--hm-border);
+}
+
+.hm-flow .hm-flow__label {
+  fill: var(--hm-heading);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.hm-flow .hm-flow__note {
+  fill: var(--hm-muted);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+/* Muted rather than the border colour the boxes use: at #21262d on #161b22 a
+   one-pixel connector is invisible, and the connectors are the part of the
+   diagram that carries the meaning. */
+.hm-flow .hm-flow__line {
+  stroke: var(--hm-muted);
+  stroke-width: 1.25;
+  fill: none;
+}
+
+.hm-flow .hm-flow__arrow {
+  fill: var(--hm-muted);
+}
+
+/* The verifier is the subject of the diagram, so it is the one box outlined
+   in the accent. */
+.hm-flow .hm-flow__box--accent {
+  stroke: var(--hm-accent);
+}
+
+.hm-flow .hm-flow__ok {
+  fill: var(--hm-accent);
+}
+
+.hm-flow .hm-flow__bad {
+  fill: var(--hm-warn);
+}
+
+/* Navbar mark
+ * ------------------------------------------------------------------ */
+
+.hm-navbar-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--hm-accent);
+}
+
+.hm-navbar-mark svg {
+  height: 1.75rem;
+  width: auto;
+  display: block;
+}
+
+.hm-navbar-mark__name {
+  font-weight: 650;
+  font-size: 1.05rem;
+  color: var(--hm-heading);
+  letter-spacing: -0.01em;
+}
+
+/* Hextra chrome
+ * ------------------------------------------------------------------
+ * The theme derives its accent ramp from the --primary-* properties
+ * hm-theme.css sets, so links, buttons and the active sidebar item already
+ * follow this palette. Its *surfaces* do not: they are bg-white / bg-dark,
+ * and "dark" is a fixed #111 rather than our #0d1117. On the landing page
+ * that is a strip behind the navbar; on a docs page it is the whole sidebar
+ * sitting in a visibly different colour from the body beside it.
+ *
+ * Named surfaces rather than a redefinition of Hextra's --hx-color-white,
+ * which is also what hx:text-white reads — a page background used as a text
+ * colour would be invisible on the surface it came from. */
+
+.hextra-nav-container-blur {
+  background-color: var(--hm-background);
+}
+
+.hextra-sidebar-container [data-toggle-animation] {
+  background-color: var(--hm-background);
+  /* The theme fades the sidebar's contents out under this footer with a
+     hardcoded white/#111 shadow, which reads as a smear of the wrong colour
+     over any other background. */
+  box-shadow: 0 -12px 16px var(--hm-background);
+  border-color: var(--hm-border);
+}
+
+/* The table of contents' sticky footer — "Scroll to top" and the rule above
+   it — carries the same hardcoded fade, which reads as a pale block floating
+   in the margin. */
+.hextra-toc .hextra-scrollbar > div:last-child {
+  background-color: var(--hm-background);
+  box-shadow: 0 -12px 16px var(--hm-background);
+  border-color: var(--hm-border);
+}
+
+.hextra-search-results {
+  background-color: var(--hm-surface);
+  border-color: var(--hm-border);
+  color: var(--hm-body);
+}
+
+.hextra-search-input {
+  color: var(--hm-body);
+}
+
+.hextra-search-input:focus-visible {
+  background-color: var(--hm-surface);
+}
+
+.hextra-toc {
+  color: var(--hm-muted);
+  border-color: var(--hm-border);
+}
+
+/* Docs prose
+ * ------------------------------------------------------------------
+ * The landing page is hand-written HTML with almost no prose in it; the docs
+ * are nothing but prose, and Hextra's typography is styled against fixed
+ * grays. Only surfaces and text are reclaimed here — chroma's syntax token
+ * colours are left alone. Our palette is semantic (accent, muted, warn) and
+ * chroma's is lexical (keyword, string, comment); mapping one onto the other
+ * would be invention, and these docs are C#, YAML, JSON and shell, which is
+ * exactly where a reader expects familiar syntax colours. */
+
+.content h1,
+.content h2,
+.content h3,
+.content h4 {
+  color: var(--hm-heading);
+}
+
+.content h2,
+.content h3 {
+  border-color: var(--hm-border);
+}
+
+.content p,
+.content li {
+  color: var(--hm-body);
+}
+
+.content a {
+  color: var(--hm-accent);
+}
+
+.content pre,
+.content pre.chroma {
+  background-color: var(--hm-surface);
+  color: var(--hm-body);
+  border: 1px solid var(--hm-border);
+  border-radius: 0.5rem;
+}
+
+/* Inline code only: :not(pre code) leaves the fenced blocks to the rule
+   above, where a per-token chip background would box every keyword. */
+.content code:not(pre code) {
+  background-color: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: 0.25rem;
+  color: var(--hm-body);
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+
+.content a code:not(pre code) {
+  color: var(--hm-accent);
+}
+
+.content .hextra-code-filename {
+  background-color: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-bottom: 0;
+  border-radius: 0.5rem 0.5rem 0 0;
+  color: var(--hm-muted);
+}
+
+.content .hextra-code-filename + div pre {
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.content table {
+  border-color: var(--hm-border);
+}
+
+.content th,
+.content td {
+  border-color: var(--hm-border);
+  color: var(--hm-body);
+}
+
+.content thead tr,
+.content tbody tr:nth-child(2n) {
+  background-color: var(--hm-surface);
+}
+
+.content blockquote {
+  border-inline-start-color: var(--hm-accent);
+  color: var(--hm-muted);
+}
+
+.content hr {
+  border-color: var(--hm-border);
+}
+
+/* Section index cards; see layouts/shortcodes/hm-children.html. */
+
+.hm-children {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.hm-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1px solid var(--hm-border);
+  border-radius: 0.5rem;
+  background-color: var(--hm-surface);
+  padding: 0.9rem 1rem;
+  text-decoration: none;
+  transition: border-color 0.12s ease;
+}
+
+.hm-child:hover {
+  border-color: var(--hm-accent);
+}
+
+.hm-child__title {
+  font-weight: 600;
+  color: var(--hm-accent);
+}
+
+.hm-child__body {
+  color: var(--hm-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* Asides; see layouts/shortcodes/hm-note.html. */
+
+.hm-note {
+  margin-top: 1.5rem;
+  padding: 0.15rem 1rem;
+  border: 1px solid var(--hm-border);
+  border-inline-start: 3px solid var(--hm-accent);
+  border-radius: 0.5rem;
+  background-color: var(--hm-surface);
+}
+
+.hm-note--warn {
+  border-inline-start-color: var(--hm-warn);
+}
+
+.hm-note > :last-child {
+  margin-bottom: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-child,
+  .hm-hero__links a {
+    transition: none;
+  }
+}

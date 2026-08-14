@@ -1,12 +1,66 @@
+# hmac-manager
 
-## Summary
+[![npm Version](https://img.shields.io/npm/v/hmac-manager?logo=npm&label=npm)](https://www.npmjs.com/package/hmac-manager)
 
-JavaScript and TypeScript clients for ASP.NET Core [HmacManager](https://github.com/jzills/hmac-manager/blob/main/README.md).
+JavaScript and TypeScript client for
+[HmacManager](https://github.com/jzills/hmac-manager). Signs requests so they
+verify against an HmacManager-protected ASP.NET Core API or Istio ext-authz
+service.
 
-## Installation
+Signing only — there is no verification side.
 
-    npm install hmac-manager
+**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/client/)**
+
+## Install
+
+```bash
+npm install hmac-manager
+```
 
 ## Usage
 
-Documentation can be found [here](https://github.com/jzills/hmac-manager/blob/main/client/lib/src/README.md).
+```ts
+import { HmacManagerFactory, HashAlgorithm } from "hmac-manager";
+
+const factory = new HmacManagerFactory([{
+  name: "MyPolicy",
+  publicKey: "00000000-0000-0000-0000-000000000001",
+  privateKey: "zvg29s2cQ4idOqbUJWETOw==",
+  contentHashAlgorithm: HashAlgorithm.SHA256,
+  signatureHashAlgorithm: HashAlgorithm.SHA256,
+  schemes: []
+}]);
+
+const manager = factory.create("MyPolicy");
+if (!manager) throw new Error("no policy named MyPolicy");
+
+const request = new Request("https://api.example.com/orders");
+const result = await manager.sign(request);
+
+if (!result.isSuccess) throw new Error("could not sign the request");
+
+const response = await fetch(request);
+```
+
+`sign` adds the HMAC headers to the request in place. It never throws —
+failures are reported through `result.isSuccess`, so check it.
+
+## Requirements
+
+Uses `crypto.randomUUID` and `crypto.subtle`, so a browser needs a secure
+context (`https://` or `localhost`) and Node needs 19 or later.
+
+> [!WARNING]
+> The private key is a shared secret. Shipping it in browser JavaScript
+> publishes it to everyone who loads the page. See
+> [where the private key lives](https://jzills.github.io/hmac-manager/docs/client/install/#where-the-private-key-lives).
+
+## Documentation
+
+- [Signing requests](https://jzills.github.io/hmac-manager/docs/client/signing-requests/)
+- [Schemes](https://jzills.github.io/hmac-manager/docs/client/schemes/)
+- [API](https://jzills.github.io/hmac-manager/docs/client/api/)
+
+## Source
+
+[github.com/jzills/hmac-manager](https://github.com/jzills/hmac-manager)

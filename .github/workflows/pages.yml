@@ -1,0 +1,166 @@
+name: Pages
+
+# The documentation site under site/, built on every push to develop and on
+# pull requests, but only published from develop. A PR that breaks the build
+# fails here rather than at deploy time.
+#
+# Publishing writes into the gh-pages branch, which GitHub Pages is configured
+# to serve ("deploy from branch"). That branch is NOT ours alone — it is also
+# the Helm chart HTTP repository, holding index.yaml, the chart tarballs and
+# artifacthub-repo.yml, published by chart-release.yml. Those files are what
+# `helm repo add zills https://jzills.github.io/hmac-manager` resolves, and
+# index.yaml pins each chart to a root URL with a content digest, so they must
+# keep being served from / byte for byte. The rsync below excludes them.
+#
+# Both workflows share the gh-pages concurrency group so they can never write
+# to the branch at the same time.
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "site/**"
+      - "assets/**"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "assets/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+env:
+  # Hextra requires the extended build; see site/hugo.toml.
+  HUGO_VERSION: 0.164.0
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The theme is a Hugo module, which is a Go module, so resolving it needs
+      # the go command. site/go.mod is the only Go module in this repository.
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: site/go.mod
+
+      - name: Install Hugo extended
+        run: |
+          curl -sSL -o hugo.tar.gz \
+            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          tar xzf hugo.tar.gz hugo
+          sudo install hugo /usr/local/bin/hugo
+          hugo version
+
+      - name: Build
+        working-directory: site
+        # --gc prunes stale cache entries; --minify is what the published site
+        # should be measured as, so PR builds exercise the same path. baseURL
+        # comes from site/hugo.toml, so a custom domain is one edit there.
+        run: hugo --gc --minify
+
+      # Hugo resolves the theme's stylesheet through resources.Get, which
+      # returns nothing when the module's assets are missing — and the build
+      # still succeeds, publishing an unstyled site. Asserted rather than
+      # assumed.
+      - name: Check the stylesheets were built
+        working-directory: site
+        run: |
+          shopt -s nullglob
+          compiled=(public/css/compiled/*.css)
+          if [ ${#compiled[@]} -eq 0 ]; then
+            echo "::error::no compiled stylesheet in public/css/compiled — the site would publish unstyled"
+            exit 1
+          fi
+          for sheet in "${compiled[@]}"; do
+            size=$(wc -c < "$sheet")
+            echo "$sheet: $size bytes"
+            [ "$size" -gt 10000 ] || { echo "::error::$sheet is suspiciously small"; exit 1; }
+          done
+          test -n "$(ls public/css/hm-theme*.css 2>/dev/null)" || {
+            echo "::error::the palette stylesheet is missing — head-end.html did not resolve it"; exit 1; }
+
+      - name: Upload site
+        if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: site/public
+          retention-days: 1
+
+  publish:
+    name: Publish to gh-pages
+    needs: build
+    if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site-public
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Sync the site into gh-pages
+        run: |
+          set -euo pipefail
+          git fetch origin gh-pages
+          git worktree add gh-pages origin/gh-pages
+
+          # Record what the Helm repository looks like before we touch
+          # anything, so the assertion below is against reality rather than
+          # against an assumption.
+          before=$(cd gh-pages && sha256sum index.yaml ./*.tgz | sort)
+
+          # --delete prunes site output that no longer exists (a renamed page
+          # would otherwise stay published forever). The excludes are the Helm
+          # chart repository: index.yaml pins every chart to a root URL with a
+          # digest, so deleting or rewriting any of them breaks `helm repo add`
+          # for everyone already using it.
+          rsync -a --delete \
+            --exclude 'index.yaml' \
+            --exclude '*.tgz' \
+            --exclude 'artifacthub-repo.yml' \
+            --exclude '.git' \
+            --exclude '.nojekyll' \
+            site-public/ gh-pages/
+
+          # Pages serves this branch through Jekyll unless told not to, which
+          # would drop any path with a leading underscore.
+          touch gh-pages/.nojekyll
+
+          after=$(cd gh-pages && sha256sum index.yaml ./*.tgz | sort)
+          if [ "$before" != "$after" ]; then
+            echo "::error::the site sync modified the Helm chart repository"
+            diff <(echo "$before") <(echo "$after") || true
+            exit 1
+          fi
+
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          cd gh-pages
+          git add -A
+          if git diff --staged --quiet; then
+            echo "site unchanged, nothing to publish"
+            exit 0
+          fi
+          git commit -m "Publish site from ${GITHUB_SHA::7}"
+          git push origin HEAD:gh-pages

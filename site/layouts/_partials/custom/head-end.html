@@ -1,0 +1,19 @@
+{{- /*
+  The palette stylesheet.
+
+  Linked separately rather than @import-ed from custom.css: Hextra runs that
+  file through its Tailwind build, which leaves a plain CSS @import in place
+  as a literal, so the browser would have requested a URL nothing publishes.
+
+  It has to load after the theme's own stylesheets, which is what this partial
+  is — Hextra calls it last in <head> — because --primary-hue and its two
+  siblings are the theme's variables and we are redefining them.
+
+  Fingerprinted so a palette change busts the cache, with an integrity hash
+  because the file is served from the same origin as the chart repository and
+  a stale CDN copy would silently restyle the whole site.
+*/ -}}
+{{- with resources.Get "css/hm-theme.css" }}
+  {{- $theme := . | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ $theme.RelPermalink }}" integrity="{{ $theme.Data.Integrity }}" />
+{{- end }}

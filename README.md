@@ -7,18 +7,15 @@
 
 _Secure HMAC request authentication for ASP.NET Core — as a NuGet library, or as an Istio ext-authz service with a Kubernetes operator for declarative policies._
 
-</div>
+**[Documentation →](https://jzills.github.io/hmac-manager/)**
 
-- [Summary](#summary)
-- [Features](#features)
-- [.NET Library](#net-library)
-- [Kubernetes (Istio ext-authz)](#kubernetes-istio-ext-authz)
-- [JavaScript / TypeScript Client](#javascript--typescript-client)
-- [Resources](#resources)
+</div>
 
 ## Summary
 
 Add secure HMAC request authentication to ASP.NET Core APIs with lightweight, configurable middleware — or enforce it across a Kubernetes service mesh without touching application code.
+
+Requests are signed and verified against named **policies**. A policy carries a key pair, a hash algorithm choice, a replay window, and optionally **schemes** — named header sets whose values are folded into the signature. The .NET library, the mesh verifier and the TypeScript client all build the same signing content, so a request signed by any of them verifies against any of the others.
 
 ## Features
 
@@ -72,7 +69,7 @@ builder.Services
     .AddHmacHttpMessageHandler("MyPolicy");
 ```
 
-See the [library documentation](src/README.md) for schemes, dynamic policies, `HmacEvents`, `IConfiguration` binding, custom signing content, and logging.
+→ [.NET documentation](https://jzills.github.io/hmac-manager/docs/dotnet/) — schemes, dynamic policies, `HmacEvents`, `IConfiguration` binding, custom signing content, and logging.
 
 ## Kubernetes (Istio ext-authz)
 
@@ -113,6 +110,8 @@ spec:
 kubectl apply -f my-policy.yaml
 ```
 
+→ [Kubernetes documentation](https://jzills.github.io/hmac-manager/docs/kubernetes/) — the ext-authz service, the CRD and operator, chart values, and enforcement.
+
 - **Helm chart** — [kubernetes/chart](kubernetes/chart/README.md) · [Artifact Hub](https://artifacthub.io/packages/search?repo=zills)
 - **Container images** — [zills/hmac-manager](https://hub.docker.com/r/zills/hmac-manager) (ext-authz service) · [zills/hmac-manager-operator](https://hub.docker.com/r/zills/hmac-manager-operator) (policy operator) on Docker Hub
 
@@ -143,10 +142,11 @@ await factory.create("MyPolicy")!.sign(request); // adds the Hmac headers to `re
 const response = await fetch(request);
 ```
 
-See the [client documentation](client/lib/src/README.md) for schemes and configuration.
+→ [Client documentation](https://jzills.github.io/hmac-manager/docs/client/) — schemes, the API surface, and where the private key can safely live.
 
 ## Resources
 
-- [Library documentation](src/README.md)
-- [Client documentation](client/lib/src/README.md)
+- [Documentation](https://jzills.github.io/hmac-manager/)
 - [Samples](samples/README.md)
+- [Releasing](RELEASING.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)

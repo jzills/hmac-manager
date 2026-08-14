@@ -62,7 +62,8 @@ Rules when adding a message:
   checkable rather than aspirational.
 - **Event ids are a contract.** Take the next free id in the right range (documented at the top of
   each catalogue); never reuse an id for a different event. The library's ids are published in
-  `src/README.md`.
+  `site/content/docs/reference/log-events.md`, which is the page a reader is pointed at from
+  `src/README.md` and from the logging docs — add the id there in the same change.
 - **Never log a private key.** `test/Unit/Diagnostics/` asserts this over the full sign/verify path
   with all levels enabled.
 - **Levels**: `Information` only for events an operator needs unprompted (the live policy set
@@ -105,9 +106,30 @@ it the real logger (`UseLogger`) and so it can report the live policy set at sta
 
 Tests mirror the source structure under `test/Unit/`. Shared test data and helpers are in `test/Unit/Common/`. The `src` project exposes internals to the `Unit` project via `InternalsVisibleTo`.
 
+### Documentation
+
+User-facing documentation lives in **one** place: `site/content/docs/`, published to
+<https://jzills.github.io/hmac-manager/>. The READMEs are deliberately thin — each is a summary,
+an install snippet and links into the site — because each one is rendered by a host that shows
+nothing else (`src/README.md` on nuget.org via `PackageReadmeFile`, `client/lib/README.md` on
+npmjs.com, `kubernetes/chart/README.md` on Artifact Hub, the two `kubernetes/*/README.md` on Docker
+Hub). Those three keep their reference tables, since those platforms will not follow a link.
+
+**Document a behaviour change in `site/content/docs/`, not in a README.** Sections map to surfaces:
+`concepts/` is the vocabulary shared by all three implementations, then `dotnet/`, `kubernetes/`
+and `client/`, with lookup tables under `reference/`. Prose is hand-authored — there is no
+generator from the READMEs, so a claim in the docs is only as accurate as the person who wrote it;
+verify API names against the source before writing them down.
+
+`site/` is a self-contained Hugo site; `hugo server` from that directory previews it. See the
+`pages.yml` section below for how it is built and published, and why the `gh-pages` branch needs
+care.
+
 ## CI/CD Pipelines
 
 All pipelines are defined under `.github/workflows/`. Dependabot is configured separately at `.github/dependabot.yml`.
+
+`pages.yml` builds and publishes the documentation site under `site/` (Hugo + Hextra) to the `gh-pages` branch, which it shares with the Helm chart HTTP repository — see its section below before changing anything that writes to that branch.
 
 The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-release.yml` for the TypeScript client npm package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md). Each of these pipelines also creates a GitHub Release for its tag via `.github/scripts/create-release.sh` (uniform `HmacManager (<Kind>)` titles, marked latest, with install info and an auto-generated changelog scoped to the previous same-prefix tag).
 
@@ -216,6 +238,41 @@ git checkout -b release/v2.7.0
 3. Creates a GitHub Release for the tag via `.github/scripts/create-release.sh` — titled `HmacManager (NPM) vX.Y.Z`, with install instructions and a changelog scoped to the previous `npm/v*` tag.
 
 **Required secret**: `NPM_TOKEN` — an npmjs.com publish token for the `hmac-manager` package.
+
+---
+
+### `pages.yml` — Build and Publish the Documentation Site
+
+**File**: `.github/workflows/pages.yml`
+
+**Triggers**: pushes to `develop` and pull requests touching `site/**`, `assets/**` or the workflow itself, plus `workflow_dispatch`. Built on both; published only from `develop`, so a PR that breaks the site fails before deploy time.
+
+**Purpose**: build the Hugo site under `site/` and publish it to the `gh-pages` branch.
+
+**The constraint that shapes this pipeline**: `gh-pages` is *also* the Helm chart HTTP repository. It holds `index.yaml`, the chart `.tgz` files and `artifacthub-repo.yml`, published by `chart-release.yml`. `index.yaml` pins every chart to a **root-level URL with a content digest**, and the tarballs exist nowhere else in the repository (`**/*.tgz` is gitignored on source branches). Those files must keep being served from `/` byte for byte or `helm repo add zills https://jzills.github.io/hmac-manager` breaks for everyone already using it.
+
+**Jobs**:
+
+#### `build`
+1. Checks out the repository.
+2. Installs Go via `go-version-file: site/go.mod` — the Hextra theme is a Hugo module, which is a Go module. `site/go.mod` is the only Go module in this repository, so the theme is isolated from the .NET and npm dependency graphs by construction. It is deliberately **not** in `dependabot.yml`; the theme is pinned on purpose.
+3. Installs Hugo **extended** (pinned by `HUGO_VERSION`; Hextra requires the extended build).
+4. `hugo --gc --minify` in `site/`.
+5. **Asserts the stylesheets were built.** Hugo resolves the theme's CSS through `resources.Get`, which returns nothing when the module's assets are missing — and the build still *succeeds*, publishing an unstyled site. The step fails if `public/css/compiled/*.css` is absent or under 10 KB, or if the fingerprinted `hm-theme*.css` is missing.
+6. Uploads `site/public` as an artifact (develop only).
+
+#### `publish` (develop only, needs `build`)
+1. Checks out with full history and downloads the artifact.
+2. Adds a `gh-pages` worktree, records the sha256 of `index.yaml` and every `.tgz`, then `rsync -a --delete` the site in, **excluding** `index.yaml`, `*.tgz`, `artifacthub-repo.yml`, `.git` and `.nojekyll`. `--delete` prunes site pages that no longer exist; the excludes are what keep the chart repository intact.
+3. Re-hashes those files and **fails the job** if any changed — the guard is against reality, not an assumption.
+4. `touch .nojekyll` (Pages runs branch-served content through Jekyll otherwise, which drops underscore-prefixed paths).
+5. Commits and pushes, skipping cleanly when nothing changed.
+
+**Concurrency**: the job shares `concurrency: { group: gh-pages }` with the `pages` job in `chart-release.yml`. Both do fetch/worktree/commit/push against the same branch, so without it they can interleave and one loses its commit.
+
+**Branch protection**: consider requiring the `Build` check on `main` and `develop` alongside the existing four.
+
+**Site generators**: `site/tools/gen-marks.py` writes `site/assets/hm-wordmark.svg`, `site/assets/hm-mark.svg` and the README's `assets/logo.svg`; `site/tools/gen-favicons.mjs` rasterizes the favicon set into `site/static/` through headless Chromium. Both are run **by hand** and their output committed — no build step invokes them, and CI installs neither toolchain. See `site/tools/README.md`.
 
 ---
 
