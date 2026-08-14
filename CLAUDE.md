@@ -141,7 +141,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 
 **Trigger**: Any pull request opened or updated targeting `main` or `develop`.
 
-**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, CI-script, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
+**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, client, CI-script, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
 
 **Jobs**:
 
@@ -159,6 +159,17 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 4. Builds `test/Operator`.
 5. Runs the operator test suite via `dotnet test` (rendering, mapping, validation, and status reconciliation for the `HmacPolicy` CRD controller under `kubernetes/operator/`).
 
+#### `client-tests`
+1. Checks out the repository.
+2. Installs Node `24.x`, with the npm cache keyed to `client/lib/package-lock.json`.
+3. `npm ci` in `client/lib`.
+4. `npm run build` — **not redundant with step 5**. Vitest only loads modules its tests import, so nothing exercises `src/index.ts`, the package entry point that `npm-release.yml` publishes; a broken import there fails the build and passes the tests.
+5. Runs the TypeScript client suite via `npx vitest run`.
+
+Mirrors the `test` job in `npm-release.yml`, which was the only place these ran until this job existed — at release time, on a tag, after the code had already merged.
+
+**There is still no typecheck.** Vitest transpiles through esbuild without checking types, and `vite-plugin-dts` prints `tsc`'s errors during the build but the build exits `0` regardless — verified by introducing a deliberate type error, which passed both. Adding `tsc --noEmit` as a gate is blocked on `client/lib/tsconfig.json`, which currently fails with `TS5107` on its own deprecated `moduleResolution=node10` before reaching any source file. Worth fixing separately; until then a type error can reach `develop`.
+
 #### `ci-script-tests`
 1. Checks out the repository.
 2. Runs `shellcheck` over `.github/scripts/*.sh`.
@@ -173,7 +184,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 6. Builds `test/Integration`.
 7. Runs the integration test suite via `dotnet test`.
 
-**Branch protection**: The `Unit Tests`, `Operator Tests`, `CI Script Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
+**Branch protection**: The `Unit Tests`, `Operator Tests`, `Client Tests`, `CI Script Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
 
 ---
 
