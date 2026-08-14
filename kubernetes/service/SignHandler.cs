@@ -38,8 +38,13 @@ internal class SignHandler(IHmacManagerFactory factory, ILogger<SignHandler> log
         var manager = factory.Create(signRequest.Policy, signRequest.Scheme);
         if (manager is null)
         {
+            // Either name can be the one that did not resolve, so the response says both rather
+            // than blaming the policy for a mistyped scheme. Which it actually was is in the
+            // library's own log at Debug — event 1200 for the policy, 1202 for the scheme.
             ServiceLog.SignPolicyNotFound(logger, signRequest.Policy);
-            return Results.NotFound($"Policy '{signRequest.Policy}' not found.");
+            return Results.NotFound(string.IsNullOrWhiteSpace(signRequest.Scheme)
+                ? $"Policy '{signRequest.Policy}' not found."
+                : $"Policy '{signRequest.Policy}' not found, or it does not declare a scheme named '{signRequest.Scheme}'.");
         }
 
         var httpRequest = new HttpRequestMessage(new HttpMethod(signRequest.Method), signRequest.Uri);

@@ -115,14 +115,24 @@ public class HmacManagerFactory : IHmacManagerFactory
             return Create(policy);
         }
 
-        if (TryGetPolicyCache(policy, out var options, out var cache))
-        {
-            return CreateManager(options, cache, scheme);
-        }
-        else
+        if (!TryGetPolicyCache(policy, out var options, out var cache))
         {
             return null;
         }
+
+        // A scheme that was asked for and does not resolve is a mistake, not a request to sign
+        // without one. The lookup used to happen inside CreateManager with its result unchecked, so
+        // an unresolved name became a null Scheme on the options — which HmacManager treats as "no
+        // scheme". The manager signed successfully, omitting the scheme header and every header
+        // value the scheme names from the signing content, and the verifier rejected it as a
+        // signature mismatch. Refusing here is the same answer an unknown policy name already gets.
+        if (options.Schemes.Get(scheme) is null)
+        {
+            HmacLog.SchemeNotFound(Logger, policy, scheme);
+            return null;
+        }
+
+        return CreateManager(options, cache, scheme);
     }
 
     /// <summary>
