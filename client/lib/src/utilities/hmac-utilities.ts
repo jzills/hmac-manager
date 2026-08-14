@@ -17,16 +17,48 @@ export const getUnicode = (signatureBytes: ArrayBuffer): string => {
  * @returns A base64 string of the hash if body exists; otherwise, null.
  */
 export const computeContentHash = async (body: ReadableStream<Uint8Array> | null, algorithm: AlgorithmIdentifier) => {
-    if (body) {
-        var streamResult = await body.getReader().read();
-        if (streamResult.value) {
-            const value = await crypto.subtle.digest(algorithm, streamResult.value);
-            const unicode = getUnicode(value);
-            return btoa(unicode);
+    if (!body) {
+        return null;
+    }
+
+    // Drained to completion. A ReadableStream makes no guarantee that one
+    // read() returns the whole body, and this previously took exactly one:
+    // anything arriving in more than one chunk was hashed from its first chunk
+    // alone. The server hashes everything it received, so the two signing
+    // content strings differed and the request was rejected as a signature
+    // mismatch — size-dependent, and therefore invisible until a payload
+    // happened to cross a chunk boundary.
+    const reader = body.getReader();
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+
+    for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        }
+
+        if (value) {
+            chunks.push(value);
+            length += value.length;
         }
     }
 
-    return null;
+    // No bytes means no content-hash segment in the signing content at all,
+    // which is what the original returned for an empty body and what the
+    // verifier expects for a request without one.
+    if (length === 0) {
+        return null;
+    }
+
+    const content = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+        content.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    return btoa(getUnicode(await crypto.subtle.digest(algorithm, content)));
 }
 
 /**
