@@ -96,7 +96,12 @@ export default class HmacManager {
 
             return this.resultFactory.success(hmac);
         } catch (error: unknown) {
-            return this.resultFactory.failure();
+            // The cause travels with the result. sign() reports failure through
+            // isSuccess rather than throwing, so discarding the error here left
+            // a caller with no way to tell a missing scheme header from an
+            // unusable key — both surfaced as a server-side 401 and nothing
+            // local.
+            return this.resultFactory.failure(error);
         }
     }
 
