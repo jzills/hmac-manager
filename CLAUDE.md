@@ -281,7 +281,7 @@ git checkout -b release/v2.7.0
 
 **Concurrency**: the job shares `concurrency: { group: gh-pages }` with the `pages` job in `chart-release.yml`. Both do fetch/worktree/commit/push against the same branch, so without it they can interleave and one loses its commit.
 
-**Branch protection**: consider requiring the `Build` check on `main` and `develop` alongside the existing four.
+**Branch protection**: consider requiring the `Build` check on `main` and `develop` alongside the existing five.
 
 **Site generators**: `site/tools/gen-marks.py` writes `site/assets/hm-wordmark.svg`, `site/assets/hm-mark.svg` and the README's `assets/logo.svg`; `site/tools/gen-favicons.mjs` rasterizes the favicon set into `site/static/` through headless Chromium. Both are run **by hand** and their output committed — no build step invokes them, and CI installs neither toolchain. See `site/tools/README.md`.
 

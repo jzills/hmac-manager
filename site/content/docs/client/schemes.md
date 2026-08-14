@@ -55,9 +55,10 @@ const result = await manager.sign(request);
 
 {{% hm-note kind="warn" %}}
 If any header the scheme names is missing, signing fails — and it fails
-*quietly*: `sign` returns `isSuccess: false` rather than throwing. Adding a
-header after signing is just as wrong, since it is then not covered by the
-signature and the verifier rejects the request. Always check `isSuccess`.
+*quietly*: `sign` returns `isSuccess: false` rather than throwing, with the
+reason on `result.error`. Adding a header after signing is just as wrong, since
+it is then not covered by the signature and the verifier rejects the request.
+Always check `isSuccess`.
 {{% /hm-note %}}
 
 ## Order matters

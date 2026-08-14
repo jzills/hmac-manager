@@ -30,15 +30,24 @@ verifier — see [headers](../../concepts/headers/).
 create(policy: string, scheme?: string | null): HmacManager | null
 ```
 
-Returns a manager for that policy, or `null` when no policy of that name is
-registered. It does not throw.
+Returns a manager, or `null` when either name does not resolve — an unregistered
+policy, or a scheme that policy does not declare. It does not throw.
 
-{{% hm-note kind="warn" %}}
-Only the *policy* name is checked. Naming a scheme the policy does not declare
-returns a working manager that signs **without** that scheme — no `null`, no
-error. The signature then omits the header values the verifier expects to find,
-and every request is rejected for a reason that looks nothing like a typo in a
-scheme name. Check the spelling against the policy you registered.
+Passing no scheme is not a failure: it signs without one, which is what a policy
+with no schemes wants.
+
+```ts
+factory.create("MyPolicy");              // a manager, no scheme
+factory.create("MyPolicy", "UserScheme"); // a manager using that scheme
+factory.create("MyPolicy", "Typo");      // null
+factory.create("Nope");                  // null
+```
+
+{{% hm-note %}}
+A `null` for a scheme name you expected to work is the check doing its job. It
+used to return a working manager that signed **without** the scheme, which the
+verifier then rejected as a signature mismatch — a symptom that looks nothing
+like a misspelled scheme name.
 {{% /hm-note %}}
 
 ## HmacManager
@@ -48,7 +57,8 @@ sign(request: Request): Promise<HmacResult>
 ```
 
 Adds the HMAC headers to `request` in place and returns the result. Never
-throws — failures come back as `isSuccess: false`.
+throws — failures come back as `isSuccess: false`, with the cause on
+`result.error`.
 
 ## HmacPolicy
 
@@ -84,7 +94,24 @@ type HmacResult = {
   hmac: Hmac | null;
   isSuccess: boolean;
   dateGenerated: Date;
+  error?: unknown;
 };
+```
+
+`error` is present only on a failure and carries whatever was thrown — a missing
+scheme header, a private key that is not valid base64, `crypto.subtle` being
+unavailable outside a secure context.
+
+It is typed `unknown` rather than `Error` because a `catch` binding is: anything
+can be thrown in JavaScript. Narrow it before using it.
+
+```ts
+if (!result.isSuccess) {
+  const reason = result.error instanceof Error
+    ? result.error.message
+    : String(result.error);
+  throw new Error(`could not sign the request: ${reason}`);
+}
 ```
 
 ## Hmac

@@ -39,17 +39,18 @@ what you hand to `fetch`.
 
 ## Two things that will bite you
 
-`create` returns `null` when no policy of that name is registered — it does not
-throw. The `!` above is fine for a literal you just registered and wrong for
-anything dynamic.
+`create` returns `null` when either name does not resolve — an unregistered
+policy, or a scheme that policy does not declare. It does not throw. The `!`
+above is fine for a literal you just registered and wrong for anything dynamic.
 
 `sign` never throws either. It returns an `HmacResult` whose `isSuccess` is
-`false`, so a signing failure is silent unless you check:
+`false` and whose `error` carries the cause, so a signing failure is silent
+unless you check:
 
 ```ts
 const result = await factory.create("MyPolicy")!.sign(request);
 if (!result.isSuccess) {
-  throw new Error("could not sign the request");
+  throw new Error(`could not sign the request: ${result.error}`);
 }
 ```
 

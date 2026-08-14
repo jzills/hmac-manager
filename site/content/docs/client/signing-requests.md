@@ -40,21 +40,29 @@ type HmacResult = {
   hmac: Hmac | null;
   isSuccess: boolean;
   dateGenerated: Date;
+  error?: unknown;
 };
 ```
 
-`factory.create` returns `null` for an unregistered policy name. `sign`
-catches everything internally and reports failure through `isSuccess` — a
-missing scheme header, an unusable key, an insecure context. Ignoring the
-result means sending an unsigned request and getting a `401` you cannot
-explain.
+`factory.create` returns `null` when either name does not resolve — an
+unregistered policy, or a scheme that policy does not declare. `sign` catches
+everything internally and reports failure through `isSuccess`, with the cause on
+`error`: a missing scheme header, an unusable key, an insecure context.
+
+Ignoring the result means sending an unsigned request and getting a `401` you
+cannot explain, so check it:
 
 ```ts
 const result = await manager.sign(request);
 if (!result.isSuccess) {
-  // no exception was thrown; this is the only signal
+  // No exception was thrown; this is the only signal.
+  console.error("signing failed:", result.error);
+  return;
 }
 ```
+
+`error` is typed `unknown` rather than `Error`, because a `catch` binding is —
+narrow it before using it.
 
 On success, `result.hmac` carries the `policy`, `scheme`, `nonce`,
 `dateRequested`, `signature` and the `signingContent` that was hashed — the
@@ -78,16 +86,12 @@ await fetch(request);
 ```
 
 The request is cloned internally before the body is read, so signing does not
-consume it and the original stays usable.
+consume it and the original stays usable — `request.bodyUsed` is still `false`
+afterwards, and you hand the same object to `fetch`.
 
-{{% hm-note kind="warn" %}}
-The body is read as a **single chunk** from its stream. For the bodies most
-callers send — a JSON payload built with `JSON.stringify` — the whole body
-arrives in one chunk and this is invisible. A large or genuinely streamed body
-can arrive in several, and only the first would be hashed, producing a
-signature the server rejects. Buffer such a body into a string or an
-`ArrayBuffer` before constructing the `Request`.
-{{% /hm-note %}}
+The body's stream is drained to completion before hashing, so a body arriving in
+several chunks — a large payload, or one built from a `ReadableStream` — is
+covered in full. Size makes no difference to correctness.
 
 A request with no body has no content-hash segment at all, on either side.
 

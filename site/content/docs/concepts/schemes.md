@@ -33,8 +33,8 @@ order the scheme declares them.
 {{% hm-note kind="warn" %}}
 Every header a scheme names must already be on the request **before** you sign
 it. In .NET, signing a request that is missing one fails; in the TypeScript
-client, `sign` returns `isSuccess: false` rather than throwing, so a missing
-header is silent unless you check the result.
+client, `sign` returns `isSuccess: false` rather than throwing — with the cause
+on `result.error` — so a missing header is silent unless you check the result.
 {{% /hm-note %}}
 
 ## Headers become claims

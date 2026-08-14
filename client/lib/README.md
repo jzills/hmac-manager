@@ -37,13 +37,17 @@ if (!manager) throw new Error("no policy named MyPolicy");
 const request = new Request("https://api.example.com/orders");
 const result = await manager.sign(request);
 
-if (!result.isSuccess) throw new Error("could not sign the request");
+if (!result.isSuccess) throw new Error(`could not sign: ${result.error}`);
 
 const response = await fetch(request);
 ```
 
-`sign` adds the HMAC headers to the request in place. It never throws —
-failures are reported through `result.isSuccess`, so check it.
+`sign` adds the HMAC headers to the request in place. It never throws — failures
+come back as `result.isSuccess === false`, with the cause on `result.error`, so
+check it.
+
+`create` returns `null` when either name does not resolve: an unregistered
+policy, or a scheme that policy does not declare.
 
 ## Requirements
 
