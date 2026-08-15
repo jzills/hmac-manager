@@ -189,6 +189,28 @@ internal static partial class HmacLog
     public static partial void NonceCacheNotFound(ILogger logger, string policy, NonceCacheType cacheType);
 
     /// <summary>
+    /// Records a request for a scheme the named policy does not declare.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Debug for the same reason as <see cref="PolicyNotFound"/>: the scheme name is caller-supplied
+    /// and unbounded, so a Warning here would let a caller drive Warning volume at will.
+    /// </para>
+    /// <para>
+    /// This exists because the alternative was worse than a null manager. The scheme used to be
+    /// looked up without checking the result, so an unresolved name produced a working manager that
+    /// signed <em>without</em> the scheme — no scheme header, and none of its header values in the
+    /// signing content — which the verifier then rejected as a signature mismatch. A typo in a
+    /// scheme name and a genuinely wrong key were indistinguishable from the outside.
+    /// </para>
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 1202,
+        Level = LogLevel.Debug,
+        Message = "Policy \"{Policy}\" does not declare a scheme named \"{Scheme}\".")]
+    public static partial void SchemeNotFound(ILogger logger, string policy, string scheme);
+
+    /// <summary>
     /// Records that the library is watching configuration for policy changes.
     /// </summary>
     [LoggerMessage(
