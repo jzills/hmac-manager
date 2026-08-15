@@ -18,8 +18,11 @@ baseURL = "https://jzills.github.io/hmac-manager/"
 # the home page with this alone and every other page as "Page – this".
 title = "HmacManager"
 
+# label is a custom param, so it belongs under params — Hugo deprecated setting
+# it on the language itself in 0.112.0 and warns on every build otherwise.
 [languages.en]
-  label = "English"
+  [languages.en.params]
+    label = "English"
 
 # The site is its own Hugo module. There is no Go module anywhere else in this
 # repository, so Hextra is isolated by construction — it cannot reach the .NET
