@@ -1,0 +1,32 @@
+{{- /*
+  Overrides Hextra's navbar title.
+
+  The theme emits the logo as two <img> tags, one per light/dark mode. An
+  image cannot inherit currentColor, so the mark would have stayed one fixed
+  blue in both modes — and with the theme's own light/dark pair, the second
+  image is a second file to keep in step for no gain. Inlined instead, so the
+  mark takes its colour from the palette like everything else on the page.
+
+  The name is spelled out beside it, which kx's equivalent does not need to
+  do: its mark *is* its wordmark. This one is the compact H-in-a-frame, which
+  identifies the project only to someone who already knows it, so the navbar
+  carries the name in text.
+
+  hx:ltr:mr-auto is load-bearing — it is what pushes the menu to the right.
+
+  href is "#" on the home page itself: linking to the page's own URL is what
+  Install/.NET/Kubernetes in this same navbar don't do (they link to a
+  fragment), and a same-URL link makes the browser do a full navigation
+  rather than the smooth in-page scroll a logo click should do. Elsewhere it
+  goes home for real — there is no "top" to scroll to on another page.
+*/ -}}
+<a
+  class="hm-navbar-mark hx:flex hx:items-center hx:hover:opacity-75 hx:ltr:mr-auto hx:rtl:ml-auto"
+  href="{{ if .IsHome }}#{{ else }}{{ .Site.Home.RelPermalink }}{{ end }}"
+  aria-label="HmacManager"
+>
+  {{- with resources.Get "hm-mark.svg" }}
+    {{- .Content | safeHTML }}
+  {{- end }}
+  <span class="hm-navbar-mark__name">HmacManager</span>
+</a>

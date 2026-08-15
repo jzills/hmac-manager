@@ -1,0 +1,12 @@
+{{- /*
+  The HmacManager wordmark, inlined so it takes its colour from the palette.
+
+      {{< hm-wordmark >}}
+
+  Markdown cannot reach resources.Get, and an <img> cannot inherit
+  currentColor — which is why this is a shortcode rather than an image tag in
+  content/_index.md.
+*/ -}}
+{{- with resources.Get "hm-wordmark.svg" -}}
+  {{- .Content | safeHTML -}}
+{{- end -}}

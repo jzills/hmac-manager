@@ -1,18 +1,28 @@
-**.vscode
-**bin
-**obj
-**.DS_Store
-**out
+# Editor and OS noise.
+**/.vscode
+**/.DS_Store
 
-**node_modules
-**dist
+# .NET build output. Anchored to a path segment: written as "**bin" these
+# behave like "*bin" matched against a basename at any depth, so a directory
+# whose name merely ends in "bin", "obj", "out" or "dist" would be dropped from
+# a commit with nothing failing to say so. site/content/docs/ is full of pages
+# that could plausibly acquire such a name — "about" ends in "out".
+**/bin/
+**/obj/
+**/out/
 
+# Node and JavaScript build output.
+**/node_modules/
+**/dist/
 client/lib/dist
 
 TODO.txt
 HmacManager.sln
 
-**.tgz
+# Packed charts and npm tarballs. The copies published to the gh-pages branch
+# are committed there by .github/workflows/chart-release.yml; this only keeps
+# locally packed ones out of the source branches.
+**/*.tgz
 
 kubernetes/chart/charts/
 kubernetes/chart/*.lock
@@ -20,3 +30,15 @@ kubernetes/chart/*.lock
 memory/
 
 docs/superpowers/
+
+# Hugo build output and module cache. The site itself is committed; these are
+# generated. See site/.gitignore, which says the same thing for anyone working
+# inside that directory.
+site/public/
+site/resources/
+site/.hugo_build.lock
+site/_vendor/
+
+# Python bytecode from the site generators under site/tools/.
+__pycache__/
+*.py[cod]

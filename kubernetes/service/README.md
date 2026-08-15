@@ -1,8 +1,12 @@
 # zills/hmac-manager
 
-Containerized HMAC authentication service for Kubernetes clusters running [Istio](https://istio.io/).
+Containerized HMAC authentication service for Kubernetes clusters running
+[Istio](https://istio.io/).
 
-Runs as an [Envoy ext-authz](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_authz/v3/ext_authz.proto) HTTP server. The Istio waypoint proxy or ingress gateway calls it before forwarding any inbound request — a valid HMAC signature passes, anything else is rejected with `403 Forbidden`.
+Runs as an [Envoy ext-authz](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_authz/v3/ext_authz.proto)
+HTTP server. The Istio waypoint proxy or ingress gateway calls it before
+forwarding any inbound request — a valid HMAC signature passes, anything else
+is rejected with `403 Forbidden`.
 
 ```
 Client → Istio waypoint / ingress gateway
@@ -13,9 +17,13 @@ Client → Istio waypoint / ingress gateway
          403    → reject
 ```
 
+**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/kubernetes/)**
+
 ## Deploy with Helm
 
-The recommended way to run this image is via the [hmac-manager Helm chart](https://github.com/jzills/hmac-manager/tree/main/kubernetes/chart), which bundles Redis for replay protection and abstracts all configuration:
+The recommended way to run this image is via the
+[hmac-manager Helm chart](https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/),
+which bundles Redis for replay protection and abstracts all configuration:
 
 ```bash
 helm repo add zills https://jzills.github.io/hmac-manager
@@ -30,7 +38,10 @@ helm install hmac-manager zills/hmac-manager \
   --set "policies[0].privateKeySecret.key=my-policy-privateKey"
 ```
 
-A fresh install deploys the verifier and a bundled Redis but does not enforce any traffic until you enable an Istio enforcement point (`istio.ingressGateway.*` or `istio.waypoint.*`). See the [chart documentation](https://artifacthub.io/packages/helm/zills/hmac-manager) for the full values reference.
+A fresh install deploys the verifier and a bundled Redis but does not enforce
+any traffic until you enable an Istio enforcement point
+(`istio.ingressGateway.*` or `istio.waypoint.*`). See
+[enforcement](https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/).
 
 ## Tags
 
@@ -38,6 +49,13 @@ A fresh install deploys the verifier and a bundled Redis but does not enforce an
 |-----|-------------|
 | `latest` | Most recent release |
 | `X.Y.Z` | Specific release version |
+
+## Ports
+
+| Port | Purpose |
+|---|---|
+| `8080` | ext-authz check endpoint — the one the Kubernetes Service exposes |
+| `8081` | Signing helper, active only when `environment: Development`; never exposed by the Service |
 
 ## Environment variables
 
@@ -50,7 +68,8 @@ For advanced use cases or deployments without Helm.
 | `ASPNETCORE_URLS` | No | Listening URL (default: `http://+:8080`). |
 | `SignPort` | No | Port for the dev-only signing helper (default: `8081`). |
 
-Policies are loaded from a JSON config file mounted at `/etc/hmac-manager/config.json`:
+Policies are loaded from a JSON config file mounted at
+`/etc/hmac-manager/config.json`:
 
 ```json
 {
@@ -73,22 +92,33 @@ Policies are loaded from a JSON config file mounted at `/etc/hmac-manager/config
 }
 ```
 
-Private keys are injected separately as environment variables (`HmacManager__0__Keys__PrivateKey`, etc.) and must never be written to the config file.
+Private keys are injected separately as environment variables
+(`HmacManager__0__Keys__PrivateKey`, etc.) and must never be written to the
+config file.
 
-## Ports
-
-| Port | Description |
-|------|-------------|
-| `8080` | ext-authz verification endpoint (all environments) |
-| `8081` | dev-only signing helper (`Development` only, not exposed by the Kubernetes Service) |
+Under Helm, that file and those variables are maintained by the
+[policy operator](https://hub.docker.com/r/zills/hmac-manager-operator) from
+`HmacPolicy` custom resources — see
+[the HmacPolicy CRD](https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)
+and the full
+[chart values](https://jzills.github.io/hmac-manager/docs/reference/chart-values/).
 
 ## Replay protection
 
-Each nonce is recorded until it expires. By default the nonce cache is in-process — safe for a single replica, not shared across pods. For multi-replica deployments, provide `ConnectionStrings__Redis` and set `Nonce.CacheType` to `Distributed` in the policy config. The Helm chart handles this automatically via `redis.enabled=true`.
+Every signature carries a nonce and a timestamp, both covered by the signature.
+The verifier rejects a request outside the policy's window and rejects a nonce
+it has already seen. Redis is bundled by the chart so this works across
+replicas. See
+[nonce and replay](https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/).
 
-## Signing requests (client side)
+## Signing requests
 
-Use the [HmacManager NuGet package](https://www.nuget.org/packages/HmacManager) to sign outgoing requests from any .NET client.
+Any of these produce signatures this service accepts:
+
+- [HmacManager on NuGet](https://www.nuget.org/packages/HmacManager) — .NET clients
+- [hmac-manager on npm](https://www.npmjs.com/package/hmac-manager) — browser and Node
+- The `/sign` helper, in `Development` only — see
+  [the ext-authz service](https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/#development-signing-endpoint)
 
 ## Source
 

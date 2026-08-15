@@ -82,6 +82,12 @@ jobs:
     needs: publish
     permissions:
       contents: write
+    # Shared with pages.yml, which publishes the documentation site into the
+    # same branch. Both do fetch/worktree/commit/push against gh-pages, so
+    # without this they can interleave and one loses its commit.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
         with:
@@ -120,6 +126,12 @@ jobs:
       # Publish the package straight to the gh-pages branch rather than as a
       # GitHub Release asset: this repo has immutable releases enabled, which
       # rejects attaching assets to a release (chart-releaser fails on that).
+      #
+      # Only the chart repository's own files are written here. index.html and
+      # the rest of that branch are the documentation site, published by
+      # pages.yml from site/ — this job used to overwrite index.html with
+      # kubernetes/pages/index.html on every chart release, which would now
+      # replace the landing page with the old standalone chart index.
       - name: Publish chart and index to gh-pages
         run: |
           PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
@@ -127,7 +139,6 @@ jobs:
           git worktree add gh-pages origin/gh-pages
           cp .cr-release-packages/*.tgz gh-pages/
           cp artifacthub-repo.yml gh-pages/artifacthub-repo.yml
-          cp kubernetes/pages/index.html gh-pages/index.html
           cd gh-pages
           if [ -f index.yaml ]; then
             helm repo index . --url "$PAGES_URL" --merge index.yaml
