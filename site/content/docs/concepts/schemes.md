@@ -30,6 +30,13 @@ A request selects the scheme with the `Hmac-Scheme` header. The signer and the
 verifier must name the same one, and both fold the header values in, in the
 order the scheme declares them.
 
+Naming a scheme the policy does not declare is refused rather than ignored, on
+both the signing and the verifying side: the factory returns no manager, and an
+incoming request naming one fails authentication. Signing without the scheme
+would produce a signature the verifier cannot reproduce, so the failure would
+otherwise surface as a mismatch — which looks nothing like a misspelled name.
+A blank scheme is different: it means "not using one", and is fine.
+
 {{% hm-note kind="warn" %}}
 Every header a scheme names must already be on the request **before** you sign
 it. In .NET, signing a request that is missing one fails; in the TypeScript

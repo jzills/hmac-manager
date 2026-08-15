@@ -46,8 +46,10 @@ const response = await fetch(request);
 come back as `result.isSuccess === false`, with the cause on `result.error`, so
 check it.
 
-`create` returns `null` when either name does not resolve: an unregistered
-policy, or a scheme that policy does not declare.
+`create` returns `null` when a name was given and does not resolve: an
+unregistered policy, or a scheme that policy does not declare. A blank scheme
+(`null`, `undefined`, `""` or whitespace) means "no scheme" rather than a failed
+lookup.
 
 ## Requirements
 

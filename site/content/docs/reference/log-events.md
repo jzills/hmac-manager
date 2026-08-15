@@ -21,6 +21,7 @@ event**, so it is safe to alert on one.
 | 1105 | `Trace` | Signature mismatch detail |
 | 1200 | `Debug` | Policy not found |
 | 1201 | `Warning` | Nonce cache not registered |
+| 1202 | `Debug` | Scheme not declared by the policy |
 | 1210 | `Information` | Watching configuration for policy changes |
 | 1211 | `Information` | Policies reloaded |
 | 1212 | `Warning` | Policy reload failed, previous set retained |
@@ -50,6 +51,7 @@ Each failure mode has its own id, so the id alone says what went wrong:
 | 1104 | The two sides built different [signing content](../../concepts/signing-content/) |
 | 1101 | A scheme header was missing from the request |
 | 1310 / 1200 | The request named a policy this host does not have |
+| 1202 | The request named a scheme that policy does not declare — usually a typo |
 | 1300 | Not an HMAC request at all — no header, so authentication was skipped |
 
 For 1104, turn on `Trace` and compare event 1002 on the signer against 1105 on
@@ -57,9 +59,10 @@ the verifier. See
 [diagnosing a mismatch](../../dotnet/logging/#diagnosing-a-signature-mismatch).
 
 {{% hm-note %}}
-Caller-controlled rejections — 1300, 1310, 1200 — are `Debug`, not `Warning`.
-An unauthenticated caller can produce them at will, and an edge deployment must
-not be drivable to unbounded `Warning` volume by traffic anyone can send.
+Caller-controlled rejections — 1300, 1310, 1200, 1202 — are `Debug`, not
+`Warning`. An unauthenticated caller can produce them at will, and an edge
+deployment must not be drivable to unbounded `Warning` volume by traffic anyone
+can send.
 {{% /hm-note %}}
 
 ## Private keys

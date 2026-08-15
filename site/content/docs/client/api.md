@@ -30,18 +30,28 @@ verifier — see [headers](../../concepts/headers/).
 create(policy: string, scheme?: string | null): HmacManager | null
 ```
 
-Returns a manager, or `null` when either name does not resolve — an unregistered
-policy, or a scheme that policy does not declare. It does not throw.
+Returns a manager, or `null` when a name was given and does not resolve — an
+unregistered policy, or a scheme that policy does not declare. It does not throw.
 
-Passing no scheme is not a failure: it signs without one, which is what a policy
-with no schemes wants.
+**Blank means no scheme, not a scheme named blank.** `null`, `undefined`, `""`
+and whitespace are all "I am not using a scheme", so a value read from
+configuration or a form works whichever way absence reaches you. Only an
+all-blank string counts; a real name is not trimmed, so `" UserScheme "` is a
+different name from `"UserScheme"` and does not match.
 
 ```ts
-factory.create("MyPolicy");              // a manager, no scheme
-factory.create("MyPolicy", "UserScheme"); // a manager using that scheme
-factory.create("MyPolicy", "Typo");      // null
-factory.create("Nope");                  // null
+factory.create("MyPolicy");                // a manager, no scheme
+factory.create("MyPolicy", null);          // the same
+factory.create("MyPolicy", "");            // the same
+factory.create("MyPolicy", "   ");         // the same
+factory.create("MyPolicy", "UserScheme");  // a manager using that scheme
+factory.create("MyPolicy", "Typo");        // null
+factory.create("MyPolicy", " UserScheme ");// null — not trimmed
+factory.create("Nope");                    // null
 ```
+
+This matches the .NET factory, which decides the same question with
+`IsNullOrWhiteSpace`, so the two agree on every row above.
 
 {{% hm-note %}}
 A `null` for a scheme name you expected to work is the check doing its job. It

@@ -44,8 +44,10 @@ type HmacResult = {
 };
 ```
 
-`factory.create` returns `null` when either name does not resolve — an
-unregistered policy, or a scheme that policy does not declare. `sign` catches
+`factory.create` returns `null` when a name was given and does not resolve — an
+unregistered policy, or a scheme that policy does not declare. Leaving the
+scheme out is not a failure, and neither is passing a blank one: `null`,
+`undefined`, `""` and whitespace all mean "no scheme". `sign` catches
 everything internally and reports failure through `isSuccess`, with the cause on
 `error`: a missing scheme header, an unusable key, an insecure context.
 

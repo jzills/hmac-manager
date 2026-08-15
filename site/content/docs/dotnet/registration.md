@@ -77,14 +77,29 @@ public class OrderClient(IHmacManagerFactory factory)
 }
 ```
 
-`Create` returns `IHmacManager?` and gives back `null` when no policy of that
-name is registered — it does not throw, so an unregistered name is a
-null-reference at the call site unless you handle it. A second argument selects
-a scheme:
+`Create` returns `IHmacManager?` and gives back `null` when a name was given and
+does not resolve — an unregistered policy, or a scheme that policy does not
+declare. It does not throw, so an unhandled `null` is a null-reference at the
+call site. A second argument selects a scheme:
 
 ```csharp
 var manager = factory.Create("MyPolicy", "UserContext");
 ```
+
+A blank scheme is not a failed lookup. `null`, `""` and whitespace all mean "no
+scheme" — `IsNullOrWhiteSpace` decides it — so a value read from configuration
+behaves the same however absence reaches you. A real name is not trimmed, so
+`" UserContext "` is a different name and does not match.
+
+```csharp
+factory.Create("MyPolicy");                  // a manager, no scheme
+factory.Create("MyPolicy", null);            // the same
+factory.Create("MyPolicy", "");              // the same
+factory.Create("MyPolicy", "UserContext");   // a manager using that scheme
+factory.Create("MyPolicy", "Typo");          // null, and logs event 1202
+```
+
+The [TypeScript client](../../client/api/) answers each of these the same way.
 
 Verifying by hand is the mirror image:
 

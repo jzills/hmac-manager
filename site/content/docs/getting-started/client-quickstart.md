@@ -39,9 +39,14 @@ what you hand to `fetch`.
 
 ## Two things that will bite you
 
-`create` returns `null` when either name does not resolve — an unregistered
-policy, or a scheme that policy does not declare. It does not throw. The `!`
-above is fine for a literal you just registered and wrong for anything dynamic.
+`create` returns `null` when a name was given and does not resolve — an
+unregistered policy, or a scheme that policy does not declare. It does not
+throw. The `!` above is fine for a literal you just registered and wrong for
+anything dynamic.
+
+A blank scheme is not a failed lookup: `null`, `undefined`, `""` and whitespace
+all mean "no scheme", so passing one straight from configuration behaves the
+same however absence reaches you.
 
 `sign` never throws either. It returns an `HmacResult` whose `isSuccess` is
 `false` and whose `error` carries the cause, so a signing failure is silent
