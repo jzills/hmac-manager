@@ -14,7 +14,7 @@ toc: false
   <ul class="hm-hero__links">
     <li><a href="https://www.nuget.org/packages/HmacManager/">NuGet</a></li>
     <li><a href="https://www.npmjs.com/package/hmac-manager">npm</a></li>
-    <li><a href="https://artifacthub.io/packages/search?repo=zills">Artifact Hub</a></li>
+    <li><a href="https://artifacthub.io/packages/helm/zills/hmac-manager">Artifact Hub</a></li>
     <li><a href="https://hub.docker.com/r/zills/hmac-manager">Docker Hub</a></li>
     <li><a href="https://github.com/jzills/hmac-manager">GitHub</a></li>
   </ul>

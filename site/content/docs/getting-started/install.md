@@ -10,7 +10,7 @@ alternatives to one another so much as three places the same check can happen.
 | Artifact | Runs | Install |
 | --- | --- | --- |
 | [`HmacManager`](https://www.nuget.org/packages/HmacManager/) | In your ASP.NET Core process | `dotnet add package HmacManager` |
-| [Helm chart](https://artifacthub.io/packages/search?repo=zills) | In your cluster, as an Istio ext-authz service | `helm install hmac-manager zills/hmac-manager` |
+| [Helm chart](https://artifacthub.io/packages/helm/zills/hmac-manager) | In your cluster, as an Istio ext-authz service | `helm install hmac-manager zills/hmac-manager` |
 | [`hmac-manager`](https://www.npmjs.com/package/hmac-manager) | In a browser or Node client, signing only | `npm install hmac-manager` |
 
 ## The .NET library
