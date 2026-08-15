@@ -1,0 +1,5 @@
+# The Node samples depend on client/lib through a file: link, so there is
+# nothing external for a lockfile to pin — its only content is the linked
+# library's version number, which would churn on every npm release.
+# Install these with `npm install`, not `npm ci`.
+package-lock.json

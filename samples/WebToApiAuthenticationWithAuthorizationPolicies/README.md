@@ -1,36 +1,54 @@
+# Authorization policies
 
-# WebToApiAuthenticationWithAuthorizationPolicies
+[Simple authentication](../WebToApiAuthentication/) with the requirement
+expressed as an ASP.NET Core **authorization** policy instead of the
+`[HmacAuthenticate]` attribute — so it composes with everything else
+authorization can already do.
 
-This demo is an example of using [HmacManager](../../README.md) for authentication between two .NET applications. One, the [Web](Web) is signing requests to interact with protected [Api](Api) endpoints.
+```bash
+dotnet run --project Api    # http://localhost:5120
+dotnet run --project Web    # http://localhost:5121  (second terminal)
+```
 
-## Api
+Then open <http://localhost:5121>. You get two results:
 
-See this [example](../WebToApiAuthentication/Api/README.md). Additionally, when calling `AddAuthorization`, the `AuthorizationPolicyBuilder` extension method `RequireHmacAuthentication` can be used to register policies and schemes:
+```json
+{ "get": { "status": 200, ... }, "delete": { "status": 403, "body": "" } }
+```
 
-    builder.Services.AddAuthorization(options => 
-    {
-        // This is one way to register
-        // options.AddPolicy("Require_Hmac_PolicyScheme_2", policy => 
-        //     policy.AddRequirements(new HmacAuthenticateAttribute 
-        //     { 
-        //         Policy = "HmacPolicy_2", 
-        //         Scheme = "HmacScheme_2"
-        //     }));
+That 403 is the sample. The Api holds two HMAC policies, `MyPolicy` and
+`AdminPolicy`; the Web app only has `MyPolicy`'s key. Its request to the
+admin-only endpoint is signed, verified and **authenticated** — and then refused,
+because it is not the caller that endpoint is for. A forged or unsigned request
+gets 401 instead; the two failures are distinct on purpose.
 
-        // This is another
-        // options.AddPolicy("Require_Hmac_PolicyScheme_2", policy =>
-        // {
-        //     policy.RequireHmacPolicy(`"HmacPolicy_2");
-        //     policy.RequireHmacScheme("HmacScheme_2");
-        // });
+## What to look at
 
-        // This is the preferred approach due to it's simplicity
-        options.AddPolicy("Require_Hmac_PolicyScheme_2", policy =>
-        {
-            policy.RequireHmacAuthentication("HmacPolicy_2", "HmacScheme_2");
-        });
-    });
+| File | Why |
+|---|---|
+| [`Api/Program.cs`](Api/Program.cs) | Two HMAC policies, then `AddAuthorization` with `RequireHmacAuthentication` |
+| [`Api/Controllers/WeatherForecastController.cs`](Api/Controllers/WeatherForecastController.cs) | `[Authorize(Policy = ...)]` per action — no `[HmacAuthenticate]` anywhere |
 
-## Web
+```csharp
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy =>
+        policy.RequireHmacAuthentication("AdminPolicy", "RequireAccountAndEmail"));
+});
+```
 
-See this [example](../WebToApiAuthentication/Web/README.md).
+`RequireHmacAuthentication` is shorthand for requiring the policy and scheme
+claims the authentication handler adds. `RequireHmacPolicy` and
+`RequireHmacScheme` are available separately, and both accept several names when
+an endpoint should admit more than one caller.
+
+Because these are ordinary authorization policies, they combine with the rest of
+the framework — `RequireRole`, a custom requirement, or a default policy applied
+with `RequireAuthorization()`.
+
+## Notes
+
+The keys are literals committed to this repository so the sample runs with no
+setup. They are not an example of key handling.
+
+**📖 [Authorization](https://jzills.github.io/hmac-manager/docs/dotnet/authorization/)**

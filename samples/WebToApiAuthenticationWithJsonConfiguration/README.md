@@ -1,28 +1,53 @@
+# Json configuration
 
-# WebToApiAuthenticationWithJsonConfiguration
+[Simple authentication](../WebToApiAuthentication/) with the policy declared in
+`appsettings.json` instead of code. Diff the two `Program.cs` files and the
+configuration binding is the whole difference.
 
-This demo is an example of using [HmacManager](../../README.md) for authentication between two .NET applications. One, the [Web](Web) is signing requests to interact with protected [Api](Api) endpoints.
+```bash
+dotnet run --project Api    # http://localhost:5110
+dotnet run --project Web    # http://localhost:5111  (second terminal)
+```
 
-## Api
+Then open <http://localhost:5111>.
 
-The call to `AddHmac` uses the overload accepting an `IConfigurationSection`. The name of the section, i.e. "Authentication" can be any name but the json structure must match.
+## What to look at
 
-    var options = builder.Configuration.GetSection("Authentication");
-    builder.Services
-        .AddAuthentication()
-        .AddHmac(options);
+| File | Why |
+|---|---|
+| [`Api/appsettings.json`](Api/appsettings.json) | The policy, including a `ClaimType` per scheme header |
+| [`Api/Program.cs`](Api/Program.cs) | `AddHmac(section)` — three lines, no policy in code |
+| [`Web/appsettings.json`](Web/appsettings.json) | The signing side of the same policy |
 
-See [WebToApiAuthentication/Api](../WebToApiAuthentication/Api/README.md) for more details.
+The section name is arbitrary. What matters is that it binds to an **array** of
+policies:
 
-## Web
+```csharp
+builder.Services
+    .AddAuthentication()
+    .AddHmac(builder.Configuration.GetSection("HmacPolicies"));
+```
 
-The call to `AddHmacManager` uses the overload accepting an `IConfigurationSection`. Again, the name of the section can be anything.
+## Claims without event handlers
 
-    // The important piece is that the schema matches an array of policies.
-    var section = builder.Configuration.GetSection("HmacManager");
+The baseline sample builds its claims in `OnAuthenticationSuccessAsync`. Here
+each header carries a `ClaimType` instead, and the authentication handler turns
+the header values into claims directly — so this sample registers no
+`HmacEvents` at all and the `POST` response still comes back with the account
+and email on it.
 
-    // Pass the configuration section instead of using the 
-    // builder overload.
-    builder.Services.AddHmacManager(section);
+Only the verifying end needs them. `Web/appsettings.json` lists the same headers
+with no `ClaimType`, because signing only needs to know which headers are
+covered.
 
-See [WebToApiAuthentication/Web](../WebToApiAuthentication/Web/README.md) for more details.
+## Notes
+
+Invalid values — a `PublicKey` that is not a GUID, an unknown algorithm — fail
+when the policy is built at startup, not on the first request.
+
+`PrivateKey` is a shared secret and `appsettings.json` is committed here so the
+sample runs with no setup. In a real application let configuration composition
+supply it from user secrets, an environment variable or a secret store.
+
+**📖 [Configuration binding](https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/)**
+· [Full schema](https://jzills.github.io/hmac-manager/docs/reference/configuration-schema/)
