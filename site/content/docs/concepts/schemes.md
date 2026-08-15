@@ -78,7 +78,9 @@ concern — see [authorization](../../dotnet/authorization/).
 
 In the [TypeScript client](../../client/schemes/), a scheme is
 `{ name, headers: string[] }` — a flat list of header names, with no claim
-mapping, because the client only signs.
+mapping. It signs and verifies with them; on a successful verification the
+covered values come back as `result.headerValues`, keyed by header name, and
+turning those into whatever your framework calls a principal is left to you.
 
 In [Kubernetes](../../kubernetes/hmacpolicy-crd/), schemes are declared on the
 `HmacPolicy` resource and do carry `claimType`, since the verifier maps them.

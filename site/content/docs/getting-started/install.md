@@ -11,7 +11,7 @@ alternatives to one another so much as three places the same check can happen.
 | --- | --- | --- |
 | [`HmacManager`](https://www.nuget.org/packages/HmacManager/) | In your ASP.NET Core process | `dotnet add package HmacManager` |
 | [Helm chart](https://artifacthub.io/packages/helm/zills/hmac-manager) | In your cluster, as an Istio ext-authz service | `helm install hmac-manager zills/hmac-manager` |
-| [`hmac-manager`](https://www.npmjs.com/package/hmac-manager) | In a browser or Node client, signing only | `npm install hmac-manager` |
+| [`hmac-manager`](https://www.npmjs.com/package/hmac-manager) | In a browser or Node client signing, or a Node service verifying | `npm install hmac-manager` |
 
 ## The .NET library
 
@@ -46,8 +46,8 @@ for the policy controller. Continue with the
 npm install hmac-manager
 ```
 
-Signs requests; it does not verify them. Ships ESM, CJS and type declarations.
-Continue with the [client quickstart](../client-quickstart/).
+Signs requests, and verifies them server-side. Ships ESM, CJS and type
+declarations. Continue with the [client quickstart](../client-quickstart/).
 
 {{% hm-note kind="warn" %}}
 The .NET package and the npm package share a version line but not a version

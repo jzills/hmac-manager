@@ -1,0 +1,17 @@
+// The CI typecheck gate. Separate from tsconfig.json because that one is also what
+// vite-plugin-dts reads when it emits declarations, and widening its `include` to
+// cover the tests would emit a .d.ts for every test file into dist/.
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true,
+		// Only the tests use Node APIs — src is deliberately runtime-agnostic, and the
+		// build config leaves these out so `node:*` never reaches the published
+		// declarations and a browser-only consumer needs no @types/node of their own.
+		"types": ["node"]
+	},
+	"include": [
+		"src/**/*",
+		"test/**/*"
+	]
+}

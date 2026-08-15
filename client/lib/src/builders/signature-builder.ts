@@ -1,7 +1,7 @@
 import Algorithm from "../components/algorithm";
 import HashAlgorithm from "../hash-algorithm";
 import { HmacAuthenticationDefaults } from "../hmac-authentication-defaults";
-import { getByteArray, getKeyBytes, getSignature, getUnicode } from "../utilities/hmac-utilities";
+import { getKeyBytes, getSignature, getUnicode, getUtf8ByteArray } from "../utilities/hmac-utilities";
 
 /**
  * Class responsible for building a signature using HMAC.
@@ -45,7 +45,10 @@ export default class SignatureBuilder {
     build = async () => {
         const signatureBytes = await getSignature(
             await getKeyBytes(this.privateKey, this.algorithm),
-            getByteArray(this.signingContent)
+            // UTF-8, matching Encoding.UTF8.GetBytes on the .NET side. The two agree on
+            // ASCII — which every part of the signing content is, except the values a
+            // scheme contributes — and disagree on anything above it.
+            getUtf8ByteArray(this.signingContent)
         );
 
         const unicode = getUnicode(signatureBytes);

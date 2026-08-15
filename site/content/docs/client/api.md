@@ -1,7 +1,7 @@
 ---
 title: API
 description: The full exported surface of the hmac-manager package.
-weight: 4
+weight: 5
 ---
 
 ```ts
@@ -9,7 +9,11 @@ import {
   HmacManagerFactory,
   HmacManager,
   HashAlgorithm,
-  HmacAuthenticationDefaults
+  HmacAuthenticationDefaults,
+  MemoryNonceStore,
+  MissingHeaderError,
+  BadHeaderFormatError,
+  fromNodeRequest
 } from "hmac-manager";
 ```
 
@@ -18,13 +22,18 @@ import {
 ```ts
 new HmacManagerFactory(
   policies: HmacPolicy[],
-  isConsolidatedHeadersEnabled?: boolean   // default false
+  isConsolidatedHeadersEnabled?: boolean,  // default false
+  nonceStore?: NonceStore                  // default new MemoryNonceStore()
 )
 ```
 
 Holds the policy set. `isConsolidatedHeadersEnabled` collapses the four
-`Hmac-*` headers into a single `Hmac-Options` header and must match the
-verifier — see [headers](../../concepts/headers/).
+`Hmac-*` headers into a single `Hmac-Options` header and must match the other
+end — see [headers](../../concepts/headers/).
+
+`nonceStore` is used only when verifying. The default is per-process; supply a
+shared one for any multi-replica deployment — see
+[replay protection](../verifying-requests/#replay-protection).
 
 ```ts
 create(policy: string, scheme?: string | null): HmacManager | null
@@ -60,6 +69,15 @@ verifier then rejected as a signature mismatch — a symptom that looks nothing
 like a misspelled scheme name.
 {{% /hm-note %}}
 
+```ts
+verify(request: Request): Promise<HmacVerificationResult>
+```
+
+Reads the policy and scheme the request names, resolves the manager, and
+verifies against it. The entry point a server wants, since a verifier does not
+know which policy a caller used until it reads the request. Never throws; an
+unregistered policy or scheme comes back as `reason: "policy-not-found"`.
+
 ## HmacManager
 
 ```ts
@@ -69,6 +87,19 @@ sign(request: Request): Promise<HmacResult>
 Adds the HMAC headers to `request` in place and returns the result. Never
 throws — failures come back as `isSuccess: false`, with the cause on
 `result.error`.
+
+```ts
+verify(request: Request): Promise<HmacVerificationResult>
+```
+
+Verifies against this manager's policy and scheme specifically. The request is
+not modified, and its body stays readable afterwards — it is hashed through a
+clone. A request naming a different policy or scheme is rejected rather than
+verified against this one.
+
+Prefer `HmacManagerFactory.verify` unless the policy is already fixed: a manager
+constructed directly gets a nonce store of its own, and one that only ever sees
+its own requests detects no replays.
 
 ## HmacPolicy
 
@@ -80,9 +111,14 @@ type HmacPolicy = {
   contentHashAlgorithm: HashAlgorithm;
   signatureHashAlgorithm: HashAlgorithm;
   schemes: HmacScheme[];
+  maxAgeInSeconds?: number;           // default 30, verification only
   signingContentAccessor?: SigningContentAccessor;
 };
 ```
+
+`maxAgeInSeconds` is the window a signature stays valid for when verifying;
+signing ignores it. It matches `Nonce.MaxAgeInSeconds` on the .NET side. The two
+ends do not have to agree, but the shorter of them decides.
 
 `signingContentAccessor` replaces the default signing string, and matches
 [`UseSigningContentBuilder`](../../dotnet/custom-signing-content/) on the .NET
@@ -123,6 +159,76 @@ if (!result.isSuccess) {
   throw new Error(`could not sign the request: ${reason}`);
 }
 ```
+
+## HmacVerificationResult
+
+```ts
+type HmacVerificationResult = {
+  isSuccess: boolean;
+  hmac: Hmac | null;
+  dateGenerated: Date;
+  reason?: HmacVerificationFailureReason;
+  error?: unknown;
+  headerValues?: Record<string, string>;
+};
+
+type HmacVerificationFailureReason =
+  | "headers-missing"
+  | "headers-malformed"
+  | "policy-not-found"
+  | "expired"
+  | "replayed"
+  | "signature-mismatch"
+  | "verification-error";
+```
+
+A separate type from `HmacResult`, because the two carry different things: a
+signing result's `hmac` is what was produced, a verification result's is what
+the verifier recomputed and found to match. `hmac` is always `null` on failure —
+the caller's unverified claims are not something to hand onward.
+
+`reason` says which check rejected the request; see
+[why it failed](../verifying-requests/#why-it-failed). `error` is present only
+where a check threw. `headerValues` carries the scheme header values the
+signature covered, by name, and is present only on success.
+
+## NonceStore
+
+```ts
+interface NonceStore {
+  has(nonce: string): Promise<boolean>;
+  set(nonce: string, dateRequested: Date): Promise<void>;
+}
+```
+
+Where used nonces are recorded. `MemoryNonceStore` implements it in-process:
+
+```ts
+new MemoryNonceStore(maxAgeInSeconds?: number)   // default 30
+```
+
+See [replay protection](../verifying-requests/#replay-protection) for a Redis
+implementation and why a multi-replica deployment needs one.
+
+## fromNodeRequest
+
+```ts
+fromNodeRequest(
+  request: NodeRequestLike,
+  options?: {
+    body?: Uint8Array | string;
+    baseUrl?: string;
+    trustProxy?: boolean;   // default false
+  }
+): Request
+```
+
+Builds a Fetch `Request` from a Node `IncomingMessage`, for Express, Koa,
+Fastify or raw `node:http`. Runtimes with a native `Request` do not need it.
+
+Pass `body` for any request that has one — the content hash is over the raw
+bytes, and a re-serialised parsed body does not reproduce them. See
+[Node, Express and friends](../verifying-requests/#node-express-and-friends).
 
 ## Hmac
 

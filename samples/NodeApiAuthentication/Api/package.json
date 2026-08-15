@@ -1,0 +1,12 @@
+{
+    "name": "node-api-authentication-api",
+    "private": true,
+    "type": "module",
+    "description": "A Node API that verifies HMAC-signed requests with the hmac-manager package.",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "hmac-manager": "file:../../../client/lib"
+    }
+}

@@ -76,16 +76,18 @@ jobs:
         working-directory: ./client/lib
         run: npm ci
 
+      # The actual type gate, and the only step here that is one. vite-plugin-dts
+      # prints tsc's errors during the build below but the build still exits 0, and
+      # vitest transpiles through esbuild without checking types at all — so before
+      # this step existed a type error passed both of them and reached develop.
+      - name: Typecheck
+        working-directory: ./client/lib
+        run: npm run typecheck
+
       # Not redundant with the tests below. vitest only loads the modules its
       # tests import, so nothing exercises src/index.ts — the package's entry
       # point, and the thing npm-release.yml publishes. A broken import there
       # fails this step and passes the tests.
-      #
-      # It is not a typecheck, despite running vite-plugin-dts: the plugin
-      # prints tsc's errors but the build still exits 0, so a type error passes
-      # both this and vitest. `tsc --noEmit` cannot be added as a gate until
-      # client/lib/tsconfig.json is dealt with — it currently fails on its own
-      # deprecated moduleResolution before reaching any source.
       - name: Build
         working-directory: ./client/lib
         run: npm run build

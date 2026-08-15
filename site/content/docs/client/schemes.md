@@ -1,7 +1,7 @@
 ---
 title: Schemes
-description: Folding header values into the signature from the client side.
-weight: 3
+description: Folding header values into the signature, on both sides.
+weight: 4
 ---
 
 A [scheme](../../concepts/schemes/) names headers whose values become part of
@@ -14,8 +14,10 @@ type HmacScheme = {
 };
 ```
 
-There is no `claimType` here — claim mapping is the verifier's job, and this
-package only signs.
+There is no `claimType` here. When this package verifies, it hands the covered
+values back on the result and stops there — see
+[below](#verifying-with-a-scheme). Mapping them onto a principal is the .NET
+handler's job, and it needs a name to map onto.
 
 ```ts
 const factory = new HmacManagerFactory([{
@@ -68,6 +70,27 @@ declares its headers, not the order they appear on the request. Both sides must
 declare them in the same order — `["X-UserId", "X-Email"]` and
 `["X-Email", "X-UserId"]` are different schemes as far as the signature is
 concerned, even though they name the same headers.
+
+## Verifying with a scheme
+
+Nothing extra to configure — the scheme is on the policy, and the request names
+which one it used. On success the covered values come back by header name:
+
+```ts
+const result = await verifier.verify(request);
+
+if (result.isSuccess) {
+  const userId = result.headerValues!["X-UserId"];
+}
+```
+
+These are the only header values worth trusting on the request. They are inside
+the signature, so altering one in transit invalidates it; every other header
+travelled unprotected.
+
+A request missing a header its scheme names fails with `headers-missing` — the
+signature covers a value that is not there, so there is nothing to compare. See
+[verifying requests](../verifying-requests/).
 
 ## Server side
 

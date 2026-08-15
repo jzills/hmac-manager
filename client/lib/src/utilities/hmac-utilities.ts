@@ -65,9 +65,36 @@ export const computeContentHash = async (body: ReadableStream<Uint8Array> | null
  * Converts a string into a Uint8Array of byte values.
  * @param content - The string to convert.
  * @returns Uint8Array of byte values from the string.
+ *
+ * The buffer type is pinned to `ArrayBuffer` rather than left to the default. A bare
+ * `Uint8Array` annotation means `Uint8Array<ArrayBufferLike>`, which includes
+ * `SharedArrayBuffer` and so does not satisfy `BufferSource` — every `crypto.subtle`
+ * call taking this value fails to typecheck. `Uint8Array.from` cannot return a shared
+ * buffer, so narrowing here is a statement of fact, not an assertion.
  */
-export const getByteArray = (content: string): Uint8Array =>
+export const getByteArray = (content: string): Uint8Array<ArrayBuffer> =>
     Uint8Array.from(content, element => element.charCodeAt(0));
+
+/**
+ * Encodes a string as UTF-8 bytes.
+ *
+ * Distinct from {@link getByteArray}, which takes the low byte of each code unit. The
+ * two agree on ASCII and diverge on everything else, and which one is correct depends
+ * entirely on what the string represents:
+ *
+ * - The signing content is text, and .NET hashes it with `Encoding.UTF8.GetBytes`. It
+ *   must go through here, or a signing string containing any non-ASCII character — a
+ *   scheme header value carrying a name, most realistically — produces a different
+ *   signature in each implementation, and neither can verify the other's requests.
+ * - The private key is base64 that `atob` has already turned into one character per
+ *   byte. Those characters run to U+00FF, so UTF-8 would re-encode half of them into
+ *   two bytes and change the key. That path keeps using {@link getByteArray}.
+ *
+ * @param content - The string to encode.
+ * @returns The UTF-8 bytes.
+ */
+export const getUtf8ByteArray = (content: string): Uint8Array<ArrayBuffer> =>
+    new TextEncoder().encode(content);
 
 /**
  * Converts a base64 private key string to a CryptoKey object for signing.
@@ -91,3 +118,34 @@ export const getKeyBytes = async (privateKey: string, algorithm: Algorithm) =>
  */
 export const getSignature = async (keyBytes: CryptoKey, signingContentBytes: BufferSource) =>
     crypto.subtle.sign("HMAC", keyBytes, signingContentBytes);
+
+/**
+ * Compares two strings in time that does not depend on where they first differ.
+ *
+ * `===` returns as soon as it finds a mismatched character, so how long it takes leaks
+ * how many leading characters were right. Against a verifier an attacker can call
+ * repeatedly, that turns forging a signature from guessing the whole value at once into
+ * guessing it one character at a time.
+ *
+ * The length check up front does leak the length, which is unavoidable without hashing
+ * both sides first and is not worth defending: the signature length is fixed by the
+ * algorithm and already public.
+ *
+ * @param left - The first string.
+ * @param right - The second string.
+ * @returns Whether the two are equal.
+ */
+export const timingSafeEqual = (left: string, right: string): boolean => {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    // Accumulated rather than short-circuited: every character is compared whatever the
+    // earlier ones did, so the loop runs the same number of times either way.
+    let difference = 0;
+    for (let index = 0; index < left.length; index++) {
+        difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+    }
+
+    return difference === 0;
+};

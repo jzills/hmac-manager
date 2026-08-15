@@ -24,6 +24,18 @@ type HmacPolicy = {
     /** The schemes associated with this HMAC policy. */
     schemes: HmacScheme[];
 
+    /**
+     * How long a signature made under this policy stays valid, in seconds.
+     *
+     * Used when verifying: a request whose `Hmac-DateRequested` is older than this, or
+     * dated in the future at all, is rejected. Signing ignores it.
+     *
+     * Defaults to 30, matching `Nonce.MaxAgeInSeconds` on the .NET side — the two ends
+     * do not have to agree, but the shorter of them is what decides, so a verifier
+     * configured tighter than its signers rejects requests that were never late.
+     */
+    maxAgeInSeconds?: number;
+
     signingContentAccessor?: SigningContentAccessor;
 };
 

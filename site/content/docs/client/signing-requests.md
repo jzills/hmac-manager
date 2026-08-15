@@ -118,3 +118,6 @@ negotiation, so a disagreement shows up as a rejected signature rather than as
 a configuration error. See
 [signing content](../../concepts/signing-content/) for the exact string both
 ends build.
+
+The verifying side can be this same package: see
+[verifying requests](../verifying-requests/).

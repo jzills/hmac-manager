@@ -1,0 +1,12 @@
+{
+    "name": "node-api-authentication-node-client",
+    "private": true,
+    "type": "module",
+    "description": "Signs requests to the Node API with the hmac-manager package.",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "hmac-manager": "file:../../../client/lib"
+    }
+}
