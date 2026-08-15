@@ -92,13 +92,20 @@ body {
 
 .hm-hero__links a {
   display: inline-block;
-  border: 1px solid var(--hm-border);
+  /* em, not px: the ring scales with the chip's own font-size, so it reads as
+     the same weight of outline at any zoom rather than thinning to a hairline. */
+  border: 0.2em solid var(--hm-border);
   border-radius: 999px;
   background-color: var(--hm-surface);
   color: var(--hm-muted);
   padding: 0.25rem 0.75rem;
   font-size: 0.82rem;
   text-decoration: none;
+  /* Lowercased here rather than in the markup: NuGet, GitHub and Artifact Hub
+     are spelled that way by the people who own them, and that spelling is what
+     belongs in the document, in the accessibility tree and on the clipboard.
+     The flattening is presentation, so it lives in the presentation layer. */
+  text-transform: lowercase;
   transition: color 0.12s ease, border-color 0.12s ease;
 }
 
