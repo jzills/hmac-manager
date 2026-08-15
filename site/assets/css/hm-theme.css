@@ -1,0 +1,50 @@
+/* The HmacManager palette.
+ *
+ * Two modes, which is the whole story: this project has no theme registry to
+ * generate palettes from, so there is nothing here for a tool to write and
+ * this file is maintained by hand. Everything in custom.css reads these
+ * properties and hardcodes no colour of its own.
+ *
+ * The dark values are the ones kubernetes/pages/index.html has been serving
+ * as the Helm repository's landing page — the project's de-facto palette,
+ * which is GitHub's dark scheme. The light values are GitHub's light scheme,
+ * so the two modes are the same palette at two lightnesses rather than two
+ * unrelated designs.
+ *
+ * --primary-hue/-saturation/-lightness are Hextra's, not ours. The theme
+ * derives its entire accent ramp — links, buttons, focus rings, the active
+ * sidebar item — from those three, so setting them from --hm-accent is what
+ * makes the theme's own chrome follow this palette instead of its stock
+ * indigo. They are the accent converted to HSL; the hue is 212deg in both
+ * modes, which is why the two do not read as different brands.
+ */
+
+:root {
+  --hm-background: #ffffff;
+  --hm-surface: #f6f8fa;
+  --hm-border: #d0d7de;
+  --hm-body: #24292f;
+  --hm-heading: #1f2328;
+  --hm-muted: #57606a;
+  --hm-accent: #0969da;
+  --hm-warn: #9a6700;
+
+  --primary-hue: 212deg;
+  --primary-saturation: 92.1%;
+  --primary-lightness: 44.5%;
+}
+
+.dark {
+  --hm-background: #0d1117;
+  --hm-surface: #161b22;
+  --hm-border: #21262d;
+  --hm-body: #c9d1d9;
+  --hm-heading: #f0f6fc;
+  --hm-muted: #8b949e;
+  --hm-accent: #58a6ff;
+  --hm-warn: #d29922;
+
+  --primary-hue: 212deg;
+  --primary-saturation: 100%;
+  --primary-lightness: 67.3%;
+}

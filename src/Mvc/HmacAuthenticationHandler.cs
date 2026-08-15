@@ -55,6 +55,19 @@ internal class HmacAuthenticationHandler : AuthenticationHandler<HmacAuthenticat
 
         var policy = hmacAuthenticationContext.Policy!;
 
+        // A request can name a policy that exists and a scheme that policy does not declare, in
+        // which case the factory has no manager to give and GetResultAsync below would dereference
+        // null. Fail the request instead: nothing can be verified without a manager, and the caller
+        // supplied the name, so this is a rejected request rather than a server fault.
+        //
+        // Not logged here, and deliberately not at Warning: the scheme name comes off a request
+        // header, so an edge deployment must not be drivable to unbounded Warning volume by it. The
+        // factory already recorded which scheme failed to resolve, at Debug (event 1202).
+        if (hmacAuthenticationContext.HmacManager is null)
+        {
+            return AuthenticateResult.Fail(new HmacAuthenticationException());
+        }
+
         var hasValidKeys = await Options.Events.OnValidateKeysAsync(Context, policy.Keys);
         if (!hasValidKeys)
         {

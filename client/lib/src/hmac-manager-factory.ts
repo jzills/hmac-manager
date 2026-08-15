@@ -35,12 +35,43 @@ export default class HmacManagerFactory {
      * @returns An HmacManager instance if a matching policy is found; otherwise, null.
      */
     create(policy: string, scheme: string | null = null): HmacManager | null {
-        const [matchingPolicy, matchingScheme] = this.policies.get(policy, scheme);
-        if (matchingPolicy) {
-            return new HmacManager(matchingPolicy, matchingScheme,
-                this.headerBuilderFactory.create());
-        } else {
+        // Blank means "no scheme", not "a scheme whose name is blank". The .NET factory decides this
+        // with IsNullOrWhiteSpace and this is the same rule, so `create(policy, cfg.scheme)` behaves
+        // the same in both when cfg.scheme is absent — which for a value read from configuration or
+        // a form is far more often "" than null.
+        //
+        // != rather than !==: it catches undefined as well as null. The default parameter already
+        // maps an explicit undefined to null for TypeScript callers, but this is a published
+        // JavaScript package and nothing stops a caller passing one.
+        //
+        // Only an all-blank name counts as absent; the name itself is not trimmed, so " S " stays a
+        // miss here exactly as it does in .NET.
+        const isSchemeRequested = scheme != null && scheme.trim().length > 0;
+
+        const [matchingPolicy, matchingScheme] = this.policies.get(
+            policy, isSchemeRequested ? scheme : null);
+
+        if (!matchingPolicy) {
             return null;
         }
+
+        // A scheme that was asked for and did not resolve is a mistake, not a
+        // request to sign without one. Previously only the policy was checked,
+        // so a misspelled scheme name produced a working manager whose scheme
+        // was undefined: it signed with no Hmac-Scheme header and with none of
+        // the scheme's header values in the signing content, reported success,
+        // and every request was then rejected server-side as a signature
+        // mismatch — the least informative symptom available for a typo. It
+        // also silently dropped the property the scheme exists to provide,
+        // that those headers are covered by the signature.
+        //
+        // Guarded on isSchemeRequested so passing no scheme keeps working; the
+        // rejection is specifically "asked for one and it does not exist".
+        if (isSchemeRequested && !matchingScheme) {
+            return null;
+        }
+
+        return new HmacManager(matchingPolicy, matchingScheme,
+            this.headerBuilderFactory.create());
     }
 }

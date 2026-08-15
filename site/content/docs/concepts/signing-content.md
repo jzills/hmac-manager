@@ -1,0 +1,79 @@
+---
+title: Signing content
+description: Exactly what string gets hashed, in what order, and why a mismatch happens.
+weight: 3
+---
+
+The signature is an HMAC over a single string built from the request. Both
+sides build that string independently and compare the results, so **every
+segment has to match exactly**. Almost every signature mismatch is really a
+signing-content mismatch.
+
+## The format
+
+Segments are joined with `:` in this order:
+
+```
+{method}:{path and query}:{authority}:{dateRequested}:{publicKey}[:{contentHash}][:{schemeHeaderValues…}]:{nonce}
+```
+
+| Segment | Value | Present |
+| --- | --- | --- |
+| `method` | `GET`, `POST`, … | always |
+| `path and query` | `/orders?page=2` | always |
+| `authority` | `api.example.com`, with port if non-default | always |
+| `dateRequested` | Unix time in **milliseconds** | always |
+| `publicKey` | the policy's public key GUID | always |
+| `contentHash` | hash of the request body | only when there is a body |
+| scheme header values | the values, in the order the scheme declares | only with a scheme |
+| `nonce` | a GUID generated per request | always |
+
+A concrete example — a `GET` with no body and no scheme:
+
+```
+GET:/orders:api.example.com:1723651200000:00000000-0000-0000-0000-000000000001:6f9619ff-8b86-d011-b42d-00c04fc964ff
+```
+
+That string is hashed with the signing algorithm and the private key, and the
+result goes into `Authorization: Hmac <signature>`.
+
+The .NET and TypeScript implementations build the same string. `Authority` in
+.NET and `URL.host` in the browser both include a non-default port and omit a
+default one, which is what makes a request signed in a browser verify in .NET.
+
+## The URI must be absolute
+
+The authority is part of the content, so it has to be known at signing time.
+Signing an `HttpRequestMessage` that carries a relative URI throws
+`AbsoluteUriException` rather than signing something the server cannot
+reproduce.
+
+This is easy to hit by accident: an `HttpClient` with a `BaseAddress` will
+happily send `client.GetAsync("/orders")`, and the request only becomes
+absolute *inside* the client. If you sign manually before that point, you sign
+`/orders` with no authority while the server verifies against the full URL.
+
+Using [`AddHmacHttpMessageHandler`](../../dotnet/http-client/) avoids it
+entirely — the handler signs after the `BaseAddress` has been applied.
+
+## Things that break a match
+
+| Cause | Looks like |
+| --- | --- |
+| A proxy rewriting `Host` or the path | mismatch on every request |
+| Signing a relative URI | `AbsoluteUriException`, or a universal mismatch |
+| Reading the request body before signing | body hash differs; the stream was already consumed |
+| Clock skew past the replay window | rejected as expired, not as a mismatch |
+| Different algorithms on each side | mismatch on every request |
+| A scheme header added *after* signing | mismatch, or a signing failure |
+
+To see the two strings side by side, turn `Trace` on for the `HmacManager`
+category on both ends and compare event 1002 (signer) with event 1105
+(verifier). The first differing segment is the cause — see
+[diagnosing a mismatch](../../dotnet/logging/#diagnosing-a-signature-mismatch).
+
+## Replacing it
+
+A policy can build its own signing content instead. That is a deliberate
+escape hatch with sharp edges — see
+[custom signing content](../../dotnet/custom-signing-content/).
