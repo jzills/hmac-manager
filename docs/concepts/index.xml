@@ -1,0 +1,640 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Concepts</title><link>https://jzills.github.io/hmac-manager/docs/concepts/</link><description>Recent content in Concepts on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/concepts/index.xml" rel="self" type="application/rss+xml"/><item><title>Policies</title><link>https://jzills.github.io/hmac-manager/docs/concepts/policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/policies/</guid><description>
+&lt;p&gt;A policy is the top-level unit of configuration. It carries everything needed
+to sign or verify a request:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Part&lt;/th&gt;
+&lt;th&gt;What it is&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Public key&lt;/td&gt;
+&lt;td&gt;A &lt;code&gt;Guid&lt;/code&gt; identifying which key pair to verify against. Not a secret — it travels in the signing content.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Private key&lt;/td&gt;
+&lt;td&gt;A base64-encoded shared secret. Never transmitted, never logged.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Algorithms&lt;/td&gt;
+&lt;td&gt;One hash for the body, one for the signature. See &lt;a href="../algorithms/"&gt;algorithms&lt;/a&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Nonce&lt;/td&gt;
+&lt;td&gt;The replay window and which cache holds used nonces. See &lt;a href="../nonce-and-replay/"&gt;nonce and replay&lt;/a&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Schemes&lt;/td&gt;
+&lt;td&gt;Optional named header sets folded into the signature. See &lt;a href="../schemes/"&gt;schemes&lt;/a&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;A request names its policy in the &lt;code&gt;Hmac-Policy&lt;/code&gt; header, so a verifier can hold
+several and pick the right one per request. That is the point of naming them:
+different callers can hold different private keys, and revoking one caller
+means removing one policy.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddPolicy&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;PaymentsApi&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;policy&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePublicKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Guid&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Parse&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;00000000-0000-0000-0000-000000000001&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePrivateKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;zvg29s2cQ4idOqbUJWETOw==&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseContentHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ContentHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SHA256&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseSigningHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;SigningHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;HMACSHA256&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseDistributedCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Both sides must agree on every part. A policy is not negotiated — if the signer
+uses &lt;code&gt;HMACSHA512&lt;/code&gt; and the verifier expects &lt;code&gt;HMACSHA256&lt;/code&gt;, the signatures simply
+do not match, and the rejection reports a mismatch rather than a configuration
+problem. See &lt;a href="../../dotnet/logging/#diagnosing-a-signature-mismatch"&gt;diagnosing a mismatch&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Key requirements&lt;span class="hx:absolute hx:-mt-20" id="key-requirements"&gt;&lt;/span&gt;
+&lt;a href="#key-requirements" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;th&gt;Must be&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Public key&lt;/td&gt;
+&lt;td&gt;A GUID string&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Private key&lt;/td&gt;
+&lt;td&gt;A base64-encoded string&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Both are validated when the policy is built, so a malformed key fails at
+startup rather than on the first request.&lt;/p&gt;
+&lt;h2&gt;Where policies come from&lt;span class="hx:absolute hx:-mt-20" id="where-policies-come-from"&gt;&lt;/span&gt;
+&lt;a href="#where-policies-come-from" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;They do not have to be hardcoded:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Static&lt;/strong&gt; — declared in code, or bound from an &lt;code&gt;IConfigurationSection&lt;/code&gt;. The
+collection is a singleton. See &lt;a href="../../dotnet/registration/"&gt;registration&lt;/a&gt; and
+&lt;a href="../../dotnet/configuration-binding/"&gt;configuration binding&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reloaded&lt;/strong&gt; — bound from configuration and re-read when that configuration
+changes, with no restart.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Per request&lt;/strong&gt; — resolved from a database or any other store on each
+request. See &lt;a href="../../dotnet/dynamic-policies/"&gt;dynamic policies&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Kubernetes resources&lt;/strong&gt; — an &lt;code&gt;HmacPolicy&lt;/code&gt; custom resource that an operator
+reconciles into the config the verifier mounts. See
+&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;the CRD&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>Schemes</title><link>https://jzills.github.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/schemes/</guid><description>
+&lt;p&gt;A scheme is a named list of headers whose &lt;strong&gt;values become part of the
+signature&lt;/strong&gt;. It answers a question a bare HMAC cannot: this request is
+authentic, but authentic &lt;em&gt;as whom&lt;/em&gt;?&lt;/p&gt;
+&lt;p&gt;Without a scheme, a signature covers the method, the URI, the timestamp, the
+public key, the body hash and the nonce. Anything else in the request — an
+&lt;code&gt;X-UserId&lt;/code&gt; header, a tenant id — is unsigned, so a caller holding a valid key
+could change it freely. A scheme closes that.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddPolicy&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;PaymentsApi&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;policy&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePublicKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;publicKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePrivateKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;privateKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddScheme&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;UserContext&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;scheme&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;scheme&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHeader&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;X-UserId&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;scheme&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHeader&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;X-Email&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;A request selects the scheme with the &lt;code&gt;Hmac-Scheme&lt;/code&gt; header. The signer and the
+verifier must name the same one, and both fold the header values in, in the
+order the scheme declares them.&lt;/p&gt;
+&lt;p&gt;Naming a scheme the policy does not declare is refused rather than ignored, on
+both the signing and the verifying side: the factory returns no manager, and an
+incoming request naming one fails authentication. Signing without the scheme
+would produce a signature the verifier cannot reproduce, so the failure would
+otherwise surface as a mismatch — which looks nothing like a misspelled name.
+A blank scheme is different: it means &amp;ldquo;not using one&amp;rdquo;, and is fine.&lt;/p&gt;
+&lt;div class="hm-note hm-note--warn"&gt;
+&lt;p&gt;Every header a scheme names must already be on the request &lt;strong&gt;before&lt;/strong&gt; you sign
+it. In .NET, signing a request that is missing one fails; in the TypeScript
+client, &lt;code&gt;sign&lt;/code&gt; returns &lt;code&gt;isSuccess: false&lt;/code&gt; rather than throwing — with the cause
+on &lt;code&gt;result.error&lt;/code&gt; — so a missing header is silent unless you check the result.&lt;/p&gt;
+&lt;/div&gt;
+&lt;h2&gt;Headers become claims&lt;span class="hx:absolute hx:-mt-20" id="headers-become-claims"&gt;&lt;/span&gt;
+&lt;a href="#headers-become-claims" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;On the .NET side, when a request authenticates, each scheme header is added to
+the &lt;code&gt;ClaimsPrincipal&lt;/code&gt;. By default the claim type is the header&amp;rsquo;s own name; pass
+a second argument to choose one:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddScheme&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;UserContext&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;scheme&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;scheme&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHeader&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;X-UserId&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ClaimTypes&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NameIdentifier&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;scheme&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHeader&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;X-Email&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ClaimTypes&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Email&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;So a verified request arrives at your endpoint with a populated
+&lt;code&gt;User.Identity&lt;/code&gt;, and the values there are ones the signature covers.&lt;/p&gt;
+&lt;h2&gt;Several schemes on one policy&lt;span class="hx:absolute hx:-mt-20" id="several-schemes-on-one-policy"&gt;&lt;/span&gt;
+&lt;a href="#several-schemes-on-one-policy" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A policy can carry several. They are alternatives, not a set applied together —
+a request picks exactly one, or none:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddScheme&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;UserContext&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;scheme&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;scheme&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHeader&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;X-UserId&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddScheme&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;ServiceContext&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;scheme&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;scheme&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHeader&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;X-ServiceId&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Requiring a &lt;em&gt;specific&lt;/em&gt; scheme on a specific endpoint is an authorization
+concern — see &lt;a href="../../dotnet/authorization/"&gt;authorization&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;In the other two surfaces&lt;span class="hx:absolute hx:-mt-20" id="in-the-other-two-surfaces"&gt;&lt;/span&gt;
+&lt;a href="#in-the-other-two-surfaces" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;In the &lt;a href="../../client/schemes/"&gt;TypeScript client&lt;/a&gt;, a scheme is
+&lt;code&gt;{ name, headers: string[] }&lt;/code&gt; — a flat list of header names, with no claim
+mapping, because the client only signs.&lt;/p&gt;
+&lt;p&gt;In &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;Kubernetes&lt;/a&gt;, schemes are declared on the
+&lt;code&gt;HmacPolicy&lt;/code&gt; resource and do carry &lt;code&gt;claimType&lt;/code&gt;, since the verifier maps them.&lt;/p&gt;</description></item><item><title>Signing content</title><link>https://jzills.github.io/hmac-manager/docs/concepts/signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/signing-content/</guid><description>
+&lt;p&gt;The signature is an HMAC over a single string built from the request. Both
+sides build that string independently and compare the results, so &lt;strong&gt;every
+segment has to match exactly&lt;/strong&gt;. Almost every signature mismatch is really a
+signing-content mismatch.&lt;/p&gt;
+&lt;h2&gt;The format&lt;span class="hx:absolute hx:-mt-20" id="the-format"&gt;&lt;/span&gt;
+&lt;a href="#the-format" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Segments are joined with &lt;code&gt;:&lt;/code&gt; in this order:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;pre&gt;&lt;code&gt;{method}:{path and query}:{authority}:{dateRequested}:{publicKey}[:{contentHash}][:{schemeHeaderValues…}]:{nonce}&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Segment&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;th&gt;Present&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;method&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;GET&lt;/code&gt;, &lt;code&gt;POST&lt;/code&gt;, …&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;path and query&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;/orders?page=2&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;authority&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;api.example.com&lt;/code&gt;, with port if non-default&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;dateRequested&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Unix time in &lt;strong&gt;milliseconds&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;publicKey&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the policy&amp;rsquo;s public key GUID&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;contentHash&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;hash of the request body&lt;/td&gt;
+&lt;td&gt;only when there is a body&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;scheme header values&lt;/td&gt;
+&lt;td&gt;the values, in the order the scheme declares&lt;/td&gt;
+&lt;td&gt;only with a scheme&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;nonce&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;a GUID generated per request&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;A concrete example — a &lt;code&gt;GET&lt;/code&gt; with no body and no scheme:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;pre&gt;&lt;code&gt;GET:/orders:api.example.com:1723651200000:00000000-0000-0000-0000-000000000001:6f9619ff-8b86-d011-b42d-00c04fc964ff&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;That string is hashed with the signing algorithm and the private key, and the
+result goes into &lt;code&gt;Authorization: Hmac &amp;lt;signature&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The .NET and TypeScript implementations build the same string. &lt;code&gt;Authority&lt;/code&gt; in
+.NET and &lt;code&gt;URL.host&lt;/code&gt; in the browser both include a non-default port and omit a
+default one, which is what makes a request signed in a browser verify in .NET.&lt;/p&gt;
+&lt;h2&gt;The URI must be absolute&lt;span class="hx:absolute hx:-mt-20" id="the-uri-must-be-absolute"&gt;&lt;/span&gt;
+&lt;a href="#the-uri-must-be-absolute" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The authority is part of the content, so it has to be known at signing time.
+Signing an &lt;code&gt;HttpRequestMessage&lt;/code&gt; that carries a relative URI throws
+&lt;code&gt;AbsoluteUriException&lt;/code&gt; rather than signing something the server cannot
+reproduce.&lt;/p&gt;
+&lt;p&gt;This is easy to hit by accident: an &lt;code&gt;HttpClient&lt;/code&gt; with a &lt;code&gt;BaseAddress&lt;/code&gt; will
+happily send &lt;code&gt;client.GetAsync(&amp;quot;/orders&amp;quot;)&lt;/code&gt;, and the request only becomes
+absolute &lt;em&gt;inside&lt;/em&gt; the client. If you sign manually before that point, you sign
+&lt;code&gt;/orders&lt;/code&gt; with no authority while the server verifies against the full URL.&lt;/p&gt;
+&lt;p&gt;Using &lt;a href="../../dotnet/http-client/"&gt;&lt;code&gt;AddHmacHttpMessageHandler&lt;/code&gt;&lt;/a&gt; avoids it
+entirely — the handler signs after the &lt;code&gt;BaseAddress&lt;/code&gt; has been applied.&lt;/p&gt;
+&lt;h2&gt;Things that break a match&lt;span class="hx:absolute hx:-mt-20" id="things-that-break-a-match"&gt;&lt;/span&gt;
+&lt;a href="#things-that-break-a-match" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Cause&lt;/th&gt;
+&lt;th&gt;Looks like&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;A proxy rewriting &lt;code&gt;Host&lt;/code&gt; or the path&lt;/td&gt;
+&lt;td&gt;mismatch on every request&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Signing a relative URI&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;AbsoluteUriException&lt;/code&gt;, or a universal mismatch&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Reading the request body before signing&lt;/td&gt;
+&lt;td&gt;body hash differs; the stream was already consumed&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Clock skew past the replay window&lt;/td&gt;
+&lt;td&gt;rejected as expired, not as a mismatch&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Different algorithms on each side&lt;/td&gt;
+&lt;td&gt;mismatch on every request&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;A scheme header added &lt;em&gt;after&lt;/em&gt; signing&lt;/td&gt;
+&lt;td&gt;mismatch, or a signing failure&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;To see the two strings side by side, turn &lt;code&gt;Trace&lt;/code&gt; on for the &lt;code&gt;HmacManager&lt;/code&gt;
+category on both ends and compare event 1002 (signer) with event 1105
+(verifier). The first differing segment is the cause — see
+&lt;a href="../../dotnet/logging/#diagnosing-a-signature-mismatch"&gt;diagnosing a mismatch&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Replacing it&lt;span class="hx:absolute hx:-mt-20" id="replacing-it"&gt;&lt;/span&gt;
+&lt;a href="#replacing-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A policy can build its own signing content instead. That is a deliberate
+escape hatch with sharp edges — see
+&lt;a href="../../dotnet/custom-signing-content/"&gt;custom signing content&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Nonce and replay</title><link>https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/</guid><description>
+&lt;p&gt;A valid signature stays valid. Without something else in play, anyone who
+captures a signed request can send it again and it will verify — the signature
+is still correct, because nothing about it has changed.&lt;/p&gt;
+&lt;p&gt;Two things prevent that, and they work together:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;The timestamp.&lt;/strong&gt; Every signature covers &lt;code&gt;Hmac-DateRequested&lt;/code&gt;. The verifier
+rejects anything older than the policy&amp;rsquo;s &lt;code&gt;maxAgeInSeconds&lt;/code&gt;, which bounds how
+long a captured request is useful at all.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;The nonce.&lt;/strong&gt; Every signature covers a &lt;code&gt;Guid&lt;/code&gt; generated per request. The
+verifier stores each nonce it accepts for the length of that same window and
+rejects a repeat. So inside the window a request works exactly once, and
+outside it the timestamp check has already rejected it.&lt;/p&gt;
+&lt;p&gt;Neither can be tampered with: both are in the signing content, so changing
+either invalidates the signature.&lt;/p&gt;
+&lt;h2&gt;Choosing the window&lt;span class="hx:absolute hx:-mt-20" id="choosing-the-window"&gt;&lt;/span&gt;
+&lt;a href="#choosing-the-window" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseMemoryCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;maxAgeInSeconds&lt;/code&gt; is both the freshness window and how long a nonce is
+remembered. It has to absorb the real clock skew between signer and verifier
+plus network time — too tight and legitimate requests fail; too loose and a
+captured request stays replayable for longer, and the cache holds more.&lt;/p&gt;
+&lt;p&gt;Minutes, not hours. The chart defaults to 60 seconds.&lt;/p&gt;
+&lt;h2&gt;Which cache&lt;span class="hx:absolute hx:-mt-20" id="which-cache"&gt;&lt;/span&gt;
+&lt;a href="#which-cache" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;UseMemoryCache&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;UseDistributedCache&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Backed by&lt;/td&gt;
+&lt;td&gt;in-process memory&lt;/td&gt;
+&lt;td&gt;Redis&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Shared between instances&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Safe for&lt;/td&gt;
+&lt;td&gt;a single instance&lt;/td&gt;
+&lt;td&gt;any number&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div class="hm-note hm-note--warn"&gt;
+&lt;p&gt;The in-memory cache is per process. Behind a load balancer with two instances,
+a replayed request that lands on the instance that has not seen the nonce is
+accepted — so the protection quietly does nothing. Any multi-instance
+deployment needs the distributed cache.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseDistributedCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;The distributed cache uses the registered &lt;code&gt;IDistributedCache&lt;/code&gt;, so it is wired
+the usual ASP.NET Core way:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddStackExchangeRedisCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Configuration&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#34;localhost:6379&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;If a policy asks for the distributed cache and no &lt;code&gt;IDistributedCache&lt;/code&gt; is
+registered, that is reported at &lt;code&gt;Warning&lt;/code&gt; (event 1201) rather than failing
+silently.&lt;/p&gt;
+&lt;h2&gt;In Kubernetes&lt;span class="hx:absolute hx:-mt-20" id="in-kubernetes"&gt;&lt;/span&gt;
+&lt;a href="#in-kubernetes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The chart bundles Redis and every policy uses the distributed cache, so
+multi-replica is the default and correct configuration. Setting
+&lt;code&gt;redis.enabled=false&lt;/code&gt; falls back to the in-process cache, and the chart then
+refuses &lt;code&gt;replicaCount &amp;gt; 1&lt;/code&gt; rather than letting you deploy something that does
+not protect anything. See &lt;a href="../../kubernetes/redis/"&gt;Redis&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Algorithms</title><link>https://jzills.github.io/hmac-manager/docs/concepts/algorithms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/algorithms/</guid><description>
+&lt;p&gt;Two separate hashes, chosen independently.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;The content hash&lt;/strong&gt; hashes the request body. Its output becomes one segment of
+the &lt;a href="../signing-content/"&gt;signing content&lt;/a&gt;, which is how the body is covered by
+the signature without being hashed twice.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;The signing hash&lt;/strong&gt; is the keyed HMAC over the finished signing content, using
+the policy&amp;rsquo;s private key. Its output is the signature in the &lt;code&gt;Authorization&lt;/code&gt;
+header.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Values&lt;/th&gt;
+&lt;th&gt;Default&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Content hash&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;SHA1&lt;/code&gt;, &lt;code&gt;SHA256&lt;/code&gt;, &lt;code&gt;SHA512&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;SHA256&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Signing hash&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;HMACSHA1&lt;/code&gt;, &lt;code&gt;HMACSHA256&lt;/code&gt;, &lt;code&gt;HMACSHA512&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;HMACSHA256&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseContentHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ContentHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SHA256&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseSigningHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;SigningHashAlgorithm&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;HMACSHA256&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Both sides must choose the same pair. There is no negotiation and no algorithm
+identifier on the wire, so a disagreement surfaces as a signature mismatch on
+every request rather than as a configuration error.&lt;/p&gt;
+&lt;h2&gt;Which to pick&lt;span class="hx:absolute hx:-mt-20" id="which-to-pick"&gt;&lt;/span&gt;
+&lt;a href="#which-to-pick" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;SHA256&lt;/code&gt; / &lt;code&gt;HMACSHA256&lt;/code&gt; unless you have a reason. It is the default on all
+three surfaces.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;SHA512&lt;/code&gt; costs a little more per request and buys little here — the signature
+is short-lived by design, bounded by the &lt;a href="../nonce-and-replay/"&gt;replay window&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;SHA1&lt;/code&gt; and &lt;code&gt;HMACSHA1&lt;/code&gt; exist for talking to something that already speaks them.
+SHA-1 is broken for collision resistance; HMAC-SHA1 is not broken in the same
+way, but neither is a choice to make for something new.&lt;/p&gt;
+&lt;h2&gt;Elsewhere&lt;span class="hx:absolute hx:-mt-20" id="elsewhere"&gt;&lt;/span&gt;
+&lt;a href="#elsewhere" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;In the TypeScript client the same choice is one enum for both, with values
+&lt;code&gt;sha-1&lt;/code&gt;, &lt;code&gt;sha-256&lt;/code&gt; and &lt;code&gt;sha-512&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;contentHashAlgorithm&lt;/span&gt;: &lt;span class="kt"&gt;HashAlgorithm.SHA256&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;signatureHashAlgorithm&lt;/span&gt;: &lt;span class="kt"&gt;HashAlgorithm.SHA256&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;In Kubernetes they are &lt;code&gt;algorithms.contentHash&lt;/code&gt; and &lt;code&gt;algorithms.signingHash&lt;/code&gt; on
+the &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;&lt;code&gt;HmacPolicy&lt;/code&gt; resource&lt;/a&gt;, spelled the same
+way as in .NET.&lt;/p&gt;</description></item><item><title>Headers</title><link>https://jzills.github.io/hmac-manager/docs/concepts/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/headers/</guid><description>
+&lt;p&gt;Signing adds these to the request. Everything except &lt;code&gt;Authorization&lt;/code&gt; is
+metadata the verifier needs in order to rebuild the
+&lt;a href="../signing-content/"&gt;signing content&lt;/a&gt;.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Header&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;th&gt;Present&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Authorization&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Hmac &amp;lt;signature&amp;gt;&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Hmac-Policy&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the policy name&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Hmac-Scheme&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;the scheme name&lt;/td&gt;
+&lt;td&gt;only when a scheme is used&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Hmac-Nonce&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;a &lt;code&gt;Guid&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Hmac-DateRequested&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Unix time in milliseconds&lt;/td&gt;
+&lt;td&gt;always&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-http" data-lang="http"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nf"&gt;GET&lt;/span&gt; &lt;span class="nn"&gt;/orders&lt;/span&gt; &lt;span class="kr"&gt;HTTP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="m"&gt;1.1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;Host&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="l"&gt;api.example.com&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;Authorization&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="l"&gt;Hmac k3F9v0mQ8s2bQ1n0Xc7yA5tR6uW4pL8jH2gK1dS0fE=&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;Hmac-Policy&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="l"&gt;PaymentsApi&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;Hmac-Nonce&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="l"&gt;6f9619ff-8b86-d011-b42d-00c04fc964ff&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;Hmac-DateRequested&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="l"&gt;1723651200000&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Note that the nonce and the timestamp are sent in the clear &lt;em&gt;and&lt;/em&gt; covered by
+the signature. They are not secrets — they are there so the verifier can
+reproduce the content, and signing them is what stops anyone editing them.&lt;/p&gt;
+&lt;p&gt;The names are constants, not strings to retype:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;HmacAuthenticationDefaults&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AuthenticationScheme&lt;/span&gt; &lt;span class="c1"&gt;// &amp;#34;Hmac&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;HmacAuthenticationDefaults&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Headers&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Policy&lt;/span&gt; &lt;span class="c1"&gt;// &amp;#34;Hmac-Policy&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;HmacAuthenticationDefaults&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Headers&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;DateRequested&lt;/span&gt; &lt;span class="c1"&gt;// &amp;#34;Hmac-DateRequested&amp;#34;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;HmacAuthenticationDefaults&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kr"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;hmac-manager&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nx"&gt;HmacAuthenticationDefaults&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;Headers&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;Policy&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="c1"&gt;// &amp;#34;Hmac-Policy&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h2&gt;Consolidated headers&lt;span class="hx:absolute hx:-mt-20" id="consolidated-headers"&gt;&lt;/span&gt;
+&lt;a href="#consolidated-headers" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The four &lt;code&gt;Hmac-*&lt;/code&gt; headers can be collapsed into one, &lt;code&gt;Hmac-Options&lt;/code&gt;, whose
+value is a base64-encoded concatenation of the same fields.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHmacManager&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;EnableConsolidatedHeaders&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Useful where a proxy strips unknown headers, or where a header budget is
+tight — four custom headers become one.&lt;/p&gt;
+&lt;div class="hm-note hm-note--warn"&gt;
+&lt;p&gt;This has to be enabled on &lt;strong&gt;both&lt;/strong&gt; sides. A signer that consolidates and a
+verifier that does not will fail on every request: the verifier looks for
+&lt;code&gt;Hmac-Policy&lt;/code&gt;, finds nothing, and treats the request as unsigned rather than as
+invalid.&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;The TypeScript client takes it as the second constructor argument:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;factory&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;policies&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;See the &lt;a href="../../reference/headers/"&gt;header reference&lt;/a&gt; for the exact values.&lt;/p&gt;</description></item></channel></rss>
