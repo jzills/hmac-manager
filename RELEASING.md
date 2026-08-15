@@ -2,9 +2,11 @@
 
 This project has five independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
 
-Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whose head branch starts with `release/` is merged into `main`, extracts the artifact and version from the branch name (`.github/scripts/extract-version.sh`), and pushes the matching prefixed tag. That tag push — and the follow-up back-merge PR it opens into `develop` — use the **`RELEASE_PAT`** secret, not the built-in `GITHUB_TOKEN`: tags pushed with `GITHUB_TOKEN` are deliberately blocked from triggering the per-artifact release workflows, and `GITHUB_TOKEN` cannot enable auto-merge (nor do its bot-authored PRs run checks without a manual approval). Merging into `main` with a direct `git push` (bypassing a PR) will **not** trigger a release — the merge must go through a PR for `tag.yml` to fire.
+Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whose head branch starts with `release/` is merged into `main`, extracts the artifact and version from the branch name (`.github/scripts/extract-version.sh`), and pushes the matching prefixed tag. That tag push — and the follow-up back-merge PR it opens into `develop` — use the **`RELEASE_PAT`** secret, not the built-in `GITHUB_TOKEN`: tags pushed with `GITHUB_TOKEN` are deliberately blocked from triggering the per-artifact release workflows, and a PR opened by `GITHUB_TOKEN` does not run checks without a manual approval. Merging into `main` with a direct `git push` (bypassing a PR) will **not** trigger a release — the merge must go through a PR for `tag.yml` to fire.
 
-> **Prerequisite for `gh pr merge --auto`:** the examples below queue the merge with `--auto`, which requires the repository's **Allow auto-merge** setting to be enabled (Settings → General → Pull Requests) and at least one required status check on `main`. If auto-merge is disabled, `gh pr merge --auto` errors out — drop `--auto` and run `gh pr merge --merge` to merge immediately once checks are green.
+The back-merge into `develop` is fully automatic: `tag.yml` opens the PR, waits for the required checks, and merges it. Nothing is left open for you to clean up.
+
+> **Do not use `gh pr merge --auto` on a freshly opened PR.** GitHub computes mergeability asynchronously, so for the first seconds of a PR's life the branch ruleset's required checks do not exist yet and the PR looks mergeable. Asking for an auto-merge in that window fails in one of two ways, both seen on 2026-08-14: GitHub enables auto-merge and drops it again seconds later because it has nothing to wait for, leaving the PR open with a green job; or `gh` decides the PR is mergeable now and merges immediately, which the ruleset rejects with `3 of 3 required status checks are expected`. Wait for the checks, then merge — which is what the examples below do.
 
 ## Artifacts and Tag Prefixes
 
@@ -47,9 +49,10 @@ git push origin release/v2.7.0
 # 3. Open a PR release/v2.7.0 -> main and merge it once checks pass.
 #    Merging the PR automatically:
 #      - tags main as nuget/v2.7.0 (triggers release.yml: test, pack, publish)
-#      - opens and auto-merges a PR to back-merge release/v2.7.0 into develop
+#      - opens, waits for checks on, and merges a PR to back-merge release/v2.7.0 into develop
 gh pr create --base main --head release/v2.7.0 --title "release: nuget v2.7.0" --fill
-gh pr merge --merge --auto
+gh pr checks --watch --required --fail-fast
+gh pr merge --merge
 
 # 4. Once the back-merge PR has merged, delete the release branch
 git push origin --delete release/v2.7.0
@@ -77,9 +80,10 @@ git push origin release/service/v1.2.0
 # 3. Open a PR release/service/v1.2.0 -> main and merge it once checks pass.
 #    Merging the PR automatically:
 #      - tags main as service/v1.2.0 (triggers service-release.yml: test, build, push image)
-#      - opens and auto-merges a PR to back-merge release/service/v1.2.0 into develop
+#      - opens, waits for checks on, and merges a PR to back-merge release/service/v1.2.0 into develop
 gh pr create --base main --head release/service/v1.2.0 --title "release: service v1.2.0" --fill
-gh pr merge --merge --auto
+gh pr checks --watch --required --fail-fast
+gh pr merge --merge
 
 # 4. Once the back-merge PR has merged, delete the release branch
 git push origin --delete release/service/v1.2.0
@@ -111,9 +115,10 @@ git push origin release/operator/v1.1.0
 # 3. Open a PR release/operator/v1.1.0 -> main and merge it once checks pass.
 #    Merging the PR automatically:
 #      - tags main as operator/v1.1.0 (triggers operator-release.yml: test, build, push image)
-#      - opens and auto-merges a PR to back-merge release/operator/v1.1.0 into develop
+#      - opens, waits for checks on, and merges a PR to back-merge release/operator/v1.1.0 into develop
 gh pr create --base main --head release/operator/v1.1.0 --title "release: operator v1.1.0" --fill
-gh pr merge --merge --auto
+gh pr checks --watch --required --fail-fast
+gh pr merge --merge
 
 # 4. Once the back-merge PR has merged, delete the release branch
 git push origin --delete release/operator/v1.1.0
@@ -156,9 +161,10 @@ git push origin release/chart/v1.5.0
 # 3. Open a PR release/chart/v1.5.0 -> main and merge it once checks pass.
 #    Merging the PR automatically:
 #      - tags main as chart/v1.5.0 (triggers chart-release.yml: package, push to GHCR + Pages)
-#      - opens and auto-merges a PR to back-merge release/chart/v1.5.0 into develop
+#      - opens, waits for checks on, and merges a PR to back-merge release/chart/v1.5.0 into develop
 gh pr create --base main --head release/chart/v1.5.0 --title "release: chart v1.5.0" --fill
-gh pr merge --merge --auto
+gh pr checks --watch --required --fail-fast
+gh pr merge --merge
 
 # 4. Once the back-merge PR has merged, delete the release branch
 git push origin --delete release/chart/v1.5.0
@@ -211,9 +217,10 @@ git push origin release/npm/v2.7.0
 # 3. Open a PR release/npm/v2.7.0 -> main and merge it once checks pass.
 #    Merging the PR automatically:
 #      - tags main as npm/v2.7.0 (triggers npm-release.yml: test, build, publish)
-#      - opens and auto-merges a PR to back-merge release/npm/v2.7.0 into develop
+#      - opens, waits for checks on, and merges a PR to back-merge release/npm/v2.7.0 into develop
 gh pr create --base main --head release/npm/v2.7.0 --title "release: npm v2.7.0" --fill
-gh pr merge --merge --auto
+gh pr checks --watch --required --fail-fast
+gh pr merge --merge
 
 # 4. Once the back-merge PR has merged, delete the release branch
 git push origin --delete release/npm/v2.7.0
@@ -245,6 +252,6 @@ This ensures the Docker image exists on Docker Hub before the chart that referen
 | `NPM_TOKEN` | `npm-release.yml` | npmjs.com → Access Tokens (granular, publish-only, scoped to `hmac-manager`) |
 | `DOCKERHUB_USERNAME` | `service-release.yml`, `operator-release.yml` | Your Docker Hub username |
 | `DOCKERHUB_TOKEN` | `service-release.yml`, `operator-release.yml` | Docker Hub → Account Settings → Security → Access Tokens |
-| `RELEASE_PAT` | `tag.yml` | GitHub → Settings → Developer settings → Personal access tokens. Needs `repo` scope (Contents: write to push release tags, Pull requests: write to open + auto-merge the back-merge PR). Required because `GITHUB_TOKEN` can neither trigger the per-artifact release workflows via a tag push nor enable auto-merge. |
+| `RELEASE_PAT` | `tag.yml` | GitHub → Settings → Developer settings → Personal access tokens. Needs `repo` scope (Contents: write to push release tags, Pull requests: write to open and merge the back-merge PR). Required because `GITHUB_TOKEN` cannot trigger the per-artifact release workflows via a tag push, and a PR it opens does not run checks without a manual approval — which `tag.yml` waits on. |
 
 GHCR (Helm chart) uses the built-in `GITHUB_TOKEN` — no additional secret required.
