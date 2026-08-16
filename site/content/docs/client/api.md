@@ -106,7 +106,7 @@ its own requests detects no replays.
 ```ts
 type HmacPolicy = {
   name: string;
-  publicKey: string;
+  publicKey: string;                  // GUID, any case
   privateKey: string;                 // base64
   contentHashAlgorithm: HashAlgorithm;
   signatureHashAlgorithm: HashAlgorithm;
@@ -115,6 +115,13 @@ type HmacPolicy = {
   signingContentAccessor?: SigningContentAccessor;
 };
 ```
+
+`publicKey` may be given in any case. It is a GUID, and a GUID's wire form is the
+canonical lowercase one — .NET gets that for free by holding the key as a `Guid`
+— so a key configured in uppercase is lowercased before it reaches the
+[signing content](../../concepts/signing-content/). Anything that is not a
+canonical GUID is used exactly as configured, since `Guid.Parse` rejects it on
+the .NET side and there is no rendering of it to agree with.
 
 `maxAgeInSeconds` is the window a signature stays valid for when verifying;
 signing ignores it. It matches `Nonce.MaxAgeInSeconds` on the .NET side. The two

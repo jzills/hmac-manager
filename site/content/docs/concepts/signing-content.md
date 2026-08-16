@@ -23,7 +23,7 @@ Segments are joined with `:` in this order:
 | `path and query` | `/orders?page=2` | always |
 | `authority` | `api.example.com`, with port if non-default | always |
 | `dateRequested` | Unix time in **milliseconds** | always |
-| `publicKey` | the policy's public key GUID | always |
+| `publicKey` | the policy's public key GUID, canonical **lowercase** | always |
 | `contentHash` | hash of the request body | only when there is a body |
 | scheme header values | the values, in the order the scheme declares | only with a scheme |
 | `nonce` | a GUID generated per request | always |
@@ -40,6 +40,14 @@ result goes into `Authorization: Hmac <signature>`.
 The .NET and TypeScript implementations build the same string. `Authority` in
 .NET and `URL.host` in the browser both include a non-default port and omit a
 default one, which is what makes a request signed in a browser verify in .NET.
+
+The public key is written in the canonical lowercase GUID form regardless of how
+the policy spells it. .NET gets that for free — `KeyCredentials.PublicKey` is a
+`Guid`, so the segment is always `Guid.ToString()` — and the TypeScript client,
+which takes a string, lowercases a canonical GUID to match. It matters because
+`NEWID()`, PowerShell and the Azure portal all produce uppercase GUIDs, and a
+client that signed one verbatim agreed with every other copy of itself while
+failing against .NET on every request.
 
 The string is hashed as **UTF-8**. Every segment above is ASCII, where the
 encoding makes no difference — except the values a scheme contributes, which are

@@ -92,6 +92,25 @@ const cases = [
         headerValues: [{ name: "X-Customer-Name", value: "Zoë Café" }]
     },
     {
+        name: "uppercase-public-key",
+        description:
+            "A public key configured in uppercase. .NET holds it as a Guid, so the wire " +
+            "form is the canonical lowercase one whatever case it was configured in; a " +
+            "client that signed the configured string verbatim produced a different " +
+            "signature from .NET for every request under that policy, and verified " +
+            "happily against another copy of itself.",
+        method: "GET",
+        url: "https://api.example.com/api/orders",
+        dateRequestedMs: 1700000007000,
+        nonce: "b4c8e21f-7a03-4d95-8e16-5f2739ac0db4",
+        publicKey: "EB8E9DAE-08BD-4883-80FE-1D9A103B30B5",
+        privateKey: "zvg29s2cQ4idOqbUJWETOw==",
+        contentHashAlgorithm: "SHA256",
+        signatureHashAlgorithm: "SHA256",
+        body: null,
+        headerValues: []
+    },
+    {
         name: "sha512",
         description: "SHA-512 for both the content hash and the signature.",
         method: "PUT",
@@ -130,7 +149,9 @@ const build = testCase => {
         `${url.pathname}${url.search}`,
         url.host,
         String(testCase.dateRequestedMs),
-        testCase.publicKey
+        // Lowercased: the segment is a GUID, and its wire form is the canonical
+        // lowercase one. .NET gets that for free by holding the key as a Guid.
+        testCase.publicKey.toLowerCase()
     ];
 
     if (testCase.body !== null) {
