@@ -48,7 +48,7 @@ jobs:
 
       # The theme is a Hugo module, which is a Go module, so resolving it needs
       # the go command. site/go.mod is the only Go module in this repository.
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: site/go.mod
 
