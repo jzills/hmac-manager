@@ -90,7 +90,7 @@ jobs:
 
       - name: Upload site
         if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: site/public
