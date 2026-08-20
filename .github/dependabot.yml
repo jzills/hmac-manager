@@ -20,7 +20,7 @@ updates:
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "npm"
-    directory: "/samples/WebToApiAuthenticationWithJavaScriptClient/Web/src"
-    schedule:
-      interval: "weekly"
+  # The samples under /samples deliberately have no npm entry. Their only
+  # dependency is a file: link to client/lib, so there is nothing external to
+  # pin, no lockfile is committed, and there would be nothing for Dependabot to
+  # update. The Sample Builds job in pr.yml is what keeps them honest instead.

@@ -25,6 +25,13 @@
     <None Update="appsettings.test.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+
+    <!-- Shared with the TypeScript client's suite, which reads the same file from its
+         own tests. It lives outside both because it belongs to neither: it is the
+         contract between them. -->
+    <None Include="..\fixtures\signing-parity.json" Link="fixtures\signing-parity.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -5,9 +5,7 @@
 JavaScript and TypeScript client for
 [HmacManager](https://github.com/jzills/hmac-manager). Signs requests so they
 verify against an HmacManager-protected ASP.NET Core API or Istio ext-authz
-service.
-
-Signing only — there is no verification side.
+service, and verifies incoming requests so a Node service can be one itself.
 
 **📖 [Documentation](https://jzills.github.io/hmac-manager/docs/client/)**
 
@@ -51,6 +49,41 @@ unregistered policy, or a scheme that policy does not declare. A blank scheme
 (`null`, `undefined`, `""` or whitespace) means "no scheme" rather than a failed
 lookup.
 
+## Verifying
+
+```ts
+import { HmacManagerFactory, fromNodeRequest } from "hmac-manager";
+
+const verifier = new HmacManagerFactory([policy]);
+
+// Runtimes with a native Request — Hono, Next.js, Deno, Bun, Workers:
+const result = await verifier.verify(request);
+
+// Node's http, Express, Koa, Fastify — pass the raw body bytes if there are any.
+// The content hash is over exactly what arrived, and a re-serialised parsed body
+// does not reproduce it:
+//
+//   const result = await verifier.verify(fromNodeRequest(req, { body: rawBody }));
+
+if (!result.isSuccess) {
+  console.warn("rejected", { reason: result.reason });   // log it, don't return it
+  return res.sendStatus(401);
+}
+```
+
+`verify` never throws either. `result.reason` is one of `headers-missing`,
+`headers-malformed`, `policy-not-found`, `expired`, `replayed`,
+`signature-mismatch` or `verification-error` — only the last is a fault on your
+side.
+
+Replayed nonces are rejected using an in-process store by default. **That is
+per-process**: any deployment with more than one replica needs a shared one, via
+the `NonceStore` interface. See
+[verifying requests](https://jzills.github.io/hmac-manager/docs/client/verifying-requests/).
+
+> [!WARNING]
+> Verification needs the private key, so it belongs on a server.
+
 ## Requirements
 
 Uses `crypto.randomUUID` and `crypto.subtle`, so a browser needs a secure
@@ -64,6 +97,7 @@ context (`https://` or `localhost`) and Node needs 19 or later.
 ## Documentation
 
 - [Signing requests](https://jzills.github.io/hmac-manager/docs/client/signing-requests/)
+- [Verifying requests](https://jzills.github.io/hmac-manager/docs/client/verifying-requests/)
 - [Schemes](https://jzills.github.io/hmac-manager/docs/client/schemes/)
 - [API](https://jzills.github.io/hmac-manager/docs/client/api/)
 

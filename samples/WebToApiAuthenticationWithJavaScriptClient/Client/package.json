@@ -1,0 +1,14 @@
+{
+    "name": "javascript-client-sample",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "engines": {
+        "node": ">=19"
+    },
+    "dependencies": {
+        "hmac-manager": "file:../../../client/lib"
+    }
+}

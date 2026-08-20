@@ -123,10 +123,10 @@ kubectl apply -f my-policy.yaml
 npm install hmac-manager
 ```
 
-Sign requests from a browser or Node client so they verify against an `HmacManager`-protected API.
+Sign requests from a browser or Node client so they verify against an `HmacManager`-protected API — and verify incoming requests, so a Node service can be one itself without a .NET hop or a mesh sidecar.
 
 ```ts
-import { HmacManagerFactory, HashAlgorithm } from "hmac-manager";
+import { HmacManagerFactory, HashAlgorithm, fromNodeRequest } from "hmac-manager";
 
 const factory = new HmacManagerFactory([{
   name: "MyPolicy",
@@ -137,12 +137,19 @@ const factory = new HmacManagerFactory([{
   schemes: []
 }]);
 
+// Calling a protected API
 const request = new Request("https://api.example.com/orders");
 await factory.create("MyPolicy")!.sign(request); // adds the Hmac headers to `request`
 const response = await fetch(request);
+
+// Being a protected API — a Fetch Request, or fromNodeRequest(req, { body }) on Express
+const result = await factory.verify(incomingRequest);
+if (!result.isSuccess) { /* result.reason says which check rejected it */ }
 ```
 
-→ [Client documentation](https://jzills.github.io/hmac-manager/docs/client/) — schemes, the API surface, and where the private key can safely live.
+Verification needs the private key, so it belongs on a server.
+
+→ [Client documentation](https://jzills.github.io/hmac-manager/docs/client/) — verifying, schemes, the API surface, and where the private key can safely live.
 
 ## Resources
 

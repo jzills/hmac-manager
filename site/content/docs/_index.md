@@ -10,9 +10,12 @@ carries a key pair, a hash algorithm choice, a replay window, and optionally a
 set of schemes; a request names the policy it was signed with, and the verifier
 recomputes the signature and compares.
 
-The same model is available in three places, and they interoperate — a request
-signed by the TypeScript client verifies against the .NET handler or the mesh
-verifier, because all three build the same signing content.
+The same model is available in three places, and they interoperate in every
+direction — all three build the same signing content, and all three can sign or
+verify. A request signed by the TypeScript client verifies against the .NET
+handler or the mesh verifier, and one signed in .NET verifies in a Node service.
+A [shared fixture](concepts/signing-content/#cross-implementation-parity) is
+what keeps that true.
 
 ```csharp
 builder.Services

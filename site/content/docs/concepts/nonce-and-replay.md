@@ -66,6 +66,21 @@ If a policy asks for the distributed cache and no `IDistributedCache` is
 registered, that is reported at `Warning` (event 1201) rather than failing
 silently.
 
+## In the TypeScript client
+
+The npm package verifies too, and applies the same two checks with the same
+rules. `maxAgeInSeconds` lives on the policy and the nonce store is the
+`NonceStore` interface — two methods, with an in-process implementation shipped
+as the default:
+
+```ts
+new HmacManagerFactory(policies, false, myRedisNonceStore);
+```
+
+The in-process default carries exactly the hazard described above, for the same
+reason. See
+[replay protection](../../client/verifying-requests/#replay-protection).
+
 ## In Kubernetes
 
 The chart bundles Redis and every policy uses the distributed cache, so
