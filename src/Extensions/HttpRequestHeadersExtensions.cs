@@ -52,10 +52,14 @@ internal static class HttpRequestHeadersExtensions
                 if (headers.TryGetValues(schemeHeader.Name, out var values))
 #pragma warning restore CS8604
                 {
-                    var schemeHeaderValue = values.First();
+                    // Trimmed so this agrees with a Fetch Headers value, which the
+                    // Headers class normalizes on the way in per specification. Without
+                    // this, a value signed with surrounding whitespace here would not
+                    // match what a compliant parser on the other end reconstructs.
+                    var schemeHeaderValue = values.First().Trim();
                     schemeHeaderValues.Add(new HeaderValue(
-                        schemeHeader.Name, 
-                        schemeHeader.ClaimType, 
+                        schemeHeader.Name,
+                        schemeHeader.ClaimType,
                         schemeHeaderValue
                     ));
                 }
