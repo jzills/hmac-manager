@@ -170,6 +170,24 @@ test("HmacManager_Verify_Rejects_A_Nonce_That_Is_Not_A_Uuid", async () => {
     assert.equal(result.reason, "headers-malformed");
 });
 
+test("HmacManager_Verify_Accepts_An_Uppercase_Nonce", async () => {
+    const { signer, verifier } = createPair();
+    const request = new Request(Url);
+
+    await signer.create("Policy-A")!.sign(request);
+
+    // The signature was computed over the lowercase nonce sign() generated. Uppercasing
+    // the header the way a third-party signer's Guid.ToString("D").ToUpper() might is
+    // only safe to accept if the verifier normalizes back to the same casing before
+    // recomputing -- otherwise this is indistinguishable from a tampered nonce.
+    const nonce = request.headers.get(HmacAuthenticationDefaults.Headers.Nonce)!;
+    request.headers.set(HmacAuthenticationDefaults.Headers.Nonce, nonce.toUpperCase());
+
+    const result = await verifier.verify(request);
+
+    assert.isTrue(result.isSuccess);
+});
+
 test("HmacManager_Verify_Rejects_A_DateRequested_That_Is_Not_A_Number", async () => {
     const { signer, verifier } = createPair();
     const request = new Request(Url);
