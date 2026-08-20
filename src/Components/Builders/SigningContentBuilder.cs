@@ -134,7 +134,17 @@ public class SigningContentBuilder : ISigningContentBuilder
             if (Context.Request.RequestUri.IsAbsoluteUri)
             {
                 Builder.Append($":{Context.Request.RequestUri.PathAndQuery}");
-                Builder.Append($":{Context.Request.RequestUri.Authority}");
+
+                // IdnHost rather than Authority: Authority renders an internationalized
+                // host as the Unicode it was given, while IdnHost is the punycode form --
+                // the one that actually travels in the Host header. The WHATWG URL parser
+                // the TypeScript client uses always applies IDNA, so URL.host is punycode;
+                // signing Authority here disagreed with every request to an IDN host.
+                var requestUri = Context.Request.RequestUri;
+                var authority = requestUri.IsDefaultPort
+                    ? requestUri.IdnHost
+                    : $"{requestUri.IdnHost}:{requestUri.Port}";
+                Builder.Append($":{authority}");
             }
             else
             {

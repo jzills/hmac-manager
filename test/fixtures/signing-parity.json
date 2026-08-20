@@ -128,6 +128,22 @@
             "signature": "W5ALtNaltNXkAFdNTch1626E0kGWsP/Ko77fP6elq+HQAuZlh26K0Ki5eVCHtCYMmDnTsAFNztitnHzQkye8XQ=="
         },
         {
+            "name": "idn-host",
+            "description": "An internationalized domain name. Uri.Authority in .NET renders the host as the Unicode it was given; Uri.IdnHost is the punycode form that actually travels in the Host header, and the one the WHATWG URL parser always produces for url.host. Signing Authority disagreed with every request to an IDN host.",
+            "method": "GET",
+            "url": "https://café.example.com/api/orders",
+            "dateRequestedMs": 1700000008000,
+            "nonce": "d4e5f607-1829-4a3b-8c5d-6e7f8091a2b3",
+            "publicKey": "eb8e9dae-08bd-4883-80fe-1d9a103b30b5",
+            "privateKey": "zvg29s2cQ4idOqbUJWETOw==",
+            "contentHashAlgorithm": "SHA256",
+            "signatureHashAlgorithm": "SHA256",
+            "body": null,
+            "headerValues": [],
+            "signingContent": "GET:/api/orders:xn--caf-dma.example.com:1700000008000:eb8e9dae-08bd-4883-80fe-1d9a103b30b5:d4e5f607-1829-4a3b-8c5d-6e7f8091a2b3",
+            "signature": "PtLNmqLKSyr4SUboTX6KBWYM1afD0T+1lbHCMihWtcU="
+        },
+        {
             "name": "sha1",
             "description": "SHA-1, still selectable and therefore still part of the contract.",
             "method": "DELETE",
