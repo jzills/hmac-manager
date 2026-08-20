@@ -22,7 +22,7 @@ alternatives to one another so much as three places the same check can happen.&l
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;&lt;a href="https://www.npmjs.com/package/hmac-manager"target="_blank" rel="noopener"&gt;&lt;code&gt;hmac-manager&lt;/code&gt;&lt;/a&gt;&lt;/td&gt;
-&lt;td&gt;In a browser or Node client, signing only&lt;/td&gt;
+&lt;td&gt;In a browser or Node client signing, or a Node service verifying&lt;/td&gt;
 &lt;td&gt;&lt;code&gt;npm install hmac-manager&lt;/code&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
@@ -90,8 +90,8 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;Signs requests; it does not verify them. Ships ESM, CJS and type declarations.
-Continue with the &lt;a href="../client-quickstart/"&gt;client quickstart&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Signs requests, and verifies them server-side. Ships ESM, CJS and type
+declarations. Continue with the &lt;a href="../client-quickstart/"&gt;client quickstart&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hm-note hm-note--warn"&gt;
 &lt;p&gt;The .NET package and the npm package share a version line but not a version
 number — they are released separately, so the numbers drift. Neither is a
@@ -342,8 +342,9 @@ you can produce a valid signature without writing a client. See the
 &lt;li&gt;&lt;a href="../../reference/chart-values/"&gt;Chart values&lt;/a&gt; — the full reference&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../kubernetes/enforcement/"&gt;Enforcement&lt;/a&gt; — ingress versus waypoint&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>Client quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/client-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/client-quickstart/</guid><description>
-&lt;p&gt;The &lt;code&gt;hmac-manager&lt;/code&gt; npm package signs requests. It does not verify them — the
-verifying side is the &lt;a href="../dotnet-quickstart/"&gt;.NET library&lt;/a&gt; or the
+&lt;p&gt;The &lt;code&gt;hmac-manager&lt;/code&gt; npm package signs requests and verifies them, so it can be
+either end of the exchange — the others being the
+&lt;a href="../dotnet-quickstart/"&gt;.NET library&lt;/a&gt; and the
 &lt;a href="../kubernetes-quickstart/"&gt;mesh verifier&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;npm install hmac-manager&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
@@ -423,6 +424,37 @@ everyone who loads the page. In a browser this package belongs in a trusted
 context — an extension, a kiosk, a first-party app talking to its own
 backend — or behind a proxy that holds the key. Node has no such caveat.&lt;/p&gt;
 &lt;/div&gt;
+&lt;h2&gt;Verify a request&lt;span class="hx:absolute hx:-mt-20" id="verify-a-request"&gt;&lt;/span&gt;
+&lt;a href="#verify-a-request" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The same policy set, read from the other direction:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;await&lt;/span&gt; &lt;span class="nx"&gt;factory&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;verify&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;request&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;&lt;span class="nx"&gt;result&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;isSuccess&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;console&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;warn&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;#34;rejected&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;reason&lt;/span&gt;: &lt;span class="kt"&gt;result.reason&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt; &lt;span class="c1"&gt;// log it, don&amp;#39;t return it
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;Response&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;null&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;status&lt;/span&gt;: &lt;span class="kt"&gt;401&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;verify&lt;/code&gt; on the &lt;strong&gt;factory&lt;/strong&gt; reads the policy the request names and resolves it —
+which is what a server needs, since it does not know which policy the caller
+used until it reads the request. Like &lt;code&gt;sign&lt;/code&gt;, it never throws; &lt;code&gt;result.reason&lt;/code&gt;
+says which check rejected it.&lt;/p&gt;
+&lt;p&gt;On Node&amp;rsquo;s &lt;code&gt;http&lt;/code&gt;, Express, Koa or Fastify there is no &lt;code&gt;Request&lt;/code&gt; to hand it. Use
+&lt;code&gt;fromNodeRequest(req, { body: rawBody })&lt;/code&gt;, and read
+&lt;a href="../../client/verifying-requests/"&gt;verifying requests&lt;/a&gt; first — the raw body and
+the origin behind a proxy are both easy to get wrong, and both fail as a
+signature mismatch that looks exactly like a forgery.&lt;/p&gt;
+&lt;p&gt;Verification needs the private key, so it is server-side only. The warning above
+is the whole reason.&lt;/p&gt;
 &lt;h2&gt;Requirements&lt;span class="hx:absolute hx:-mt-20" id="requirements"&gt;&lt;/span&gt;
 &lt;a href="#requirements" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;crypto.randomUUID&lt;/code&gt; and &lt;code&gt;crypto.subtle&lt;/code&gt; are used for the nonce and the hashes,
 so a browser needs a &lt;a href="https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"target="_blank" rel="noopener"&gt;secure context&lt;/a&gt;
@@ -433,6 +465,7 @@ something the server cannot reproduce.&lt;/p&gt;
 &lt;h2&gt;Next&lt;span class="hx:absolute hx:-mt-20" id="next"&gt;&lt;/span&gt;
 &lt;a href="#next" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
 &lt;li&gt;&lt;a href="../../client/signing-requests/"&gt;Signing requests&lt;/a&gt; — content hashing, bodies, and what gets signed&lt;/li&gt;
+&lt;li&gt;&lt;a href="../../client/verifying-requests/"&gt;Verifying requests&lt;/a&gt; — replay protection, Node and Express, failure reasons&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../client/schemes/"&gt;Schemes&lt;/a&gt; — adding header values to the signature&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../client/api/"&gt;API&lt;/a&gt; — the full surface&lt;/li&gt;
 &lt;/ul&gt;</description></item></channel></rss>
