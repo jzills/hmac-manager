@@ -9,7 +9,7 @@ weight: 1
 | `Authorization` | `Hmac <signature>` | base64 string | always |
 | `Hmac-Policy` | Name of the policy | string | always |
 | `Hmac-Scheme` | Name of the scheme | string | only with a scheme |
-| `Hmac-Nonce` | Per-request nonce | GUID | always |
+| `Hmac-Nonce` | Per-request nonce | GUID, 8-4-4-4-12, any case | always |
 | `Hmac-DateRequested` | When the request was signed | Unix time, **milliseconds** | always |
 | `Hmac-Options` | The four `Hmac-*` values, concatenated | base64 string | only with consolidated headers |
 

@@ -95,7 +95,10 @@ The body's stream is drained to completion before hashing, so a body arriving in
 several chunks — a large payload, or one built from a `ReadableStream` — is
 covered in full. Size makes no difference to correctness.
 
-A request with no body has no content-hash segment at all, on either side.
+A request with no body has no content-hash segment at all, on either side — and
+so does a request whose body is present but zero-length. The two are treated
+identically, so a `POST` carrying an empty string signs the same content as a
+`POST` carrying nothing.
 
 ## The URL must be absolute
 
