@@ -345,8 +345,30 @@ entirely — the handler signs after the &lt;code&gt;BaseAddress&lt;/code&gt; ha
 &lt;td&gt;A scheme header added &lt;em&gt;after&lt;/em&gt; signing&lt;/td&gt;
 &lt;td&gt;mismatch, or a signing failure&lt;/td&gt;
 &lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;A percent-encoded unreserved character in the path (&lt;code&gt;%41&lt;/code&gt; for &lt;code&gt;A&lt;/code&gt;)&lt;/td&gt;
+&lt;td&gt;mismatch on that request only&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;A URL ending in a bare &lt;code&gt;?&lt;/code&gt; with no query&lt;/td&gt;
+&lt;td&gt;mismatch on that request only&lt;/td&gt;
+&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;p&gt;The path/query pair is where .NET and the browser disagree in ways that are
+narrow enough to document rather than fix, since normalizing either side
+changes the wire format for a case nobody is deliberately relying on:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Percent-encoded unreserved characters.&lt;/strong&gt; &lt;code&gt;Uri.PathAndQuery&lt;/code&gt; unescapes the
+RFC 3986 §2.3 unreserved set (&lt;code&gt;A-Za-z0-9-._~&lt;/code&gt;) — &lt;code&gt;/api/%41%42C&lt;/code&gt; becomes
+&lt;code&gt;/api/ABC&lt;/code&gt; — while the WHATWG &lt;code&gt;URL&lt;/code&gt; parser&amp;rsquo;s &lt;code&gt;pathname&lt;/code&gt; leaves it as given.
+&lt;code&gt;%2F&lt;/code&gt; and &lt;code&gt;%20&lt;/code&gt; are unaffected; only unreserved-set escapes differ.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A trailing &lt;code&gt;?&lt;/code&gt; with an empty query.&lt;/strong&gt; &lt;code&gt;Uri.PathAndQuery&lt;/code&gt; keeps the
+delimiter for &lt;code&gt;https://api.example.com/orders?&lt;/code&gt;, but &lt;code&gt;URL.search&lt;/code&gt; is &lt;code&gt;&amp;quot;&amp;quot;&lt;/code&gt;
+when the query is empty, so the TypeScript builder drops it. Some
+query-string builders emit a trailing &lt;code&gt;?&lt;/code&gt; for an empty parameter map —
+avoid that shape if you sign from the browser.&lt;/li&gt;
+&lt;/ul&gt;
 &lt;p&gt;To see the two strings side by side, turn &lt;code&gt;Trace&lt;/code&gt; on for the &lt;code&gt;HmacManager&lt;/code&gt;
 category on both ends and compare event 1002 (signer) with event 1105
 (verifier). The first differing segment is the cause — see
