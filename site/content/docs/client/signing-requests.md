@@ -110,6 +110,18 @@ new Request("/orders")                          // no host to sign
 The query string is included; the fragment is not, since it never leaves the
 client.
 
+Credentials in the URL are not supported:
+
+```ts
+new Request("https://user:pass@api.example.com/orders")
+// TypeError: Request cannot be constructed from a URL that includes credentials
+```
+
+The Fetch `Request` constructor refuses a URL carrying userinfo per
+specification, so `sign` never gets the chance to sign it — the failure
+happens at `new Request(...)`, before `manager.sign` is even called, and
+`result.error` is not involved.
+
 ## Matching the server
 
 Everything about the policy must match the verifying side — name, public key,
