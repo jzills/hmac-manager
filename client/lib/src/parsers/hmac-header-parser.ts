@@ -17,11 +17,13 @@ import BadHeaderFormatError from "../exceptions/bad-header-format-error";
  */
 export default class HmacHeaderParser {
     /**
-     * Matches the canonical 8-4-4-4-12 hexadecimal UUID form.
+     * Matches the canonical 8-4-4-4-12 hexadecimal UUID form, case-insensitively.
      *
      * Deliberately not a variant/version-aware pattern: .NET decides this with
      * `Guid.TryParse`, which cares about the shape and not about which RFC 4122 version
-     * produced it. Anything stricter here would reject nonces .NET accepts.
+     * produced it. `Guid.TryParse` also accepts the `N`, `B`, `P` and `X` formats, which
+     * this pattern does not — narrower than .NET here, not stricter, since neither
+     * library ever emits those and nothing depends on accepting them.
      */
     private static readonly NoncePattern =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -124,6 +126,13 @@ export default class HmacHeaderParser {
      * shape could never verify there; rejecting it here keeps the two implementations
      * agreeing on the same requests, and gives the nonce store a bounded, predictable
      * key rather than an arbitrary caller-supplied string.
+     *
+     * Lowercased before it is returned: it becomes a segment of the signing content,
+     * and .NET's `Guid.ToString()` there is always lowercase. Both libraries emit
+     * lowercase nonces themselves, so this only matters for a third-party signer that
+     * sent an uppercase one — without it, .NET would accept that request and this
+     * client would reject it, the same casing bug the public key had before
+     * {@link normalizePublicKey}.
      */
     getNonce(): string {
         const nonce = this.getHeader(HmacAuthenticationDefaults.Headers.Nonce);
@@ -137,7 +146,7 @@ export default class HmacHeaderParser {
                 `The "${HmacAuthenticationDefaults.Headers.Nonce}" header must be a UUID.`);
         }
 
-        return nonce;
+        return nonce.toLowerCase();
     }
 
     /**
