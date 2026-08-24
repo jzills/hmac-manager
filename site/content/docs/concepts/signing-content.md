@@ -42,17 +42,26 @@ segment is built from `Uri.IdnHost` in .NET and `URL.host` in the browser,
 both of which include a non-default port and omit a default one, which is
 what makes a request signed in a browser verify in .NET.
 
-For an internationalized domain name, both sides sign the **punycode** form
+For an internationalized domain name, every side signs the **punycode** form
 (`xn--caf-dma.example.com`, not `café.example.com`) — the form that actually
-travels in the `Host` header. .NET previously signed the Unicode form, via
-`Uri.Authority`, and so could not verify against a browser client for an IDN
-host in either direction. It now uses `Uri.IdnHost`. **This changes the wire
-format for a deployment already signing an IDN host**: both ends have to be
-upgraded together, or requests to that host will start being rejected.
+travels in the `Host` header, since DNS and HTTP require it there.
+
+This used to be true of every side *except* a .NET signer. A verifier rebuilds
+the URI from the `Host` header it received, which is already punycode, so it
+has always produced the punycode form; the TypeScript client gets it from
+`URL.host`, which applies IDNA unconditionally. Only .NET's signing path read
+`Uri.Authority` off the URL as the caller wrote it, so an `HttpClient`
+configured with `https://café.example.com` signed a host **nothing else
+reproduced — including a .NET verifier**. It now uses `Uri.IdnHost`.
+
+That makes this a fix rather than a wire-format change: it turns requests that
+were rejected into requests that verify, and a signer on the new version works
+against a verifier on either. A caller that already configured the punycode
+form was never affected in the first place.
 
 An IPv6 literal keeps its brackets — `[::1]:8080`, not `::1:8080` — which is
 what `URL.host` produces and what `Uri.Authority` produced before. Only the
-IDN case changed.
+IDN signing case changed.
 
 The public key is written in the canonical lowercase GUID form regardless of how
 the policy spells it. .NET gets that for free — `KeyCredentials.PublicKey` is a
