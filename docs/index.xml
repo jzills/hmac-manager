@@ -1446,6 +1446,26 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;p&gt;The query string is included; the fragment is not, since it never leaves the
 client.&lt;/p&gt;
+&lt;p&gt;Credentials in the URL are not supported:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;Request&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;#34;https://user:pass@api.example.com/orders&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// TypeError: Request cannot be constructed from a URL that includes credentials
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;The Fetch &lt;code&gt;Request&lt;/code&gt; constructor refuses a URL carrying userinfo per
+specification, so &lt;code&gt;sign&lt;/code&gt; never gets the chance to sign it — the failure
+happens at &lt;code&gt;new Request(...)&lt;/code&gt;, before &lt;code&gt;manager.sign&lt;/code&gt; is even called, and
+&lt;code&gt;result.error&lt;/code&gt; is not involved.&lt;/p&gt;
 &lt;h2&gt;Matching the server&lt;span class="hx:absolute hx:-mt-20" id="matching-the-server"&gt;&lt;/span&gt;
 &lt;a href="#matching-the-server" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Everything about the policy must match the verifying side — name, public key,
 private key, both algorithms, and the scheme if there is one. There is no
