@@ -274,9 +274,17 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;p&gt;That string is hashed with the signing algorithm and the private key, and the
 result goes into &lt;code&gt;Authorization: Hmac &amp;lt;signature&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;The .NET and TypeScript implementations build the same string. &lt;code&gt;Authority&lt;/code&gt; in
-.NET and &lt;code&gt;URL.host&lt;/code&gt; in the browser both include a non-default port and omit a
-default one, which is what makes a request signed in a browser verify in .NET.&lt;/p&gt;
+&lt;p&gt;The .NET and TypeScript implementations build the same string. The authority
+segment is built from &lt;code&gt;Uri.IdnHost&lt;/code&gt; in .NET and &lt;code&gt;URL.host&lt;/code&gt; in the browser,
+both of which include a non-default port and omit a default one, which is
+what makes a request signed in a browser verify in .NET.&lt;/p&gt;
+&lt;p&gt;For an internationalized domain name, both sides sign the &lt;strong&gt;punycode&lt;/strong&gt; form
+(&lt;code&gt;xn--caf-dma.example.com&lt;/code&gt;, not &lt;code&gt;café.example.com&lt;/code&gt;) — the form that actually
+travels in the &lt;code&gt;Host&lt;/code&gt; header. &lt;code&gt;Uri.Authority&lt;/code&gt; renders the Unicode a caller
+configured instead, so a version of this library built before this note
+signed the Unicode form and could not verify against a browser client for an
+IDN host; upgrading changes the wire format for a deployment already using
+one.&lt;/p&gt;
 &lt;p&gt;The public key is written in the canonical lowercase GUID form regardless of how
 the policy spells it. .NET gets that for free — &lt;code&gt;KeyCredentials.PublicKey&lt;/code&gt; is a
 &lt;code&gt;Guid&lt;/code&gt;, so the segment is always &lt;code&gt;Guid.ToString()&lt;/code&gt; — and the TypeScript client,
