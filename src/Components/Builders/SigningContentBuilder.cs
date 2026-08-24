@@ -140,10 +140,15 @@ public class SigningContentBuilder : ISigningContentBuilder
                 // the one that actually travels in the Host header. The WHATWG URL parser
                 // the TypeScript client uses always applies IDNA, so URL.host is punycode;
                 // signing Authority here disagreed with every request to an IDN host.
+                //
+                // IdnHost also strips the brackets from an IPv6 literal, which Authority
+                // and URL.host both keep -- without re-adding them, "[::1]:8080" would
+                // sign as the ambiguous "::1:8080" and break a case that already worked.
                 var requestUri = Context.Request.RequestUri;
-                var authority = requestUri.IsDefaultPort
-                    ? requestUri.IdnHost
-                    : $"{requestUri.IdnHost}:{requestUri.Port}";
+                var host = requestUri.HostNameType == UriHostNameType.IPv6
+                    ? $"[{requestUri.IdnHost}]"
+                    : requestUri.IdnHost;
+                var authority = requestUri.IsDefaultPort ? host : $"{host}:{requestUri.Port}";
                 Builder.Append($":{authority}");
             }
             else
