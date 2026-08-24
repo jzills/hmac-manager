@@ -96,6 +96,22 @@ entirely — the handler signs after the `BaseAddress` has been applied.
 | Clock skew past the replay window | rejected as expired, not as a mismatch |
 | Different algorithms on each side | mismatch on every request |
 | A scheme header added *after* signing | mismatch, or a signing failure |
+| A percent-encoded unreserved character in the path (`%41` for `A`) | mismatch on that request only |
+| A URL ending in a bare `?` with no query | mismatch on that request only |
+
+The path/query pair is where .NET and the browser disagree in ways that are
+narrow enough to document rather than fix, since normalizing either side
+changes the wire format for a case nobody is deliberately relying on:
+
+- **Percent-encoded unreserved characters.** `Uri.PathAndQuery` unescapes the
+  RFC 3986 §2.3 unreserved set (`A-Za-z0-9-._~`) — `/api/%41%42C` becomes
+  `/api/ABC` — while the WHATWG `URL` parser's `pathname` leaves it as given.
+  `%2F` and `%20` are unaffected; only unreserved-set escapes differ.
+- **A trailing `?` with an empty query.** `Uri.PathAndQuery` keeps the
+  delimiter for `https://api.example.com/orders?`, but `URL.search` is `""`
+  when the query is empty, so the TypeScript builder drops it. Some
+  query-string builders emit a trailing `?` for an empty parameter map —
+  avoid that shape if you sign from the browser.
 
 To see the two strings side by side, turn `Trace` on for the `HmacManager`
 category on both ends and compare event 1002 (signer) with event 1105
