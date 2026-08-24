@@ -37,9 +37,18 @@ GET:/orders:api.example.com:1723651200000:00000000-0000-0000-0000-000000000001:6
 That string is hashed with the signing algorithm and the private key, and the
 result goes into `Authorization: Hmac <signature>`.
 
-The .NET and TypeScript implementations build the same string. `Authority` in
-.NET and `URL.host` in the browser both include a non-default port and omit a
-default one, which is what makes a request signed in a browser verify in .NET.
+The .NET and TypeScript implementations build the same string. The authority
+segment is built from `Uri.IdnHost` in .NET and `URL.host` in the browser,
+both of which include a non-default port and omit a default one, which is
+what makes a request signed in a browser verify in .NET.
+
+For an internationalized domain name, both sides sign the **punycode** form
+(`xn--caf-dma.example.com`, not `café.example.com`) — the form that actually
+travels in the `Host` header. `Uri.Authority` renders the Unicode a caller
+configured instead, so a version of this library built before this note
+signed the Unicode form and could not verify against a browser client for an
+IDN host; upgrading changes the wire format for a deployment already using
+one.
 
 The public key is written in the canonical lowercase GUID form regardless of how
 the policy spells it. .NET gets that for free — `KeyCredentials.PublicKey` is a

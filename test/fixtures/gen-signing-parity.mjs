@@ -125,6 +125,42 @@ const cases = [
         headerValues: []
     },
     {
+        name: "idn-host",
+        description:
+            "An internationalized domain name. Uri.Authority in .NET renders the host as " +
+            "the Unicode it was given; Uri.IdnHost is the punycode form that actually " +
+            "travels in the Host header, and the one the WHATWG URL parser always produces " +
+            "for url.host. Signing Authority disagreed with every request to an IDN host.",
+        method: "GET",
+        url: "https://café.example.com/api/orders",
+        dateRequestedMs: 1700000008000,
+        nonce: "d4e5f607-1829-4a3b-8c5d-6e7f8091a2b3",
+        publicKey: "eb8e9dae-08bd-4883-80fe-1d9a103b30b5",
+        privateKey: "zvg29s2cQ4idOqbUJWETOw==",
+        contentHashAlgorithm: "SHA256",
+        signatureHashAlgorithm: "SHA256",
+        body: null,
+        headerValues: []
+    },
+    {
+        name: "ipv6-host",
+        description:
+            "An IPv6 literal, which keeps its brackets in the authority segment. Uri.IdnHost " +
+            "strips them where Uri.Authority and URL.host both keep them, so deriving the " +
+            "segment from IdnHost without re-adding them would sign the ambiguous " +
+            "\"::1:8080\" and break a host that already verified.",
+        method: "GET",
+        url: "http://[::1]:8080/api/orders",
+        dateRequestedMs: 1700000009000,
+        nonce: "f1e2d3c4-b5a6-4978-8b1c-2d3e4f5a6b7c",
+        publicKey: "eb8e9dae-08bd-4883-80fe-1d9a103b30b5",
+        privateKey: "zvg29s2cQ4idOqbUJWETOw==",
+        contentHashAlgorithm: "SHA256",
+        signatureHashAlgorithm: "SHA256",
+        body: null,
+        headerValues: []
+    },
+    {
         name: "sha1",
         description: "SHA-1, still selectable and therefore still part of the contract.",
         method: "DELETE",
