@@ -30,7 +30,7 @@
 &lt;tr&gt;
 &lt;td&gt;&lt;code&gt;Hmac-Nonce&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Per-request nonce&lt;/td&gt;
-&lt;td&gt;GUID&lt;/td&gt;
+&lt;td&gt;GUID, 8-4-4-4-12, any case&lt;/td&gt;
 &lt;td&gt;always&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;

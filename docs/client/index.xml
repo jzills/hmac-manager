@@ -209,7 +209,10 @@ afterwards, and you hand the same object to &lt;code&gt;fetch&lt;/code&gt;.&lt;/
 &lt;p&gt;The body&amp;rsquo;s stream is drained to completion before hashing, so a body arriving in
 several chunks — a large payload, or one built from a &lt;code&gt;ReadableStream&lt;/code&gt; — is
 covered in full. Size makes no difference to correctness.&lt;/p&gt;
-&lt;p&gt;A request with no body has no content-hash segment at all, on either side.&lt;/p&gt;
+&lt;p&gt;A request with no body has no content-hash segment at all, on either side — and
+so does a request whose body is present but zero-length. The two are treated
+identically, so a &lt;code&gt;POST&lt;/code&gt; carrying an empty string signs the same content as a
+&lt;code&gt;POST&lt;/code&gt; carrying nothing.&lt;/p&gt;
 &lt;h2&gt;The URL must be absolute&lt;span class="hx:absolute hx:-mt-20" id="the-url-must-be-absolute"&gt;&lt;/span&gt;
 &lt;a href="#the-url-must-be-absolute" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The host is part of the signing content, so it has to be known when the request
 is signed:&lt;/p&gt;

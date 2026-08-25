@@ -126,6 +126,11 @@ data-copied-label="Copied!"
 &lt;p&gt;A request selects the scheme with the &lt;code&gt;Hmac-Scheme&lt;/code&gt; header. The signer and the
 verifier must name the same one, and both fold the header values in, in the
 order the scheme declares them.&lt;/p&gt;
+&lt;p&gt;Values are &lt;strong&gt;trimmed&lt;/strong&gt; before they are folded in, so surrounding whitespace
+never reaches the signature. HTTP treats whitespace around a field value as
+insignificant and parsers strip it, so signing it would mean signing something
+the other end cannot reconstruct. Whitespace &lt;em&gt;inside&lt;/em&gt; a value is preserved, and
+is signed exactly as given.&lt;/p&gt;
 &lt;p&gt;Naming a scheme the policy does not declare is refused rather than ignored, on
 both the signing and the verifying side: the factory returns no manager, and an
 incoming request naming one fails authentication. Signing without the scheme
@@ -244,16 +249,16 @@ data-copied-label="Copied!"
 &lt;tr&gt;
 &lt;td&gt;&lt;code&gt;contentHash&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;hash of the request body&lt;/td&gt;
-&lt;td&gt;only when there is a body&lt;/td&gt;
+&lt;td&gt;only when the body is &lt;strong&gt;non-empty&lt;/strong&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;scheme header values&lt;/td&gt;
-&lt;td&gt;the values, in the order the scheme declares&lt;/td&gt;
+&lt;td&gt;the values, &lt;strong&gt;trimmed&lt;/strong&gt;, in the order the scheme declares&lt;/td&gt;
 &lt;td&gt;only with a scheme&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;&lt;code&gt;nonce&lt;/code&gt;&lt;/td&gt;
-&lt;td&gt;a GUID generated per request&lt;/td&gt;
+&lt;td&gt;a GUID generated per request, canonical &lt;strong&gt;lowercase&lt;/strong&gt;&lt;/td&gt;
 &lt;td&gt;always&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
@@ -278,13 +283,23 @@ result goes into &lt;code&gt;Authorization: Hmac &amp;lt;signature&amp;gt;&lt;/c
 segment is built from &lt;code&gt;Uri.IdnHost&lt;/code&gt; in .NET and &lt;code&gt;URL.host&lt;/code&gt; in the browser,
 both of which include a non-default port and omit a default one, which is
 what makes a request signed in a browser verify in .NET.&lt;/p&gt;
-&lt;p&gt;For an internationalized domain name, both sides sign the &lt;strong&gt;punycode&lt;/strong&gt; form
+&lt;p&gt;For an internationalized domain name, every side signs the &lt;strong&gt;punycode&lt;/strong&gt; form
 (&lt;code&gt;xn--caf-dma.example.com&lt;/code&gt;, not &lt;code&gt;café.example.com&lt;/code&gt;) — the form that actually
-travels in the &lt;code&gt;Host&lt;/code&gt; header. &lt;code&gt;Uri.Authority&lt;/code&gt; renders the Unicode a caller
-configured instead, so a version of this library built before this note
-signed the Unicode form and could not verify against a browser client for an
-IDN host; upgrading changes the wire format for a deployment already using
-one.&lt;/p&gt;
+travels in the &lt;code&gt;Host&lt;/code&gt; header, since DNS and HTTP require it there.&lt;/p&gt;
+&lt;p&gt;This used to be true of every side &lt;em&gt;except&lt;/em&gt; a .NET signer. A verifier rebuilds
+the URI from the &lt;code&gt;Host&lt;/code&gt; header it received, which is already punycode, so it
+has always produced the punycode form; the TypeScript client gets it from
+&lt;code&gt;URL.host&lt;/code&gt;, which applies IDNA unconditionally. Only .NET&amp;rsquo;s signing path read
+&lt;code&gt;Uri.Authority&lt;/code&gt; off the URL as the caller wrote it, so an &lt;code&gt;HttpClient&lt;/code&gt;
+configured with &lt;code&gt;https://café.example.com&lt;/code&gt; signed a host &lt;strong&gt;nothing else
+reproduced — including a .NET verifier&lt;/strong&gt;. It now uses &lt;code&gt;Uri.IdnHost&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;That makes this a fix rather than a wire-format change: it turns requests that
+were rejected into requests that verify, and a signer on the new version works
+against a verifier on either. A caller that already configured the punycode
+form was never affected in the first place.&lt;/p&gt;
+&lt;p&gt;An IPv6 literal keeps its brackets — &lt;code&gt;[::1]:8080&lt;/code&gt;, not &lt;code&gt;::1:8080&lt;/code&gt; — which is
+what &lt;code&gt;URL.host&lt;/code&gt; produces and what &lt;code&gt;Uri.Authority&lt;/code&gt; produced before. Only the
+IDN signing case changed.&lt;/p&gt;
 &lt;p&gt;The public key is written in the canonical lowercase GUID form regardless of how
 the policy spells it. .NET gets that for free — &lt;code&gt;KeyCredentials.PublicKey&lt;/code&gt; is a
 &lt;code&gt;Guid&lt;/code&gt;, so the segment is always &lt;code&gt;Guid.ToString()&lt;/code&gt; — and the TypeScript client,
@@ -292,6 +307,21 @@ which takes a string, lowercases a canonical GUID to match. It matters because
 &lt;code&gt;NEWID()&lt;/code&gt;, PowerShell and the Azure portal all produce uppercase GUIDs, and a
 client that signed one verbatim agreed with every other copy of itself while
 failing against .NET on every request.&lt;/p&gt;
+&lt;p&gt;The nonce is normalized the same way, and for the same reason. .NET parses the
+&lt;code&gt;Hmac-Nonce&lt;/code&gt; header into a &lt;code&gt;Guid&lt;/code&gt;, so the segment is always lowercase whatever
+case arrived; the TypeScript client lowercases the parsed value to match. Both
+libraries emit lowercase nonces already, so this only matters for a
+third-party signer — one written in Go or Python against this page — which
+would otherwise be accepted by one implementation and rejected by the other.&lt;/p&gt;
+&lt;p&gt;Scheme header values are &lt;strong&gt;trimmed&lt;/strong&gt; before they are signed. The Fetch
+&lt;code&gt;Headers&lt;/code&gt; class strips surrounding whitespace on the way in per specification,
+and HTTP itself treats optional whitespace around a field value as
+insignificant, so a value signed untrimmed would not match what the parser on
+the receiving end delivers.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;An empty body contributes no segment.&lt;/strong&gt; A &lt;code&gt;POST&lt;/code&gt; whose body is present but
+zero-length is treated exactly like one with no body at all — there is no
+content-hash segment on either side. Hashing the empty string instead would
+produce a segment no verifier reproduces.&lt;/p&gt;
 &lt;p&gt;The string is hashed as &lt;strong&gt;UTF-8&lt;/strong&gt;. Every segment above is ASCII, where the
 encoding makes no difference — except the values a scheme contributes, which are
 whatever the caller put in those headers.&lt;/p&gt;
@@ -642,6 +672,9 @@ data-copied-label="Copied!"
 &lt;p&gt;Note that the nonce and the timestamp are sent in the clear &lt;em&gt;and&lt;/em&gt; covered by
 the signature. They are not secrets — they are there so the verifier can
 reproduce the content, and signing them is what stops anyone editing them.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Hmac-Nonce&lt;/code&gt; is accepted in either case, and is lowercased before it goes into
+the &lt;a href="../signing-content/"&gt;signing content&lt;/a&gt; — so a signer emitting an uppercase
+GUID is verified the same by both implementations rather than by only one.&lt;/p&gt;
 &lt;p&gt;The names are constants, not strings to retype:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;HmacAuthenticationDefaults&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AuthenticationScheme&lt;/span&gt; &lt;span class="c1"&gt;// &amp;#34;Hmac&amp;#34;&lt;/span&gt;
