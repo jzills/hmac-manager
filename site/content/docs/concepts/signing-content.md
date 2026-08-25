@@ -24,9 +24,9 @@ Segments are joined with `:` in this order:
 | `authority` | `api.example.com`, with port if non-default | always |
 | `dateRequested` | Unix time in **milliseconds** | always |
 | `publicKey` | the policy's public key GUID, canonical **lowercase** | always |
-| `contentHash` | hash of the request body | only when there is a body |
-| scheme header values | the values, in the order the scheme declares | only with a scheme |
-| `nonce` | a GUID generated per request | always |
+| `contentHash` | hash of the request body | only when the body is **non-empty** |
+| scheme header values | the values, **trimmed**, in the order the scheme declares | only with a scheme |
+| `nonce` | a GUID generated per request, canonical **lowercase** | always |
 
 A concrete example — a `GET` with no body and no scheme:
 
@@ -42,13 +42,26 @@ segment is built from `Uri.IdnHost` in .NET and `URL.host` in the browser,
 both of which include a non-default port and omit a default one, which is
 what makes a request signed in a browser verify in .NET.
 
-For an internationalized domain name, both sides sign the **punycode** form
+For an internationalized domain name, every side signs the **punycode** form
 (`xn--caf-dma.example.com`, not `café.example.com`) — the form that actually
-travels in the `Host` header. `Uri.Authority` renders the Unicode a caller
-configured instead, so a version of this library built before this note
-signed the Unicode form and could not verify against a browser client for an
-IDN host; upgrading changes the wire format for a deployment already using
-one.
+travels in the `Host` header, since DNS and HTTP require it there.
+
+This used to be true of every side *except* a .NET signer. A verifier rebuilds
+the URI from the `Host` header it received, which is already punycode, so it
+has always produced the punycode form; the TypeScript client gets it from
+`URL.host`, which applies IDNA unconditionally. Only .NET's signing path read
+`Uri.Authority` off the URL as the caller wrote it, so an `HttpClient`
+configured with `https://café.example.com` signed a host **nothing else
+reproduced — including a .NET verifier**. It now uses `Uri.IdnHost`.
+
+That makes this a fix rather than a wire-format change: it turns requests that
+were rejected into requests that verify, and a signer on the new version works
+against a verifier on either. A caller that already configured the punycode
+form was never affected in the first place.
+
+An IPv6 literal keeps its brackets — `[::1]:8080`, not `::1:8080` — which is
+what `URL.host` produces and what `Uri.Authority` produced before. Only the
+IDN signing case changed.
 
 The public key is written in the canonical lowercase GUID form regardless of how
 the policy spells it. .NET gets that for free — `KeyCredentials.PublicKey` is a
@@ -57,6 +70,24 @@ which takes a string, lowercases a canonical GUID to match. It matters because
 `NEWID()`, PowerShell and the Azure portal all produce uppercase GUIDs, and a
 client that signed one verbatim agreed with every other copy of itself while
 failing against .NET on every request.
+
+The nonce is normalized the same way, and for the same reason. .NET parses the
+`Hmac-Nonce` header into a `Guid`, so the segment is always lowercase whatever
+case arrived; the TypeScript client lowercases the parsed value to match. Both
+libraries emit lowercase nonces already, so this only matters for a
+third-party signer — one written in Go or Python against this page — which
+would otherwise be accepted by one implementation and rejected by the other.
+
+Scheme header values are **trimmed** before they are signed. The Fetch
+`Headers` class strips surrounding whitespace on the way in per specification,
+and HTTP itself treats optional whitespace around a field value as
+insignificant, so a value signed untrimmed would not match what the parser on
+the receiving end delivers.
+
+**An empty body contributes no segment.** A `POST` whose body is present but
+zero-length is treated exactly like one with no body at all — there is no
+content-hash segment on either side. Hashing the empty string instead would
+produce a segment no verifier reproduces.
 
 The string is hashed as **UTF-8**. Every segment above is ASCII, where the
 encoding makes no difference — except the values a scheme contributes, which are

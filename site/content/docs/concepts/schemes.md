@@ -30,6 +30,12 @@ A request selects the scheme with the `Hmac-Scheme` header. The signer and the
 verifier must name the same one, and both fold the header values in, in the
 order the scheme declares them.
 
+Values are **trimmed** before they are folded in, so surrounding whitespace
+never reaches the signature. HTTP treats whitespace around a field value as
+insignificant and parsers strip it, so signing it would mean signing something
+the other end cannot reconstruct. Whitespace *inside* a value is preserved, and
+is signed exactly as given.
+
 Naming a scheme the policy does not declare is refused rather than ignored, on
 both the signing and the verifying side: the factory returns no manager, and an
 incoming request naming one fails authentication. Signing without the scheme
