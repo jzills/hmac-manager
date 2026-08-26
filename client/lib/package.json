@@ -1,12 +1,14 @@
 {
     "name": "hmac-manager",
     "version": "2.6.0",
-    "description": "Signs outgoing requests with HMAC so they verify against an HmacManager-protected ASP.NET Core API or Istio ext-authz service.",
+    "description": "Signs and verifies HMAC-authenticated requests, interoperating with HmacManager-protected ASP.NET Core APIs and the Istio ext-authz service.",
     "author": "Joshua Zillwood",
     "license": "MIT",
     "keywords": [
         "hmac",
-        "authentication"
+        "authentication",
+        "request-signing",
+        "request-verification"
     ],
     "type": "module",
     "homepage": "https://jzills.github.io/hmac-manager/docs/client/",
@@ -32,10 +34,12 @@
     ],
     "scripts": {
         "build": "vite build",
-        "test": "vitest"
+        "test": "vitest",
+        "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
     },
     "devDependencies": {
         "@types/node": "^26.2.0",
+        "typescript": "^6.0.3",
         "vite": "^8.2.1",
         "vite-plugin-dts": "^5.0.3",
         "vitest": "^4.1.10"

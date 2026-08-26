@@ -1,70 +1,62 @@
+# Simple authentication
 
-# WebToApiAuthentication
+The baseline sample: a **Web** app signing requests to a protected **Api**. Every
+other sample is this one with a single thing changed, so a diff against this
+directory is the feature.
 
-This demo is an example of using [HmacManager](../../README.md) for authentication between two .NET applications. One, the [Web](Web) is signing requests to interact with protected [Api](Api) endpoints.
+```bash
+dotnet run --project Api    # http://localhost:5100
+dotnet run --project Web    # http://localhost:5101  (second terminal)
+```
 
-## Api
+Then open <http://localhost:5101>. The response is what the Api returned for a
+signed `GET` and a signed `POST`.
 
-Register [HmacManager](../../README.md) through the [AddHmac](/src/Mvc/Extensions/AuthenticationBuilderExtensions.cs) extension method.
+## What to look at
 
-    builder.Services
-        .AddMemoryCache()
-        .AddAuthentication()
-        .AddHmac(options =>
-        {
-            options.AddPolicy("MyPolicy", policy =>
-            {
-                policy.UsePublicKey(...);
-                policy.UsePrivateKey(...);
-                policy.UseMemoryCache(30);
-                policy.AddScheme("RequireAccountAndEmail", scheme =>
-                {
-                    scheme.AddHeader("X-Account");
-                    scheme.AddHeader("X-Email");
-                });
-            });
-        });
+| File | Why |
+|---|---|
+| [`Api/Program.cs`](Api/Program.cs) | `AddHmac` — the policy, its scheme, and the `HmacEvents` hooks |
+| [`Api/Controllers/WeatherForecastController.cs`](Api/Controllers/WeatherForecastController.cs) | `[HmacAuthenticate]` — what actually enforces it |
+| [`Web/Program.cs`](Web/Program.cs) | `AddHmacManager` + `AddHmacHttpMessageHandler` — the signing side |
 
-Decorate controller or action with [HmacAuthenticateAttribute](/src/Mvc/HmacAuthenticateAttribute.cs).
+The client side is one line. `AddHmacHttpMessageHandler` attaches a handler to a
+named `HttpClient`, and from then on every request that client sends is signed:
 
-    [ApiController]
-    [Route("api/[controller]")]
-    [HmacAuthenticate(Policy = "MyPolicy", Scheme = "RequireAccountAndEmail")]
-    public class WeatherForecastController : ControllerBase
+```csharp
+builder.Services
+    .AddHttpClient("WeatherApi", client => client.BaseAddress = new Uri(apiUrl))
+    .AddHmacHttpMessageHandler("MyPolicy", "RequireAccountAndEmail");
+```
 
-## Web
+Nothing in the calling code mentions HMAC.
 
-Register [HmacManager](../../README.md) through the [AddHmacManager](/src/Mvc/Extensions/IServiceCollectionExtensions.cs) extension method.
+## Seeing it work
 
-    builder.Services
-        .AddHmacManager(options =>
-        {
-            options.AddPolicy("MyPolicy", policy =>
-            {
-                policy.UsePublicKey(...);
-                policy.UsePrivateKey(...);
-                policy.UseMemoryCache(30);
-                policy.AddScheme("RequireAccountAndEmail", scheme =>
-                {
-                    scheme.AddHeader("X-Account");
-                    scheme.AddHeader("X-Email");
-                });
-            });
-        });
+The `RequireAccountAndEmail` scheme folds `X-Account` and `X-Email` into the
+signature, and the Api turns them into claims — which is why the `POST` response
+echoes the account and email back. They cannot be altered in transit without
+invalidating the signature.
 
-Add a HttpClient and call [AddHmacHttpMessageHandler](/src/Mvc/HmacDelegatingHandler.cs) to register a handler to automatically sign outgoing requests.
+Two things worth trying:
 
-    builder.Services
-        .AddHttpClient("Hmac_MyPolicy_RequireAccountAndEmail", client =>
-        {
-            client.BaseAddress = new Uri(...);
-        }).AddHmacHttpMessageHandler("MyPolicy", "RequireAccountAndEmail");
+```bash
+# Unsigned — 401.
+curl -i http://localhost:5100/api/weatherforecast
 
-Create a request, add any headers required by the scheme and fire away.
+# Comment out one of the header lines in Web/Program.cs and rerun.
+# Signing fails: the signature covers a header that is not there.
+```
 
-    using var request = new HttpRequestMessage(HttpMethod.Get, "api/weatherforecast");
+## Notes
 
-    request.Headers.Add("X-Account", ...);
-    request.Headers.Add("X-Email", ...);
+Both projects run over plain HTTP so the sample needs no development
+certificate. HMAC authenticates a request and detects tampering; it does not
+encrypt one, so a real deployment still belongs behind TLS.
 
-    var response = await _client.SendAsync(request);
+The keys are literals committed to this repository so the sample runs with no
+setup. They are not an example of key handling — see
+[configuration binding](https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/)
+for where a real key belongs.
+
+**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/)**

@@ -29,6 +29,10 @@ Note that the nonce and the timestamp are sent in the clear *and* covered by
 the signature. They are not secrets — they are there so the verifier can
 reproduce the content, and signing them is what stops anyone editing them.
 
+`Hmac-Nonce` is accepted in either case, and is lowercased before it goes into
+the [signing content](../signing-content/) — so a signer emitting an uppercase
+GUID is verified the same by both implementations rather than by only one.
+
 The names are constants, not strings to retype:
 
 ```csharp

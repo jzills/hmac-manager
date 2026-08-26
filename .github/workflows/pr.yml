@@ -76,16 +76,18 @@ jobs:
         working-directory: ./client/lib
         run: npm ci
 
+      # The actual type gate, and the only step here that is one. vite-plugin-dts
+      # prints tsc's errors during the build below but the build still exits 0, and
+      # vitest transpiles through esbuild without checking types at all — so before
+      # this step existed a type error passed both of them and reached develop.
+      - name: Typecheck
+        working-directory: ./client/lib
+        run: npm run typecheck
+
       # Not redundant with the tests below. vitest only loads the modules its
       # tests import, so nothing exercises src/index.ts — the package's entry
       # point, and the thing npm-release.yml publishes. A broken import there
       # fails this step and passes the tests.
-      #
-      # It is not a typecheck, despite running vite-plugin-dts: the plugin
-      # prints tsc's errors but the build still exits 0, so a type error passes
-      # both this and vitest. `tsc --noEmit` cannot be added as a gate until
-      # client/lib/tsconfig.json is dealt with — it currently fails on its own
-      # deprecated moduleResolution before reaching any source.
       - name: Build
         working-directory: ./client/lib
         run: npm run build
@@ -108,6 +110,37 @@ jobs:
 
       - name: Test create-release.sh
         run: bash .github/scripts/create-release.test.sh
+
+  sample-builds:
+    name: Sample Builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Nothing in CI referenced samples/ before this job, and it showed. The
+      # JavaScript client sample depended on a tarball that is gitignored and was
+      # never committed, so npm install failed on any clean checkout; one sample
+      # was pinned to a released package four minor versions behind the source it
+      # sits beside; and the run command in every README named a directory that
+      # held no project. A build alone would have caught the second; only a run
+      # catches the others, which is why the two Node samples are executed rather
+      # than compiled.
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: client/lib/package-lock.json
+
+      - name: Build every sample, round-trip the Node ones
+        run: bash .github/scripts/verify-samples.sh
 
   integration-tests:
     name: Integration Tests

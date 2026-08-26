@@ -1,4 +1,5 @@
 import SigningContentContext from "./signing-content-context";
+import MissingHeaderError from "../exceptions/missing-header-error";
 
 /**
  * Builder for constructing the signing content used in HMAC authentication.
@@ -58,7 +59,7 @@ export default class SigningContentBuilder {
         return this;
     }
 
-    /** 
+    /**
      * Adds signed headers to the signing content.
      * Throws an error if any required headers are missing.
      * @param signedHeaders The headers that are signed.
@@ -70,7 +71,12 @@ export default class SigningContentBuilder {
             const headerValues = signedHeaders.map(key => this.context.request?.headers.get(key));
             const isMissingHeaderValues = headerValues.some(value => value === null);
             if (isMissingHeaderValues) {
-                throw new Error("There are missing headers that are required for signing.");
+                // A typed error rather than a bare one. This same builder runs on both
+                // sides now, and the verifier has to tell "the caller omitted a header
+                // the scheme covers" — a rejected request — apart from a fault of its
+                // own; it cannot do that by matching on a message.
+                throw new MissingHeaderError(
+                    "There are missing headers that are required for signing.");
             } else {
                 this.context.signedHeaders = headerValues as string[];
             }

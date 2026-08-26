@@ -55,6 +55,17 @@ What it is not for is a public web page talking to a third-party API with a
 key baked in. If that is the shape of the problem, the key needs to be on a
 server and the browser needs to be calling that server.
 
+### Verifying is server-side only
+
+The same key both signs and verifies — that is what makes HMAC symmetric — so
+[`verify`](../verifying-requests/) needs exactly the secret the warning above is
+about. There is no browser exception to find: a bundle that can check a
+signature can forge one.
+
+Nothing enforces this, because nothing can. `verify` runs wherever
+`crypto.subtle` does, and a browser build that calls it will work perfectly
+while handing the key to everyone who loads the page.
+
 ## Version
 
 The npm package and the NuGet package are released separately and their version

@@ -23,6 +23,10 @@ jobs:
         working-directory: ./client/lib
         run: npm ci
 
+      - name: Typecheck
+        working-directory: ./client/lib
+        run: npm run typecheck
+
       - name: Build
         working-directory: ./client/lib
         run: npm run build

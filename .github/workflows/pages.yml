@@ -48,7 +48,7 @@ jobs:
 
       # The theme is a Hugo module, which is a Go module, so resolving it needs
       # the go command. site/go.mod is the only Go module in this repository.
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: site/go.mod
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: Upload site
         if: github.ref == 'refs/heads/develop' && github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: site/public
@@ -108,7 +108,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: site-public

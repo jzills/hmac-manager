@@ -95,7 +95,10 @@ The body's stream is drained to completion before hashing, so a body arriving in
 several chunks — a large payload, or one built from a `ReadableStream` — is
 covered in full. Size makes no difference to correctness.
 
-A request with no body has no content-hash segment at all, on either side.
+A request with no body has no content-hash segment at all, on either side — and
+so does a request whose body is present but zero-length. The two are treated
+identically, so a `POST` carrying an empty string signs the same content as a
+`POST` carrying nothing.
 
 ## The URL must be absolute
 
@@ -110,6 +113,18 @@ new Request("/orders")                          // no host to sign
 The query string is included; the fragment is not, since it never leaves the
 client.
 
+Credentials in the URL are not supported:
+
+```ts
+new Request("https://user:pass@api.example.com/orders")
+// TypeError: Request cannot be constructed from a URL that includes credentials
+```
+
+The Fetch `Request` constructor refuses a URL carrying userinfo per
+specification, so `sign` never gets the chance to sign it — the failure
+happens at `new Request(...)`, before `manager.sign` is even called, and
+`result.error` is not involved.
+
 ## Matching the server
 
 Everything about the policy must match the verifying side — name, public key,
@@ -118,3 +133,6 @@ negotiation, so a disagreement shows up as a rejected signature rather than as
 a configuration error. See
 [signing content](../../concepts/signing-content/) for the exact string both
 ends build.
+
+The verifying side can be this same package: see
+[verifying requests](../verifying-requests/).

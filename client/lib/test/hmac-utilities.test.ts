@@ -1,5 +1,5 @@
 import { assert, test } from "vitest";
-import { computeContentHash } from "../src/utilities/hmac-utilities";
+import { computeContentHash, timingSafeEqual } from "../src/utilities/hmac-utilities";
 import HashAlgorithm from "../src/hash-algorithm";
 
 // computeContentHash used to take a single read() off the body stream, so a
@@ -74,4 +74,36 @@ test("an empty body means no content hash", async () => {
     // The verifier omits the content-hash segment for a request with no body,
     // so this must not become the hash of nothing.
     assert.isNull(await computeContentHash(streamOf(), HashAlgorithm.SHA256));
+});
+
+// timingSafeEqual replaces === on the verification path, so it has to agree with === on
+// every input while taking the same time whatever the answer. Timing itself is not
+// asserted — a wall-clock measurement in a JIT-compiled runtime is noise — so what is
+// checked here is the correctness half, and the implementation is short enough to read
+// for the other half.
+
+test("timingSafeEqual accepts identical strings", () => {
+    assert.isTrue(timingSafeEqual("hUY6fD+lVmqPZ8bTQ==", "hUY6fD+lVmqPZ8bTQ=="));
+});
+
+test("timingSafeEqual rejects a difference in the last character", () => {
+    assert.isFalse(timingSafeEqual("hUY6fD+lVmqPZ8bTQ==", "hUY6fD+lVmqPZ8bTQ=A"));
+});
+
+test("timingSafeEqual rejects a difference in the first character", () => {
+    // The case === would answer fastest, and the one an attacker measures for.
+    assert.isFalse(timingSafeEqual("hUY6fD+lVmqPZ8bTQ==", "AUY6fD+lVmqPZ8bTQ=="));
+});
+
+test("timingSafeEqual rejects strings of different lengths", () => {
+    assert.isFalse(timingSafeEqual("abc", "abcd"));
+    assert.isFalse(timingSafeEqual("abcd", "abc"));
+});
+
+test("timingSafeEqual accepts two empty strings", () => {
+    assert.isTrue(timingSafeEqual("", ""));
+});
+
+test("timingSafeEqual rejects an empty string against a non-empty one", () => {
+    assert.isFalse(timingSafeEqual("", "a"));
 });
