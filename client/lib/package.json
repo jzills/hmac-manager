@@ -1,6 +1,6 @@
 {
     "name": "hmac-manager",
-    "version": "2.6.0",
+    "version": "2.7.0",
     "description": "Signs and verifies HMAC-authenticated requests, interoperating with HmacManager-protected ASP.NET Core APIs and the Istio ext-authz service.",
     "author": "Joshua Zillwood",
     "license": "MIT",
