@@ -62,8 +62,17 @@ public class HmacOptionsHeaderParser : HmacHeaderParser
         }
     }
 
-    private static string DecodeBase64(string value) => 
-        Encoding.UTF8.GetString(Convert.FromBase64String(value));
+    private static string DecodeBase64(string value)
+    {
+        try
+        {
+            return Encoding.UTF8.GetString(Convert.FromBase64String(value));
+        }
+        catch (FormatException)
+        {
+            throw new BadHeaderFormatException();
+        }
+    }
 
     private static IDictionary<string, string> ToDictionary(string value)
     {

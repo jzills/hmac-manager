@@ -45,7 +45,7 @@ policies.
 | `Keys.PrivateKey` | A base64-encoded string |
 | `Algorithms.ContentHashAlgorithm` | `SHA1`, `SHA256`, `SHA512` |
 | `Algorithms.SigningHashAlgorithm` | `HMACSHA1`, `HMACSHA256`, `HMACSHA512` |
-| `Nonce.CacheType` | `Memory`, `Distributed` |
+| `Nonce.CacheType` | `Memory`, `Distributed`, `Redis` |
 | `Nonce.MaxAgeInSeconds` | Replay window, in seconds |
 | `Schemes[].Name` | Scheme name, matched against the `Hmac-Scheme` header |
 | `Schemes[].Headers[].Name` | Header name |
@@ -54,8 +54,8 @@ policies.
 Values are validated when the policy is built, so an invalid key or algorithm
 fails at startup rather than on the first request.
 
-`Distributed` requires an `IDistributedCache` to be registered. If none is,
-that is reported at `Warning` as event 1201 rather than failing quietly — see
+`Distributed` requires an `IDistributedCache` to be registered, and `Redis` an
+`IConnectionMultiplexer`. If none is, that is reported at `Warning` as event 1201 rather than failing quietly — see
 [nonce and replay](../../concepts/nonce-and-replay/).
 
 {{% hm-note kind="warn" %}}

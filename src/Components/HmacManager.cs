@@ -116,7 +116,15 @@ public class HmacManager : IHmacManager
             return ResultFactory.Failure();
         }
 
-        if (!await Cache.IsValidNonceAsync(incomingHmac.Nonce, incomingHmac.DateRequested, Options.MaxAgeInSeconds))
+        if (incomingHmac.DateRequested.AddSeconds(Options.MaxAgeInSeconds) <= DateTimeOffset.UtcNow)
+        {
+            HmacLog.VerificationRequestExpired(
+                Logger, Options.Policy, incomingHmac.DateRequested, Options.MaxAgeInSeconds);
+
+            return ResultFactory.Failure();
+        }
+
+        if (!await Cache.IsValidNonceAsync(incomingHmac.Nonce, incomingHmac.DateRequested, TimeSpan.FromSeconds(Options.MaxAgeInSeconds)))
         {
             HmacLog.VerificationNonceReplayed(Logger, Options.Policy, incomingHmac.Nonce);
 

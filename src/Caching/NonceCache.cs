@@ -34,6 +34,18 @@ internal abstract class NonceCache : INonceCache
 
     public abstract Task SetAsync(Guid nonce, DateTimeOffset dateRequested, int maxAgeInSeconds);
 
+    /// <inheritdoc/>
+    public virtual async Task<bool> TryAddAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
+    {
+        if (await ContainsAsync(nonce))
+        {
+            return false;
+        }
+
+        await SetAsync(nonce, dateRequested, (int)maxAge.TotalSeconds);
+        return true;
+    }
+
     /// <summary>
     /// Creates a cache key for the specified nonce.
     /// </summary>

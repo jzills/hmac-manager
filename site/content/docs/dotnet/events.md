@@ -31,6 +31,12 @@ builder.Services
 The defaults pass through: `true`, an empty `Claim[]`, and an
 `HmacAuthenticationException`. Setting none of them changes nothing.
 
+A request that names an unknown policy, whose `Hmac-Policy` header is missing
+or malformed, or whose consolidated `Hmac-Options` header is not valid base64,
+fails authentication with an
+`HmacAuthenticationException` instead of throwing. None of the events run for
+it: there is no policy to hand them.
+
 ## OnValidateKeysAsync
 
 Runs before verification, with the keys the request named. Returning `false`

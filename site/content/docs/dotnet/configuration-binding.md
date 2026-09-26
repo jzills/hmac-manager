@@ -58,7 +58,7 @@ Restricted values:
 | `PrivateKey` | a base64-encoded string |
 | `ContentHashAlgorithm` | `SHA1`, `SHA256`, `SHA512` |
 | `SigningHashAlgorithm` | `HMACSHA1`, `HMACSHA256`, `HMACSHA512` |
-| `CacheType` | `Memory`, `Distributed` |
+| `CacheType` | `Memory`, `Distributed`, `Redis` |
 
 Invalid values fail when the policy is built, not on the first request.
 

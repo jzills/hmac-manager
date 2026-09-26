@@ -1,6 +1,6 @@
 import { assert, test } from "vitest";
 import MemoryNonceStore from "../src/caching/memory-nonce-store";
-import { isValidNonce } from "../src/caching/nonce-store";
+import NonceStore, { isValidNonce } from "../src/caching/nonce-store";
 
 const nonce = (suffix: string) => `00000000-0000-0000-0000-${suffix.padStart(12, "0")}`;
 
@@ -63,6 +63,21 @@ test("MemoryNonceStore_Keeps_Entries_That_Are_Still_Live", async () => {
     assert.isTrue(await store.has(nonce("2")));
 });
 
+test("MemoryNonceStore_TryAdd_Is_True_Then_False", async () => {
+    const store = new MemoryNonceStore();
+
+    assert.isTrue(await store.tryAdd(nonce("1"), new Date()));
+    assert.isFalse(await store.tryAdd(nonce("1"), new Date()));
+});
+
+test("MemoryNonceStore_TryAdd_Accepts_A_Nonce_Whose_Entry_Has_Expired", async () => {
+    const store = new MemoryNonceStore(30);
+    await store.set(nonce("1"), new Date(Date.now() - 31_000));
+
+    assert.isTrue(await store.tryAdd(nonce("1"), new Date()));
+    assert.isTrue(await store.has(nonce("1")));
+});
+
 test("IsValidNonce_Claims_A_Nonce_On_First_Use_And_Rejects_The_Second", async () => {
     const store = new MemoryNonceStore();
 
@@ -75,4 +90,15 @@ test("IsValidNonce_Treats_Distinct_Nonces_Independently", async () => {
 
     assert.isTrue(await isValidNonce(store, nonce("1"), new Date()));
     assert.isTrue(await isValidNonce(store, nonce("2"), new Date()));
+});
+
+test("IsValidNonce_Works_With_A_Store_That_Has_Only_Has_And_Set", async () => {
+    const entries = new Set<string>();
+    const store: NonceStore = {
+        has: async (value) => entries.has(value),
+        set: async (value) => { entries.add(value); }
+    };
+
+    assert.isTrue(await isValidNonce(store, nonce("1"), new Date()));
+    assert.isFalse(await isValidNonce(store, nonce("1"), new Date()));
 });

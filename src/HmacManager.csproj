@@ -43,10 +43,12 @@
 
   <ItemGroup>
     <PackageReference Include="System.Runtime.Caching" Version="$(_CachingVersion)" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
   </ItemGroup>
 
   <ItemGroup> 
     <InternalsVisibleTo Include="Unit" /> 
+    <InternalsVisibleTo Include="Integration" />
   </ItemGroup>
 
 </Project>

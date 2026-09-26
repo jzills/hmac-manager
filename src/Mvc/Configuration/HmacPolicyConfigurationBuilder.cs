@@ -40,6 +40,9 @@ internal class HmacPolicyConfigurationBuilder : HmacPolicyBuilder
             case NonceCacheType.Distributed:
                 UseDistributedCache(policy.Nonce.MaxAgeInSeconds);
                 break;
+            case NonceCacheType.Redis:
+                UseRedisCache(policy.Nonce.MaxAgeInSeconds);
+                break;
             default:
                 throw new NonceCacheTypeNotSupportedException($"The specified \"CacheType\" of {Enum.GetName(policy.Nonce.CacheType)} is not supported.");
         }

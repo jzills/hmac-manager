@@ -245,6 +245,35 @@ test("HmacManager_Verify_Rejects_A_Replayed_Request", async () => {
     assert.equal(second.reason, "replayed");
 });
 
+test("HmacManager_Verify_Rejects_A_Forged_Signature_Without_Spending_The_Nonce", async () => {
+    const { signer, verifier } = createPair();
+    const request = new Request(Url);
+
+    await signer.create("Policy-A")!.sign(request);
+
+    const forged = new Request(Url, { headers: request.headers });
+    forged.headers.set(HmacAuthenticationDefaults.Headers.Authorization, "Hmac Zm9yZ2Vk");
+
+    const forgedResult = await verifier.verify(forged);
+    const genuineResult = await verifier.verify(request);
+
+    assert.isFalse(forgedResult.isSuccess);
+    assert.equal(forgedResult.reason, "signature-mismatch");
+    assert.isTrue(genuineResult.isSuccess);
+});
+
+test("HmacManager_Verify_Accepts_Only_One_Of_Concurrent_Replays", async () => {
+    const { signer, verifier } = createPair();
+    const request = new Request(Url);
+
+    await signer.create("Policy-A")!.sign(request);
+
+    const results = await Promise.all(
+        Array.from({ length: 32 }, () => verifier.verify(new Request(Url, { headers: request.headers }))));
+
+    assert.equal(results.filter(result => result.isSuccess).length, 1);
+});
+
 test("HmacManager_Verify_Rejects_An_Unregistered_Policy", async () => {
     const signer = new HmacManagerFactory([createPolicy()]);
     const verifier = new HmacManagerFactory([createPolicy({ name: "Policy-B" })]);

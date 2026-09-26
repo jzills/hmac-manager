@@ -58,6 +58,21 @@ export default class MemoryNonceStore implements NonceStore {
     };
 
     /**
+     * Checks and records the nonce with no `await` in between, so no other call can
+     * interleave on the event loop.
+     */
+    tryAdd = async (nonce: string, dateRequested: Date): Promise<boolean> => {
+        const expiresAt = this.entries.get(nonce);
+        if (expiresAt !== undefined && expiresAt > Date.now()) {
+            return false;
+        }
+
+        this.evictExpired();
+        this.entries.set(nonce, dateRequested.getTime() + this.maxAgeInMilliseconds);
+        return true;
+    };
+
+    /**
      * Drops the entries that have lapsed.
      *
      * Every entry gets the same TTL and `Map` iterates in insertion order, so the

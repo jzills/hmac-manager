@@ -120,6 +120,18 @@ public class HmacPolicyBuilder
     }
 
     /// <summary>
+    /// Sets the maximum age on an <see cref="HttpRequestMessage"/> and the TTL for nonce cache entries.
+    /// </summary>
+    /// <param name="maxAgeInSeconds">The <see cref="TimeSpan"/> representing the max age of a request.</param>
+    /// <returns>A <see cref="HmacPolicyBuilder"/> that can be used to further configure a policy.</returns>
+    public HmacPolicyBuilder UseRedisCache(int maxAgeInSeconds)
+    {
+        Nonce.CacheType = NonceCacheType.Redis;
+        Nonce.MaxAgeInSeconds = maxAgeInSeconds;
+        return this;
+    }
+
+    /// <summary>
     /// Defines the configuration for creating signing content for an <see cref="Hmac"/>.
     /// </summary>
     /// <param name="signingContentAccessor"></param>
