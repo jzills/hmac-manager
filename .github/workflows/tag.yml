@@ -77,36 +77,7 @@ jobs:
             --base develop \
             --head "${{ github.event.pull_request.head.ref }}")
 
-          # Merge by retrying until the branch ruleset accepts it — not by
-          # requesting an auto-merge, and not by watching checks first.
-          #
-          # `gh pr merge --auto` cannot be trusted in the seconds after a PR is
-          # opened. GitHub computes mergeability asynchronously, so in that
-          # window the branch ruleset's required checks do not exist yet and the
-          # PR looks mergeable. Both outcomes were observed on 2026-08-14:
-          #
-          #   - auto-merge was enabled and GitHub dropped it two seconds later,
-          #     having nothing to wait for (nuget/v2.9.0: auto_merge_enabled
-          #     02:17:55, auto_merge_disabled 02:17:57). The job went green and
-          #     the PR sat open.
-          #   - gh decided the PR was mergeable now and called mergePullRequest,
-          #     which the ruleset rejected with "3 of 3 required status checks
-          #     are expected" (service/v0.4.0). The job went red although the
-          #     release itself had succeeded.
-          #
-          # Watching with `gh pr checks --watch` first does not work either.
-          # This PR's head is the commit the release -> main PR already ran
-          # checks on, and `gh pr checks` reports checks per commit, so it saw
-          # those old passing runs and returned at once. The merge was then
-          # rejected with "3 of 3 required status checks are queued" while this
-          # PR's own runs into develop had not started — all five releases on
-          # 2026-08-26 (chart/v0.4.1: back-merge #144, stale checks from #139).
-          #
-          # The ruleset is the only thing that knows which checks count for this
-          # PR, so let it decide: attempt the merge, and retry while it refuses.
-          # A refused merge is not an error by itself; a failed required check,
-          # a conflict, or the deadline is. This job goes green only if the
-          # back-merge actually happened.
+          # Retry the merge until the develop ruleset accepts it.
           DEADLINE=$((SECONDS + 1800))
           while true; do
             if OUT=$(gh pr merge "$PR_URL" --merge 2>&1); then
@@ -115,9 +86,6 @@ jobs:
             fi
             echo "Not mergeable yet: $OUT"
 
-            # Any failure here is from this PR's own runs: the stale ones it
-            # shares with the release -> main PR all passed, or that PR would
-            # not have merged.
             FAILED=$(gh pr checks "$PR_URL" --required --json name,bucket \
               --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' \
               2>/dev/null || true)
