@@ -191,10 +191,6 @@ export default class HmacManager {
             return this.verificationResultFactory.failure("expired");
         }
 
-        if (!await isValidNonce(this.nonceStore, incoming.nonce, incoming.dateRequested)) {
-            return this.verificationResultFactory.failure("replayed");
-        }
-
         let computed;
         try {
             // The caller's date and nonce, this policy's keys. Recomputing with the
@@ -216,6 +212,16 @@ export default class HmacManager {
 
         if (!timingSafeEqual(computed.signature, incoming.signature)) {
             return this.verificationResultFactory.failure("signature-mismatch");
+        }
+
+        // The request can expire while its signature is computed. Recheck before
+        // accessing a nonce store that may reject a nonpositive remaining lifetime.
+        if (!this.hasValidDateRequested(incoming.dateRequested)) {
+            return this.verificationResultFactory.failure("expired");
+        }
+
+        if (!await isValidNonce(this.nonceStore, incoming.nonce, incoming.dateRequested)) {
+            return this.verificationResultFactory.failure("replayed");
         }
 
         const hmac: Hmac = {

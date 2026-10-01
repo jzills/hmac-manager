@@ -23,7 +23,7 @@ import {
 new HmacManagerFactory(
   policies: HmacPolicy[],
   isConsolidatedHeadersEnabled?: boolean,  // default false
-  nonceStore?: NonceStore                  // default new MemoryNonceStore()
+  nonceStore?: NonceStore                  // default memory store covers all policy windows
 )
 ```
 
@@ -205,14 +205,22 @@ signature covered, by name, and is present only on success.
 interface NonceStore {
   has(nonce: string): Promise<boolean>;
   set(nonce: string, dateRequested: Date): Promise<void>;
+  tryAdd?(nonce: string, dateRequested: Date): Promise<boolean>;
 }
 ```
 
-Where used nonces are recorded. `MemoryNonceStore` implements it in-process:
+Verification uses `tryAdd` when available and otherwise calls `has` followed
+by `set`. The default `MemoryNonceStore` implements `tryAdd` atomically within
+one process:
 
 ```ts
 new MemoryNonceStore(maxAgeInSeconds?: number)   // default 30
 ```
+
+The factory configures its default store to cover the longest policy window,
+with a minimum of 30 seconds. Custom stores need the same lifetime coverage,
+measured from the signing date, because the policy's maximum age is not passed
+to these methods.
 
 See [replay protection](../verifying-requests/#replay-protection) for a Redis
 implementation and why a multi-replica deployment needs one.

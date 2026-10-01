@@ -29,6 +29,7 @@ event**, so it is safe to alert on one.
 | 1301 | `Warning` | `OnValidateKeys` rejected the credentials |
 | 1302 | `Debug` | Authentication succeeded |
 | 1303 | `Warning` | Authentication failed |
+| 1304 | `Debug` | Authentication rejected because a required HMAC header is missing or malformed |
 | 1310 | `Debug` | Requested policy not registered |
 
 ## Ranges
@@ -53,13 +54,14 @@ Each failure mode has its own id, so the id alone says what went wrong:
 | 1310 / 1200 | The request named a policy this host does not have |
 | 1202 | The request named a scheme that policy does not declare — usually a typo |
 | 1300 | Not an HMAC request at all — no header, so authentication was skipped |
+| 1304 | A required HMAC header was missing or malformed, including invalid base64 in `Hmac-Options` |
 
 For 1104, turn on `Trace` and compare event 1002 on the signer against 1105 on
 the verifier. See
 [diagnosing a mismatch](../../dotnet/logging/#diagnosing-a-signature-mismatch).
 
 {{% hm-note %}}
-Caller-controlled rejections — 1300, 1310, 1200, 1202 — are `Debug`, not
+Caller-controlled rejections — 1300, 1304, 1310, 1200, 1202 — are `Debug`, not
 `Warning`. An unauthenticated caller can produce them at will, and an edge
 deployment must not be drivable to unbounded `Warning` volume by traffic anyone
 can send.

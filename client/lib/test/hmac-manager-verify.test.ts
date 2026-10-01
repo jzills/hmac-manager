@@ -1,4 +1,4 @@
-import { assert, test } from "vitest";
+import { assert, test, vi } from "vitest";
 import { HmacAuthenticationDefaults } from "../src/hmac-authentication-defaults";
 import HmacManagerFactory from "../src/hmac-manager-factory";
 import HmacPolicy from "../src/components/hmac-policy";
@@ -216,6 +216,48 @@ test("HmacManager_Verify_Rejects_A_Signature_Older_Than_The_Policy_Window", asyn
     assert.equal(result.reason, "expired");
 });
 
+test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computation_At_%i_ms", async elapsed => {
+    const start = new Date("2026-01-01T00:00:00Z");
+    let verifying = false;
+    let computedDuringVerification = false;
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(start);
+
+    try {
+        const policy = createPolicy({
+            maxAgeInSeconds: 5,
+            signingContentAccessor: async context => {
+                if (verifying) {
+                    computedDuringVerification = true;
+                    vi.setSystemTime(start.getTime() + elapsed);
+                }
+                return `${context.nonce}:${context.dateRequested.getTime()}`;
+            }
+        });
+        const store = {
+            has: vi.fn(async () => false),
+            set: vi.fn(async () => {}),
+            tryAdd: vi.fn(async () => true)
+        };
+        const signer = new HmacManagerFactory([policy]);
+        const verifier = new HmacManagerFactory([policy], false, store);
+        const request = new Request(Url);
+        assert.isTrue((await signer.create("Policy-A")!.sign(request)).isSuccess);
+
+        verifying = true;
+        const result = await verifier.verify(request);
+
+        assert.isTrue(computedDuringVerification);
+        assert.equal(result.isSuccess, elapsed < 5000);
+        assert.equal(result.reason, elapsed < 5000 ? undefined : "expired");
+        assert.equal(store.tryAdd.mock.calls.length, elapsed < 5000 ? 1 : 0);
+        assert.equal(store.has.mock.calls.length, 0);
+        assert.equal(store.set.mock.calls.length, 0);
+    } finally {
+        vi.useRealTimers();
+    }
+});
+
 test("HmacManager_Verify_Rejects_A_Signature_Dated_In_The_Future", async () => {
     const { signer, verifier } = createPair();
     const request = new Request(Url);
@@ -243,6 +285,35 @@ test("HmacManager_Verify_Rejects_A_Replayed_Request", async () => {
     assert.isTrue(first.isSuccess);
     assert.isFalse(second.isSuccess);
     assert.equal(second.reason, "replayed");
+});
+
+test("HmacManager_Verify_Rejects_A_Forged_Signature_Without_Spending_The_Nonce", async () => {
+    const { signer, verifier } = createPair();
+    const request = new Request(Url);
+
+    await signer.create("Policy-A")!.sign(request);
+
+    const forged = new Request(Url, { headers: request.headers });
+    forged.headers.set(HmacAuthenticationDefaults.Headers.Authorization, "Hmac Zm9yZ2Vk");
+
+    const forgedResult = await verifier.verify(forged);
+    const genuineResult = await verifier.verify(request);
+
+    assert.isFalse(forgedResult.isSuccess);
+    assert.equal(forgedResult.reason, "signature-mismatch");
+    assert.isTrue(genuineResult.isSuccess);
+});
+
+test("HmacManager_Verify_Accepts_Only_One_Of_Concurrent_Replays", async () => {
+    const { signer, verifier } = createPair();
+    const request = new Request(Url);
+
+    await signer.create("Policy-A")!.sign(request);
+
+    const results = await Promise.all(
+        Array.from({ length: 32 }, () => verifier.verify(new Request(Url, { headers: request.headers }))));
+
+    assert.equal(results.filter(result => result.isSuccess).length, 1);
 });
 
 test("HmacManager_Verify_Rejects_An_Unregistered_Policy", async () => {

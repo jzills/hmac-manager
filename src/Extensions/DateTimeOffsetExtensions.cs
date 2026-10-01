@@ -14,9 +14,15 @@ internal static class DateTimeOffsetExtensions
     public static bool HasValidDateRequested(
       this DateTimeOffset dateRequested,
       int maxAgeInSeconds
+    ) => dateRequested.HasValidDateRequested(maxAgeInSeconds, TimeProvider.System);
+
+    internal static bool HasValidDateRequested(
+      this DateTimeOffset dateRequested,
+      int maxAgeInSeconds,
+      TimeProvider clock
     )
     {
-        var elapsed = DateTimeOffset.UtcNow.Subtract(dateRequested);
+        TimeSpan elapsed = clock.GetUtcNow().Subtract(dateRequested);
         return elapsed >= TimeSpan.Zero
             && elapsed < TimeSpan.FromSeconds(maxAgeInSeconds);
     }
