@@ -77,8 +77,8 @@ jobs:
             --base develop \
             --head "${{ github.event.pull_request.head.ref }}")
 
-          # Wait for the required checks and merge, rather than asking for an
-          # auto-merge.
+          # Merge by retrying until the branch ruleset accepts it — not by
+          # requesting an auto-merge, and not by watching checks first.
           #
           # `gh pr merge --auto` cannot be trusted in the seconds after a PR is
           # opened. GitHub computes mergeability asynchronously, so in that
@@ -94,24 +94,47 @@ jobs:
           #     are expected" (service/v0.4.0). The job went red although the
           #     release itself had succeeded.
           #
-          # Waiting is also better signal: this job now goes green only if the
+          # Watching with `gh pr checks --watch` first does not work either.
+          # This PR's head is the commit the release -> main PR already ran
+          # checks on, and `gh pr checks` reports checks per commit, so it saw
+          # those old passing runs and returned at once. The merge was then
+          # rejected with "3 of 3 required status checks are queued" while this
+          # PR's own runs into develop had not started — all five releases on
+          # 2026-08-26 (chart/v0.4.1: back-merge #144, stale checks from #139).
+          #
+          # The ruleset is the only thing that knows which checks count for this
+          # PR, so let it decide: attempt the merge, and retry while it refuses.
+          # A refused merge is not an error by itself; a failed required check,
+          # a conflict, or the deadline is. This job goes green only if the
           # back-merge actually happened.
-
-          # A PR has no check runs at all for its first few seconds, and
-          # `gh pr checks` treats that as an error rather than as "pending", so
-          # wait for them to appear before watching them.
-          # if/then rather than `[ ... ] && break`: steps run under `bash -e`,
-          # where the trailing form is easy to misread as safe.
-          for _ in $(seq 60); do
-            COUNT=$(gh pr checks "$PR_URL" --required --json name --jq 'length' 2>/dev/null || echo 0)
-            if [ "${COUNT:-0}" -gt 0 ]; then
+          DEADLINE=$((SECONDS + 1800))
+          while true; do
+            if OUT=$(gh pr merge "$PR_URL" --merge 2>&1); then
+              echo "$OUT"
               break
             fi
-            sleep 5
-          done
+            echo "Not mergeable yet: $OUT"
 
-          # --required gates on the three checks the ruleset actually enforces
-          # (Unit, Integration, CI Script — about two minutes), so this does not
-          # wait on the much slower E2E suite.
-          gh pr checks "$PR_URL" --watch --required --fail-fast --interval 15
-          gh pr merge "$PR_URL" --merge
+            # Any failure here is from this PR's own runs: the stale ones it
+            # shares with the release -> main PR all passed, or that PR would
+            # not have merged.
+            FAILED=$(gh pr checks "$PR_URL" --required --json name,bucket \
+              --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' \
+              2>/dev/null || true)
+            if [ -n "$FAILED" ]; then
+              echo "::error::Required checks failed on the back-merge PR ($FAILED). Fix them and merge $PR_URL by hand."
+              exit 1
+            fi
+
+            if [ "$(gh pr view "$PR_URL" --json mergeable --jq '.mergeable')" = "CONFLICTING" ]; then
+              echo "::error::The back-merge PR conflicts with develop. Resolve and merge $PR_URL by hand."
+              exit 1
+            fi
+
+            if [ "$SECONDS" -ge "$DEADLINE" ]; then
+              echo "::error::The back-merge PR was still not mergeable after 30 minutes. Merge $PR_URL by hand."
+              exit 1
+            fi
+
+            sleep 20
+          done
