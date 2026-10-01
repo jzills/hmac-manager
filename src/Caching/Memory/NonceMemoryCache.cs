@@ -5,7 +5,9 @@ namespace HmacManager.Caching.Memory;
 /// <summary>
 /// Provides an in-memory cache implementation of <see cref="NonceCache"/> for storing nonces.
 /// </summary>
-internal class NonceMemoryCache : NonceCache
+// Re-declares INonceCache so the obsolete members below map to this class: NonceCache is where the
+// interface is implemented, so without it calls through INonceCache would reach the throwing defaults.
+internal class NonceMemoryCache : NonceCache, INonceCache
 {
     /// <summary>
     /// Gets the in-memory cache instance used to store nonces.
@@ -13,7 +15,12 @@ internal class NonceMemoryCache : NonceCache
     protected readonly IMemoryCache Cache;
 
     /// <summary>
-    /// Locks that make the check and set in <see cref="TryAddAsync"/> atomic. Static because a
+    /// Gets the configuration options for the nonce cache.
+    /// </summary>
+    protected readonly NonceCacheOptions Options;
+
+    /// <summary>
+    /// Locks that make the check and set in <see cref="TryAddCoreAsync"/> atomic. Static because a
     /// <see cref="NonceMemoryCache"/> is created per scope while the <see cref="IMemoryCache"/> behind it is shared.
     /// </summary>
     private static readonly object[] Locks = Enumerable.Range(0, 64).Select(_ => new object()).ToArray();
@@ -23,50 +30,55 @@ internal class NonceMemoryCache : NonceCache
     /// </summary>
     /// <param name="cache">The in-memory cache implementation.</param>
     /// <param name="options">The configuration options for nonce caching.</param>
-    public NonceMemoryCache(IMemoryCache cache, NonceCacheOptions options) 
-        : base(options) => Cache = cache;
-
-    /// <summary>
-    /// Sets a nonce in the cache with an expiration based on the specified <paramref name="dateRequested"/>.
-    /// </summary>
-    /// <param name="nonce">The unique identifier for the nonce.</param>
-    /// <param name="dateRequested">The date and time the nonce was requested, used to calculate expiration.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public override Task SetAsync(Guid nonce, DateTimeOffset dateRequested, int maxAgeInSeconds)
+    /// <param name="clock">The clock expiries are compared against.</param>
+    public NonceMemoryCache(IMemoryCache cache, NonceCacheOptions options, TimeProvider? clock = null)
+        : base(clock)
     {
-        Cache.Set(
-            GetKey(nonce),
-            dateRequested, 
-            new MemoryCacheEntryOptions
-                { AbsoluteExpiration = GetAbsoluteExpiration(dateRequested, maxAgeInSeconds) }
-        );
+        Cache = cache;
+        Options = options;
+    }
+
+    /// <inheritdoc/>
+    protected override Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt)
+    {
+        var key = Options.CreateKey(nonce);
+        lock (GetLock(nonce))
+        {
+            if (Contains(key))
+            {
+                return Task.FromResult(false);
+            }
+
+            Set(key, expiresAt);
+            return Task.FromResult(true);
+        }
+    }
+
+    /// <inheritdoc/>
+    [Obsolete("Use TryAddAsync.")]
+    public Task SetAsync(Guid nonce, DateTimeOffset dateRequested) =>
+        SetAsync(nonce, dateRequested, TimeSpan.FromSeconds(Options.MaxAgeInSeconds));
+
+    /// <inheritdoc/>
+    [Obsolete("Use TryAddAsync.")]
+    public Task SetAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
+    {
+        lock (GetLock(nonce))
+        {
+            Set(Options.CreateKey(nonce), dateRequested + maxAge);
+        }
 
         return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    public override Task<bool> TryAddAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
-    {
-        lock (Locks[(nonce.GetHashCode() & int.MaxValue) % Locks.Length])
-        {
-            if (Cache.Get(GetKey(nonce)) is not null)
-            {
-                return Task.FromResult(false);
-            }
+    [Obsolete("Use TryAddAsync.")]
+    public Task<bool> ContainsAsync(Guid nonce) => Task.FromResult(Contains(Options.CreateKey(nonce)));
 
-            SetAsync(nonce, dateRequested, (int)maxAge.TotalSeconds);
-            return Task.FromResult(true);
-        }
-    }
+    private bool Contains(string key) => Cache.TryGetValue(key, out _);
 
-    /// <summary>
-    /// Checks if a nonce exists in the cache.
-    /// </summary>
-    /// <param name="nonce">The unique identifier for the nonce.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains <c>true</c> if the nonce exists; otherwise, <c>false</c>.</returns>
-    public override Task<bool> ContainsAsync(Guid nonce)
-    {
-        var value = Cache.Get(GetKey(nonce));
-        return Task.FromResult(value is not null);
-    }
+    private void Set(string key, DateTimeOffset expiresAt) =>
+        Cache.Set(key, true, new MemoryCacheEntryOptions { AbsoluteExpiration = expiresAt });
+
+    private static object GetLock(Guid nonce) => Locks[(nonce.GetHashCode() & int.MaxValue) % Locks.Length];
 }

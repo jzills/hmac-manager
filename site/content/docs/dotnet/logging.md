@@ -1,7 +1,7 @@
 ---
 title: Logging
 description: Categories, levels, and how to find the cause of a signature mismatch.
-weight: 8
+weight: 9
 ---
 
 HmacManager writes to `ILogger` and needs no configuration to do so — register

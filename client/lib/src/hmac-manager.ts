@@ -95,8 +95,7 @@ export default class HmacManager {
         this.maxAgeInSeconds = policy.maxAgeInSeconds ?? DefaultMaxAgeInSeconds;
         this.headerParserFactory = verification.headerParserFactory ??
             new HmacHeaderParserFactory(false);
-        this.nonceStore = verification.nonceStore ??
-            new MemoryNonceStore(this.maxAgeInSeconds);
+        this.nonceStore = verification.nonceStore ?? new MemoryNonceStore();
 
         const signingContentBuilder = this.policy.signingContentAccessor ? 
             new SigningContentBuilderAccessor(this.policy.signingContentAccessor) :
@@ -214,14 +213,11 @@ export default class HmacManager {
             return this.verificationResultFactory.failure("signature-mismatch");
         }
 
-        // The request can expire while its signature is computed. Recheck before
-        // accessing a nonce store that may reject a nonpositive remaining lifetime.
-        if (!this.hasValidDateRequested(incoming.dateRequested)) {
-            return this.verificationResultFactory.failure("expired");
-        }
-
-        if (!await isValidNonce(this.nonceStore, incoming.nonce, incoming.dateRequested)) {
-            return this.verificationResultFactory.failure("replayed");
+        if (!await isValidNonce(this.nonceStore, incoming.nonce, incoming.dateRequested, this.maxAgeInSeconds)) {
+            // A nonce whose window closed while the signature was computed is refused
+            // too, which is an expiry, not a replay.
+            return this.verificationResultFactory.failure(
+                this.hasValidDateRequested(incoming.dateRequested) ? "replayed" : "expired");
         }
 
         const hmac: Hmac = {

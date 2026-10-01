@@ -1,4 +1,4 @@
-import { assert, test } from "vitest";
+import { assert, test, vi } from "vitest";
 import MemoryNonceStore from "../src/caching/memory-nonce-store";
 import NonceStore, { isValidNonce } from "../src/caching/nonce-store";
 
@@ -81,15 +81,15 @@ test("MemoryNonceStore_TryAdd_Accepts_A_Nonce_Whose_Entry_Has_Expired", async ()
 test("IsValidNonce_Claims_A_Nonce_On_First_Use_And_Rejects_The_Second", async () => {
     const store = new MemoryNonceStore();
 
-    assert.isTrue(await isValidNonce(store, nonce("1"), new Date()));
-    assert.isFalse(await isValidNonce(store, nonce("1"), new Date()));
+    assert.isTrue(await isValidNonce(store, nonce("1"), new Date(), 30));
+    assert.isFalse(await isValidNonce(store, nonce("1"), new Date(), 30));
 });
 
 test("IsValidNonce_Treats_Distinct_Nonces_Independently", async () => {
     const store = new MemoryNonceStore();
 
-    assert.isTrue(await isValidNonce(store, nonce("1"), new Date()));
-    assert.isTrue(await isValidNonce(store, nonce("2"), new Date()));
+    assert.isTrue(await isValidNonce(store, nonce("1"), new Date(), 30));
+    assert.isTrue(await isValidNonce(store, nonce("2"), new Date(), 30));
 });
 
 test("IsValidNonce_Works_With_A_Store_That_Has_Only_Has_And_Set", async () => {
@@ -99,6 +99,69 @@ test("IsValidNonce_Works_With_A_Store_That_Has_Only_Has_And_Set", async () => {
         set: async (value) => { entries.add(value); }
     };
 
-    assert.isTrue(await isValidNonce(store, nonce("1"), new Date()));
-    assert.isFalse(await isValidNonce(store, nonce("1"), new Date()));
+    assert.isTrue(await isValidNonce(store, nonce("1"), new Date(), 30));
+    assert.isFalse(await isValidNonce(store, nonce("1"), new Date(), 30));
+});
+
+test("MemoryNonceStore_TryAdd_Holds_A_Nonce_For_The_Window_It_Is_Given", async () => {
+    // The constructor's 30 seconds would have expired this entry already; the policy's 60 have not.
+    const store = new MemoryNonceStore(30);
+    const signed = new Date(Date.now() - 40_000);
+
+    assert.isTrue(await store.tryAdd(nonce("1"), signed, 60));
+    assert.isFalse(await store.tryAdd(nonce("1"), signed, 60));
+});
+
+test("MemoryNonceStore_TryAdd_Refuses_A_Nonce_Whose_Window_Has_Closed", async () => {
+    const store = new MemoryNonceStore();
+
+    assert.isFalse(await store.tryAdd(nonce("1"), new Date(Date.now() - 31_000), 30));
+    assert.equal(store.size, 0);
+});
+
+test("MemoryNonceStore_TryAdd_Moves_A_Reclaimed_Nonce_To_The_End", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+        const start = new Date("2026-01-01T00:00:00Z");
+        vi.setSystemTime(start);
+        const store = new MemoryNonceStore();
+        const keys = () => [...(store as unknown as { entries: Map<string, number> }).entries.keys()];
+
+        await store.tryAdd(nonce("a"), start, 60);
+        await store.tryAdd(nonce("lapsed"), start, 10);
+        await store.tryAdd(nonce("b"), start, 60);
+
+        // "lapsed" has expired but sits behind a live entry, so no sweep has reached it.
+        vi.setSystemTime(start.getTime() + 20_000);
+        assert.isTrue(await store.tryAdd(nonce("lapsed"), new Date(), 10));
+
+        // Left in place, its new, later expiry would sit ahead of "b" in the order.
+        assert.deepEqual(keys(), [nonce("a"), nonce("b"), nonce("lapsed")]);
+    } finally {
+        vi.useRealTimers();
+    }
+});
+
+test("IsValidNonce_Passes_The_Policy_Window_To_TryAdd", async () => {
+    const tryAdd = vi.fn(async () => true);
+    const store: NonceStore = { has: async () => false, set: async () => {}, tryAdd };
+    const signed = new Date();
+
+    assert.isTrue(await isValidNonce(store, nonce("1"), signed, 42));
+    assert.deepEqual(tryAdd.mock.calls, [[nonce("1"), signed, 42]]);
+});
+
+test("IsValidNonce_Refuses_A_Lapsed_Nonce_Without_Touching_The_Store", async () => {
+    const store = {
+        has: vi.fn(async () => false),
+        set: vi.fn(async () => {}),
+        tryAdd: vi.fn(async () => true)
+    };
+    const legacy = { has: vi.fn(async () => false), set: vi.fn(async () => {}) };
+    const lapsed = new Date(Date.now() - 31_000);
+
+    assert.isFalse(await isValidNonce(store, nonce("1"), lapsed, 30));
+    assert.isFalse(await isValidNonce(legacy, nonce("1"), lapsed, 30));
+    assert.equal(store.tryAdd.mock.calls.length + store.has.mock.calls.length + store.set.mock.calls.length, 0);
+    assert.equal(legacy.has.mock.calls.length + legacy.set.mock.calls.length, 0);
 });

@@ -216,7 +216,7 @@ test("HmacManager_Verify_Rejects_A_Signature_Older_Than_The_Policy_Window", asyn
     assert.equal(result.reason, "expired");
 });
 
-test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computation_At_%i_ms", async elapsed => {
+test.each([4999, 5000, 5001])("HmacManager_Verify_Reports_A_Window_Closing_During_Computation_As_Expired_At_%i_ms", async elapsed => {
     const start = new Date("2026-01-01T00:00:00Z");
     let verifying = false;
     let computedDuringVerification = false;
@@ -237,7 +237,7 @@ test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computat
         const store = {
             has: vi.fn(async () => false),
             set: vi.fn(async () => {}),
-            tryAdd: vi.fn(async () => true)
+            tryAdd: vi.fn(async (_nonce: string, _dateRequested: Date, _maxAgeInSeconds: number) => true)
         };
         const signer = new HmacManagerFactory([policy]);
         const verifier = new HmacManagerFactory([policy], false, store);
@@ -250,9 +250,44 @@ test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computat
         assert.isTrue(computedDuringVerification);
         assert.equal(result.isSuccess, elapsed < 5000);
         assert.equal(result.reason, elapsed < 5000 ? undefined : "expired");
+        // A lapsed nonce never reaches the store; a live one is claimed with the policy's window.
         assert.equal(store.tryAdd.mock.calls.length, elapsed < 5000 ? 1 : 0);
+        if (elapsed < 5000) {
+            assert.equal(store.tryAdd.mock.calls[0][2], 5);
+        }
         assert.equal(store.has.mock.calls.length, 0);
         assert.equal(store.set.mock.calls.length, 0);
+    } finally {
+        vi.useRealTimers();
+    }
+});
+
+test("HmacManager_Verify_Reports_A_Window_Closing_Inside_The_Store_As_Expired", async () => {
+    // A shared store's round trip can outlast the window too. It refuses the claim, and the
+    // refusal is an expiry rather than a replay.
+    const start = new Date("2026-01-01T00:00:00Z");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(start);
+
+    try {
+        const policy = createPolicy({ maxAgeInSeconds: 5 });
+        const store = {
+            has: async () => false,
+            set: async () => {},
+            tryAdd: async () => {
+                vi.setSystemTime(start.getTime() + 5_000);
+                return false;
+            }
+        };
+        const signer = new HmacManagerFactory([policy]);
+        const verifier = new HmacManagerFactory([policy], false, store);
+        const request = new Request(Url);
+        assert.isTrue((await signer.create("Policy-A")!.sign(request)).isSuccess);
+
+        const result = await verifier.verify(request);
+
+        assert.isFalse(result.isSuccess);
+        assert.equal(result.reason, "expired");
     } finally {
         vi.useRealTimers();
     }

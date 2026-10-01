@@ -203,24 +203,30 @@ signature covered, by name, and is present only on success.
 
 ```ts
 interface NonceStore {
-  has(nonce: string): Promise<boolean>;
-  set(nonce: string, dateRequested: Date): Promise<void>;
-  tryAdd?(nonce: string, dateRequested: Date): Promise<boolean>;
+  tryAdd?(nonce: string, dateRequested: Date, maxAgeInSeconds: number): Promise<boolean>;
+  /** @deprecated */ has(nonce: string): Promise<boolean>;
+  /** @deprecated */ set(nonce: string, dateRequested: Date): Promise<void>;
 }
 ```
 
-Verification uses `tryAdd` when available and otherwise calls `has` followed
-by `set`. The default `MemoryNonceStore` implements `tryAdd` atomically within
-one process:
+`tryAdd` claims a nonce until `dateRequested + maxAgeInSeconds` and returns
+whether it was unused. `maxAgeInSeconds` is the window of the policy the
+request was verified for, so one store serves every policy. An implementation
+must claim atomically, and return `false` rather than store an entry whose
+expiry has already passed. A nonce whose window has closed never reaches the
+store at all.
+
+`has` and `set` are deprecated, and verification calls them only for a store
+without `tryAdd`: check-then-set, which is not atomic, with a TTL the store has
+to choose itself. The next major version makes `tryAdd` required and removes
+them; until then a store has to provide them, even as stubs.
+
+The default `MemoryNonceStore` implements `tryAdd` atomically within one
+process:
 
 ```ts
-new MemoryNonceStore(maxAgeInSeconds?: number)   // default 30
+new MemoryNonceStore(maxAgeInSeconds?: number)   // window for the deprecated set; default 30
 ```
-
-The factory configures its default store to cover the longest policy window,
-with a minimum of 30 seconds. Custom stores need the same lifetime coverage,
-measured from the signing date, because the policy's maximum age is not passed
-to these methods.
 
 See [replay protection](../verifying-requests/#replay-protection) for a Redis
 implementation and why a multi-replica deployment needs one.

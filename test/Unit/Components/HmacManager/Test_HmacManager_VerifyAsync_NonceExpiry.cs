@@ -1,36 +1,23 @@
 using HmacManager.Caching;
+using HmacManager.Caching.Memory;
 using HmacManager.Components;
 using HmacManager.Policies;
 using HmacManager.Schemes;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Unit.Tests.Components;
 
+/// <summary>
+/// A request can expire while its signature is computed. The cache refuses to claim a nonce whose
+/// window has closed, and the manager reports that as an expiry rather than a replay.
+/// </summary>
 public class Test_HmacManager_VerifyAsync_NonceExpiry
 {
-    private class RecordingNonceCache : INonceCache
-    {
-        public int Calls;
-
-        public Task SetAsync(Guid nonce, DateTimeOffset dateRequested)
-        {
-            Interlocked.Increment(ref Calls);
-            return Task.CompletedTask;
-        }
-
-        public Task<bool> ContainsAsync(Guid nonce)
-        {
-            Interlocked.Increment(ref Calls);
-            return Task.FromResult(false);
-        }
-
-        public Task<bool> TryAddAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
-        {
-            Interlocked.Increment(ref Calls);
-            return Task.FromResult(true);
-        }
-    }
+    private const int RequestVerified = 1100;
+    private const int VerificationRequestExpired = 1102;
+    private const int VerificationNonceReplayed = 1103;
 
     private class ClockAdvancingHmacFactory : IHmacFactory
     {
@@ -64,7 +51,7 @@ public class Test_HmacManager_VerifyAsync_NonceExpiry
     [TestCase(4999, true)]
     [TestCase(5000, false)]
     [TestCase(5001, false)]
-    public async Task Test_VerifyAsync_RechecksExpiryBeforeStorage(int elapsedMilliseconds, bool expectedSuccess)
+    public async Task Test_VerifyAsync_WindowClosingDuringVerification_IsAnExpiry(int elapsedMilliseconds, bool expectedSuccess)
     {
         var maxAge = TimeSpan.FromSeconds(5);
         var privateKey = "Hii9mvaSlUm9RRLwsfuUcg==";
@@ -97,10 +84,11 @@ public class Test_HmacManager_VerifyAsync_NonceExpiry
             TimeSpan.FromMilliseconds(elapsedMilliseconds)
         );
 
-        var cache = new RecordingNonceCache();
+        var cache = new NonceMemoryCache(
+            new MemoryCache(Options.Create(new MemoryCacheOptions())), new NonceCacheOptions(), clock);
+        var logger = new RecordingLogger<HmacManager.Components.HmacManager>();
         var hmacManager = new HmacManager.Components.HmacManager(
-            options, factory, new HmacResultFactory(options.Policy, null), cache,
-            NullLogger<HmacManager.Components.HmacManager>.Instance, clock);
+            options, factory, new HmacResultFactory(options.Policy, null), cache, logger, clock);
 
         var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost/api/endpoint");
         Assert.IsTrue((await hmacManager.SignAsync(request)).IsSuccess);
@@ -109,6 +97,8 @@ public class Test_HmacManager_VerifyAsync_NonceExpiry
 
         Assert.That(factory.VerificationCalls, Is.EqualTo(1));
         Assert.That(result.IsSuccess, Is.EqualTo(expectedSuccess));
-        Assert.That(cache.Calls, Is.EqualTo(expectedSuccess ? 1 : 0));
+        Assert.That(logger.WithEventId(RequestVerified).Count(), Is.EqualTo(expectedSuccess ? 1 : 0));
+        Assert.That(logger.WithEventId(VerificationRequestExpired).Count(), Is.EqualTo(expectedSuccess ? 0 : 1));
+        Assert.That(logger.WithEventId(VerificationNonceReplayed), Is.Empty);
     }
 }

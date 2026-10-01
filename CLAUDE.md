@@ -59,7 +59,7 @@ Signature computation lives in `HmacSignatureProvider` → `HmacFactory` → has
 
 ### Nonce caching
 
-`INonceCache` (`src/Caching/`) prevents replay attacks by storing used nonces with a TTL. Two implementations exist: `MemoryNonceCache` (in-process) and `DistributedNonceCache` (Redis). The `Nonce` config on a policy selects which to use.
+`INonceCache` (`src/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the expiry calculation and the past-expiry guard, so an implementation writes only `TryAddCoreAsync`. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, written with a relative TTL so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
 
 ### Logging
 

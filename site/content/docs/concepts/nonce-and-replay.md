@@ -30,11 +30,18 @@ is valid. The order matters: recording a nonce before authenticating the
 request would let an unauthenticated caller spend a genuine request's nonce
 ahead of it, or fill the cache with nonces of its own.
 
-The memory cache checks and records a nonce atomically, so two concurrent
-copies of the same request cannot both be accepted by that cache.
-The `Distributed` cache type is built on `IDistributedCache`, which
-has no conditional write, so it stays check-then-set: two copies of a request
-arriving at the same moment on different instances can both pass.
+Recording is one operation: the cache is asked to **claim** the nonce until
+`dateRequested + maxAgeInSeconds`, and answers whether it was unused. It
+refuses a nonce whose window has already closed — a request can expire while
+its signature is computed — and the verifier reports that as an expiry, not a
+replay.
+
+A claim should be atomic, so two concurrent copies of the same request cannot
+both be accepted. The memory cache's is. The `Distributed` cache type is built
+on `IDistributedCache`, which has no conditional write, so it stays
+check-then-set: two copies of a request arriving at the same moment on
+different instances can both pass. A store with an atomic primitive can back a
+[custom nonce cache](../../dotnet/custom-nonce-cache/) instead.
 
 ## Choosing the window
 
@@ -85,11 +92,10 @@ silently.
 
 The npm package verifies too, and applies the same two checks with the same
 rules, in the same order: date, signature, then the nonce. `maxAgeInSeconds`
-lives on the policy and the nonce store is the `NonceStore` interface — `has`
-and `set`, plus an optional `tryAdd` that checks and records in one atomic
-step. The in-process `MemoryNonceStore` is shipped as the default and
-implements `tryAdd`; a shared store should implement it with its own atomic
-primitive:
+lives on the policy and the nonce store is the `NonceStore` interface, whose
+`tryAdd` makes the same claim with the policy's window passed on every call.
+The in-process `MemoryNonceStore` is shipped as the default; a shared store
+should implement `tryAdd` with its own atomic primitive:
 
 ```ts
 new HmacManagerFactory(policies, false, myRedisNonceStore);
