@@ -585,6 +585,11 @@ data-copied-label="Copied!"
 &lt;/table&gt;
 &lt;p&gt;The defaults pass through: &lt;code&gt;true&lt;/code&gt;, an empty &lt;code&gt;Claim[]&lt;/code&gt;, and an
 &lt;code&gt;HmacAuthenticationException&lt;/code&gt;. Setting none of them changes nothing.&lt;/p&gt;
+&lt;p&gt;A request that names an unknown policy, whose &lt;code&gt;Hmac-Policy&lt;/code&gt; header is missing
+or malformed, or whose consolidated &lt;code&gt;Hmac-Options&lt;/code&gt; header is not valid base64,
+fails authentication with an
+&lt;code&gt;HmacAuthenticationException&lt;/code&gt; instead of throwing. None of the events run for
+it: there is no policy to hand them.&lt;/p&gt;
 &lt;h2&gt;OnValidateKeysAsync&lt;span class="hx:absolute hx:-mt-20" id="onvalidatekeysasync"&gt;&lt;/span&gt;
 &lt;a href="#onvalidatekeysasync" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Runs before verification, with the keys the request named. Returning &lt;code&gt;false&lt;/code&gt;
 rejects the request without attempting to verify it — which is the cheap place

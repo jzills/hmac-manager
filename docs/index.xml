@@ -1127,6 +1127,11 @@ event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;td&gt;Authentication failed&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
+&lt;td&gt;1304&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Debug&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Authentication rejected because a required HMAC header is missing or malformed&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
 &lt;td&gt;1310&lt;/td&gt;
 &lt;td&gt;&lt;code&gt;Debug&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Requested policy not registered&lt;/td&gt;
@@ -1198,13 +1203,17 @@ event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;td&gt;1300&lt;/td&gt;
 &lt;td&gt;Not an HMAC request at all — no header, so authentication was skipped&lt;/td&gt;
 &lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1304&lt;/td&gt;
+&lt;td&gt;A required HMAC header was missing or malformed, including invalid base64 in &lt;code&gt;Hmac-Options&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;p&gt;For 1104, turn on &lt;code&gt;Trace&lt;/code&gt; and compare event 1002 on the signer against 1105 on
 the verifier. See
 &lt;a href="../../dotnet/logging/#diagnosing-a-signature-mismatch"&gt;diagnosing a mismatch&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hm-note hm-note--note"&gt;
-&lt;p&gt;Caller-controlled rejections — 1300, 1310, 1200, 1202 — are &lt;code&gt;Debug&lt;/code&gt;, not
+&lt;p&gt;Caller-controlled rejections — 1300, 1304, 1310, 1200, 1202 — are &lt;code&gt;Debug&lt;/code&gt;, not
 &lt;code&gt;Warning&lt;/code&gt;. An unauthenticated caller can produce them at will, and an edge
 deployment must not be drivable to unbounded &lt;code&gt;Warning&lt;/code&gt; volume by traffic anyone
 can send.&lt;/p&gt;
@@ -2645,7 +2654,7 @@ inside its window — the same mechanism as the
 &lt;a href="../../concepts/nonce-and-replay/"&gt;.NET nonce cache&lt;/a&gt;. The default store is
 in-process:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;policies&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;// MemoryNonceStore, 30s
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;policies&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="c1"&gt;// MemoryNonceStore, covering the longest policy window
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -2664,24 +2673,38 @@ replayed request that lands on the instance that has not seen the nonce is
 accepted, and the protection quietly does nothing. Any multi-replica deployment
 needs a shared store.&lt;/p&gt;
 &lt;/div&gt;
-&lt;p&gt;Supply one by implementing &lt;code&gt;NonceStore&lt;/code&gt;, which is two methods:&lt;/p&gt;
+&lt;p&gt;Supply a shared store by implementing &lt;code&gt;NonceStore&lt;/code&gt;. Alongside the required
+&lt;code&gt;has&lt;/code&gt; and &lt;code&gt;set&lt;/code&gt; methods, provide &lt;code&gt;tryAdd&lt;/code&gt; so verification can check and record
+the nonce in one atomic operation. This Redis example uses &lt;code&gt;SET … PX … NX&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nx"&gt;Redis&lt;/span&gt; &lt;span class="kr"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;ioredis&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kr"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;hmac-manager&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="kr"&gt;type&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;NonceStore&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kr"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;hmac-manager&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;redis&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;Redis&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;process&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;env&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;REDIS_URL&lt;/span&gt;&lt;span class="o"&gt;!&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;// One store serves all policies, so keep nonces for the longest allowed window.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;maxAgeInMilliseconds&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nb"&gt;Math&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;max&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;30&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt;&lt;span class="nx"&gt;policies&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;map&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;policy&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="nx"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;maxAgeInSeconds&lt;/span&gt; &lt;span class="o"&gt;??&lt;/span&gt; &lt;span class="mi"&gt;30&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;remainingTtl&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dateRequested&lt;/span&gt;: &lt;span class="kt"&gt;Date&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nb"&gt;Math&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;ceil&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;getTime&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="nx"&gt;maxAgeInMilliseconds&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="nb"&gt;Date&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;now&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;store&lt;/span&gt;: &lt;span class="kt"&gt;NonceStore&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;has&lt;/span&gt;: &lt;span class="kt"&gt;async&lt;/span&gt; &lt;span class="nx"&gt;nonce&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;await&lt;/span&gt; &lt;span class="nx"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;exists&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sb"&gt;`hmac:nonce:&lt;/span&gt;&lt;span class="si"&gt;${&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;&lt;span class="si"&gt;}&lt;/span&gt;&lt;span class="sb"&gt;`&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;===&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kr"&gt;set&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="kr"&gt;async&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;// Dated from when the request was signed, not from now: an entry that
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;// outlives its signature&amp;#39;s window guards nothing, because the request is
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;// already rejected as expired before the nonce is consulted.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;remaining&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;30&lt;/span&gt;&lt;span class="nx"&gt;_000&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;Date&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;now&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="nx"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;getTime&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="c1"&gt;// Expiry is measured from when the request was signed.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;remaining&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;remainingTtl&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;remaining&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;await&lt;/span&gt; &lt;span class="nx"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="kr"&gt;set&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sb"&gt;`hmac:nonce:&lt;/span&gt;&lt;span class="si"&gt;${&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;&lt;span class="si"&gt;}&lt;/span&gt;&lt;span class="sb"&gt;`&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;1&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;PX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;remaining&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;},&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;tryAdd&lt;/span&gt;: &lt;span class="kt"&gt;async&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;remaining&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;remainingTtl&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;remaining&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;result&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;await&lt;/span&gt; &lt;span class="nx"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="kr"&gt;set&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sb"&gt;`hmac:nonce:&lt;/span&gt;&lt;span class="si"&gt;${&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;&lt;span class="si"&gt;}&lt;/span&gt;&lt;span class="sb"&gt;`&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;1&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;PX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;remaining&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;NX&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nx"&gt;result&lt;/span&gt; &lt;span class="o"&gt;===&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;OK&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;};&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
@@ -2697,11 +2720,12 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;The default &lt;code&gt;has&lt;/code&gt;-then-&lt;code&gt;set&lt;/code&gt; is not atomic, so two simultaneous replays of the
-same request can both slip through. Closing that needs an atomic primitive from
-the store — &lt;code&gt;SET … NX&lt;/code&gt; on Redis, whose reply tells you whether you claimed the
-key — so a &lt;code&gt;NonceStore&lt;/code&gt; that can do better should. The .NET library has the same
-gap in the same place.&lt;/p&gt;
+&lt;p&gt;The store keeps nonces for the longest policy window and rejects entries
+that have already expired. Both client and .NET memory stores also record
+nonces atomically. Client stores without &lt;code&gt;tryAdd&lt;/code&gt; fall back to separate &lt;code&gt;has&lt;/code&gt;
+and &lt;code&gt;set&lt;/code&gt; calls, so concurrent replays can pass. The .NET distributed cache
+has the same limitation because &lt;code&gt;IDistributedCache&lt;/code&gt; has no atomic conditional
+write.&lt;/p&gt;
 &lt;h2&gt;Node, Express and friends&lt;span class="hx:absolute hx:-mt-20" id="node-express-and-friends"&gt;&lt;/span&gt;
 &lt;a href="#node-express-and-friends" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Runtimes with a native &lt;code&gt;Request&lt;/code&gt; — Hono, Next.js route handlers, Deno, Bun,
 Cloudflare Workers — pass it straight to &lt;code&gt;verify&lt;/code&gt;. Node&amp;rsquo;s &lt;code&gt;http&lt;/code&gt; module, and
@@ -3283,6 +3307,17 @@ rejects a repeat. So inside the window a request works exactly once, and
 outside it the timestamp check has already rejected it.&lt;/p&gt;
 &lt;p&gt;Neither can be tampered with: both are in the signing content, so changing
 either invalidates the signature.&lt;/p&gt;
+&lt;h2&gt;Verification order&lt;span class="hx:absolute hx:-mt-20" id="verification-order"&gt;&lt;/span&gt;
+&lt;a href="#verification-order" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The verifier checks the date window first, then the signature, and only then
+records the nonce — so a nonce is recorded only for a request whose signature
+is valid. The order matters: recording a nonce before authenticating the
+request would let an unauthenticated caller spend a genuine request&amp;rsquo;s nonce
+ahead of it, or fill the cache with nonces of its own.&lt;/p&gt;
+&lt;p&gt;The memory cache checks and records a nonce atomically, so two concurrent
+copies of the same request cannot both be accepted by that cache.
+The &lt;code&gt;Distributed&lt;/code&gt; cache type is built on &lt;code&gt;IDistributedCache&lt;/code&gt;, which
+has no conditional write, so it stays check-then-set: two copies of a request
+arriving at the same moment on different instances can both pass.&lt;/p&gt;
 &lt;h2&gt;Choosing the window&lt;span class="hx:absolute hx:-mt-20" id="choosing-the-window"&gt;&lt;/span&gt;
 &lt;a href="#choosing-the-window" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseMemoryCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
@@ -3315,7 +3350,7 @@ captured request stays replayable for longer, and the cache holds more.&lt;/p&gt
 &lt;tr&gt;
 &lt;td&gt;Backed by&lt;/td&gt;
 &lt;td&gt;in-process memory&lt;/td&gt;
-&lt;td&gt;Redis&lt;/td&gt;
+&lt;td&gt;any &lt;code&gt;IDistributedCache&lt;/code&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Shared between instances&lt;/td&gt;
@@ -3323,9 +3358,14 @@ captured request stays replayable for longer, and the cache holds more.&lt;/p&gt
 &lt;td&gt;yes&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
-&lt;td&gt;Safe for&lt;/td&gt;
+&lt;td&gt;Atomic check and record&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Deployment&lt;/td&gt;
 &lt;td&gt;a single instance&lt;/td&gt;
-&lt;td&gt;any number&lt;/td&gt;
+&lt;td&gt;multiple instances, with the concurrency limitation above&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
@@ -3369,9 +3409,12 @@ registered, that is reported at &lt;code&gt;Warning&lt;/code&gt; (event 1201) ra
 silently.&lt;/p&gt;
 &lt;h2&gt;In the TypeScript client&lt;span class="hx:absolute hx:-mt-20" id="in-the-typescript-client"&gt;&lt;/span&gt;
 &lt;a href="#in-the-typescript-client" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The npm package verifies too, and applies the same two checks with the same
-rules. &lt;code&gt;maxAgeInSeconds&lt;/code&gt; lives on the policy and the nonce store is the
-&lt;code&gt;NonceStore&lt;/code&gt; interface — two methods, with an in-process implementation shipped
-as the default:&lt;/p&gt;
+rules, in the same order: date, signature, then the nonce. &lt;code&gt;maxAgeInSeconds&lt;/code&gt;
+lives on the policy and the nonce store is the &lt;code&gt;NonceStore&lt;/code&gt; interface — &lt;code&gt;has&lt;/code&gt;
+and &lt;code&gt;set&lt;/code&gt;, plus an optional &lt;code&gt;tryAdd&lt;/code&gt; that checks and records in one atomic
+step. The in-process &lt;code&gt;MemoryNonceStore&lt;/code&gt; is shipped as the default and
+implements &lt;code&gt;tryAdd&lt;/code&gt;; a shared store should implement it with its own atomic
+primitive:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;policies&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;myRedisNonceStore&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
@@ -3654,7 +3697,7 @@ data-copied-label="Copied!"
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;policies&lt;/span&gt;: &lt;span class="kt"&gt;HmacPolicy&lt;/span&gt;&lt;span class="p"&gt;[],&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;isConsolidatedHeadersEnabled?&lt;/span&gt;: &lt;span class="kt"&gt;boolean&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="c1"&gt;// default false
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;nonceStore?&lt;/span&gt;: &lt;span class="kt"&gt;NonceStore&lt;/span&gt; &lt;span class="c1"&gt;// default new MemoryNonceStore()
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;nonceStore?&lt;/span&gt;: &lt;span class="kt"&gt;NonceStore&lt;/span&gt; &lt;span class="c1"&gt;// default memory store covers all policy windows
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -3913,6 +3956,7 @@ signature covered, by name, and is present only on success.&lt;/p&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;interface&lt;/span&gt; &lt;span class="nx"&gt;NonceStore&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;has&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;: &lt;span class="kt"&gt;string&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;Promise&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;boolean&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kr"&gt;set&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;: &lt;span class="kt"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;dateRequested&lt;/span&gt;: &lt;span class="kt"&gt;Date&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;Promise&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;void&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;tryAdd&lt;/span&gt;&lt;span class="o"&gt;?&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;nonce&lt;/span&gt;: &lt;span class="kt"&gt;string&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;dateRequested&lt;/span&gt;: &lt;span class="kt"&gt;Date&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;Promise&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="nt"&gt;boolean&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -3925,7 +3969,9 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;Where used nonces are recorded. &lt;code&gt;MemoryNonceStore&lt;/code&gt; implements it in-process:&lt;/p&gt;
+&lt;p&gt;Verification uses &lt;code&gt;tryAdd&lt;/code&gt; when available and otherwise calls &lt;code&gt;has&lt;/code&gt; followed
+by &lt;code&gt;set&lt;/code&gt;. The default &lt;code&gt;MemoryNonceStore&lt;/code&gt; implements &lt;code&gt;tryAdd&lt;/code&gt; atomically within
+one process:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;MemoryNonceStore&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;maxAgeInSeconds?&lt;/span&gt;: &lt;span class="kt"&gt;number&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="c1"&gt;// default 30
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
@@ -3940,6 +3986,10 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
+&lt;p&gt;The factory configures its default store to cover the longest policy window,
+with a minimum of 30 seconds. Custom stores need the same lifetime coverage,
+measured from the signing date, because the policy&amp;rsquo;s maximum age is not passed
+to these methods.&lt;/p&gt;
 &lt;p&gt;See &lt;a href="../verifying-requests/#replay-protection"&gt;replay protection&lt;/a&gt; for a Redis
 implementation and why a multi-replica deployment needs one.&lt;/p&gt;
 &lt;h2&gt;fromNodeRequest&lt;span class="hx:absolute hx:-mt-20" id="fromnoderequest"&gt;&lt;/span&gt;
@@ -4089,6 +4139,11 @@ data-copied-label="Copied!"
 &lt;/table&gt;
 &lt;p&gt;The defaults pass through: &lt;code&gt;true&lt;/code&gt;, an empty &lt;code&gt;Claim[]&lt;/code&gt;, and an
 &lt;code&gt;HmacAuthenticationException&lt;/code&gt;. Setting none of them changes nothing.&lt;/p&gt;
+&lt;p&gt;A request that names an unknown policy, whose &lt;code&gt;Hmac-Policy&lt;/code&gt; header is missing
+or malformed, or whose consolidated &lt;code&gt;Hmac-Options&lt;/code&gt; header is not valid base64,
+fails authentication with an
+&lt;code&gt;HmacAuthenticationException&lt;/code&gt; instead of throwing. None of the events run for
+it: there is no policy to hand them.&lt;/p&gt;
 &lt;h2&gt;OnValidateKeysAsync&lt;span class="hx:absolute hx:-mt-20" id="onvalidatekeysasync"&gt;&lt;/span&gt;
 &lt;a href="#onvalidatekeysasync" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Runs before verification, with the keys the request named. Returning &lt;code&gt;false&lt;/code&gt;
 rejects the request without attempting to verify it — which is the cheap place

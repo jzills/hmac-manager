@@ -246,6 +246,11 @@ event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;td&gt;Authentication failed&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
+&lt;td&gt;1304&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Debug&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Authentication rejected because a required HMAC header is missing or malformed&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
 &lt;td&gt;1310&lt;/td&gt;
 &lt;td&gt;&lt;code&gt;Debug&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Requested policy not registered&lt;/td&gt;
@@ -317,13 +322,17 @@ event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;td&gt;1300&lt;/td&gt;
 &lt;td&gt;Not an HMAC request at all — no header, so authentication was skipped&lt;/td&gt;
 &lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1304&lt;/td&gt;
+&lt;td&gt;A required HMAC header was missing or malformed, including invalid base64 in &lt;code&gt;Hmac-Options&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;p&gt;For 1104, turn on &lt;code&gt;Trace&lt;/code&gt; and compare event 1002 on the signer against 1105 on
 the verifier. See
 &lt;a href="../../dotnet/logging/#diagnosing-a-signature-mismatch"&gt;diagnosing a mismatch&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hm-note hm-note--note"&gt;
-&lt;p&gt;Caller-controlled rejections — 1300, 1310, 1200, 1202 — are &lt;code&gt;Debug&lt;/code&gt;, not
+&lt;p&gt;Caller-controlled rejections — 1300, 1304, 1310, 1200, 1202 — are &lt;code&gt;Debug&lt;/code&gt;, not
 &lt;code&gt;Warning&lt;/code&gt;. An unauthenticated caller can produce them at will, and an edge
 deployment must not be drivable to unbounded &lt;code&gt;Warning&lt;/code&gt; volume by traffic anyone
 can send.&lt;/p&gt;
