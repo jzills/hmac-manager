@@ -29,7 +29,22 @@ internal abstract class NonceCache : INonceCache
     /// <param name="nonce">The nonce to store in the cache.</param>
     /// <param name="dateRequested">The date and time the nonce was requested, used to calculate expiration.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public abstract Task SetAsync(Guid nonce, DateTimeOffset dateRequested);
+    public Task SetAsync(Guid nonce, DateTimeOffset dateRequested) =>
+        SetAsync(nonce, dateRequested, Options.MaxAgeInSeconds);
+
+    public abstract Task SetAsync(Guid nonce, DateTimeOffset dateRequested, int maxAgeInSeconds);
+
+    /// <inheritdoc/>
+    public virtual async Task<bool> TryAddAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
+    {
+        if (await ContainsAsync(nonce))
+        {
+            return false;
+        }
+
+        await SetAsync(nonce, dateRequested, (int)maxAge.TotalSeconds);
+        return true;
+    }
 
     /// <summary>
     /// Creates a cache key for the specified nonce.
@@ -43,5 +58,5 @@ internal abstract class NonceCache : INonceCache
     /// </summary>
     /// <param name="dateRequested">The date and time the nonce was requested.</param>
     /// <returns>The absolute expiration date and time for the nonce.</returns>
-    protected DateTimeOffset GetAbsoluteExpiration(DateTimeOffset dateRequested) => dateRequested.AddSeconds(Options.MaxAgeInSeconds);
+    protected static DateTimeOffset GetAbsoluteExpiration(DateTimeOffset dateRequested, int maxAgeInSeconds) => dateRequested.AddSeconds(maxAgeInSeconds);
 }

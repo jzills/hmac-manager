@@ -13,6 +13,12 @@ internal class NonceMemoryCache : NonceCache
     protected readonly IMemoryCache Cache;
 
     /// <summary>
+    /// Locks that make the check and set in <see cref="TryAddAsync"/> atomic. Static because a
+    /// <see cref="NonceMemoryCache"/> is created per scope while the <see cref="IMemoryCache"/> behind it is shared.
+    /// </summary>
+    private static readonly object[] Locks = Enumerable.Range(0, 64).Select(_ => new object()).ToArray();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="NonceMemoryCache"/> class with the specified memory cache and options.
     /// </summary>
     /// <param name="cache">The in-memory cache implementation.</param>
@@ -26,16 +32,31 @@ internal class NonceMemoryCache : NonceCache
     /// <param name="nonce">The unique identifier for the nonce.</param>
     /// <param name="dateRequested">The date and time the nonce was requested, used to calculate expiration.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public override Task SetAsync(Guid nonce, DateTimeOffset dateRequested)
+    public override Task SetAsync(Guid nonce, DateTimeOffset dateRequested, int maxAgeInSeconds)
     {
         Cache.Set(
             GetKey(nonce),
             dateRequested, 
             new MemoryCacheEntryOptions
-                { AbsoluteExpiration = GetAbsoluteExpiration(dateRequested) }
+                { AbsoluteExpiration = GetAbsoluteExpiration(dateRequested, maxAgeInSeconds) }
         );
 
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public override Task<bool> TryAddAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
+    {
+        lock (Locks[(nonce.GetHashCode() & int.MaxValue) % Locks.Length])
+        {
+            if (Cache.Get(GetKey(nonce)) is not null)
+            {
+                return Task.FromResult(false);
+            }
+
+            SetAsync(nonce, dateRequested, (int)maxAge.TotalSeconds);
+            return Task.FromResult(true);
+        }
     }
 
     /// <summary>

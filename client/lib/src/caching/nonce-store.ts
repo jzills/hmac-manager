@@ -27,23 +27,36 @@ export default interface NonceStore {
      * two machines.
      */
     set(nonce: string, dateRequested: Date): Promise<void>;
+
+    /**
+     * Records a nonce as used only if it has not been seen before, as one atomic step.
+     *
+     * @param nonce The nonce to record.
+     * @param dateRequested When the request carrying it was signed, as for {@link set}.
+     * @returns Whether the nonce was unused and is now recorded.
+     */
+    tryAdd?(nonce: string, dateRequested: Date): Promise<boolean>;
 }
 
 /**
  * Checks a nonce and claims it in one step, returning whether it was unused.
  *
- * Mirrors `INonceCacheExtensions.IsValidNonceAsync`. Note that this is check-then-set
- * and not atomic: two concurrent replays of the same request can both observe the nonce
- * as unused before either records it. Closing that needs an atomic primitive from the
- * underlying store — `SET key value NX` on Redis — which is why the operation lives
- * here as a default rather than in the interface. An implementation that can do better
- * should, and the .NET library has the same gap in the same place.
+ * Mirrors `INonceCacheExtensions.IsValidNonceAsync`. Uses the store's `tryAdd` when it
+ * has one, which is atomic: {@link MemoryNonceStore} implements it, and a shared store
+ * should implement it with its own atomic primitive — `SET key value NX` on Redis. A
+ * store with only `has` and `set` falls back to check-then-set, where two concurrent
+ * replays of the same request can both observe the nonce as unused before either
+ * records it.
  */
 export const isValidNonce = async (
     store: NonceStore,
     nonce: string,
     dateRequested: Date
 ): Promise<boolean> => {
+    if (store.tryAdd) {
+        return store.tryAdd(nonce, dateRequested);
+    }
+
     if (await store.has(nonce)) {
         return false;
     }

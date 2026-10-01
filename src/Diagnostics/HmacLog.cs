@@ -288,6 +288,15 @@ internal static partial class HmacLog
     public static partial void AuthenticationFailed(ILogger logger, string policy);
 
     /// <summary>
+    /// Records that missing or malformed HMAC headers prevented authentication.
+    /// </summary>
+    [LoggerMessage(
+        EventId = 1304,
+        Level = LogLevel.Debug,
+        Message = "HMAC authentication rejected because a required header is missing or malformed.")]
+    public static partial void AuthenticationHeadersInvalid(ILogger logger);
+
+    /// <summary>
     /// Records that a caller named a policy this host does not have. Distinct from
     /// <see cref="PolicyNotFound"/> only in vantage point — this fires from the authentication
     /// context provider — but the same reasoning applies: the policy name is caller-supplied and

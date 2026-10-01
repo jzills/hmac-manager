@@ -11,22 +11,15 @@ internal static class INonceCacheExtensions
     /// <param name="cache">The instance of <see cref="INonceCache"/> to operate on.</param>
     /// <param name="nonce">The unique identifier for the nonce.</param>
     /// <param name="dateRequested">The date and time when the nonce was requested.</param>
+    /// <param name="maxAge">The maximum age of a request under the policy the nonce was verified for.</param>
     /// <returns>
     /// A task that represents the asynchronous operation, 
     /// containing a boolean indicating whether the nonce is valid (i.e., not already present in the cache).
     /// </returns>
-    public static async Task<bool> IsValidNonceAsync(
+    public static Task<bool> IsValidNonceAsync(
         this INonceCache cache, 
         Guid nonce, 
-        DateTimeOffset dateRequested
-    )
-    {
-        var isValidNonce = !await cache.ContainsAsync(nonce);
-        if (isValidNonce)
-        {
-            await cache.SetAsync(nonce, dateRequested);
-        }
-
-        return isValidNonce;
-    }
+        DateTimeOffset dateRequested,
+        TimeSpan maxAge
+    ) => cache.TryAddAsync(nonce, dateRequested, maxAge);
 }

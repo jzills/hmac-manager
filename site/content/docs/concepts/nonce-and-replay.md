@@ -22,6 +22,20 @@ outside it the timestamp check has already rejected it.
 Neither can be tampered with: both are in the signing content, so changing
 either invalidates the signature.
 
+## Verification order
+
+The verifier checks the date window first, then the signature, and only then
+records the nonce — so a nonce is recorded only for a request whose signature
+is valid. The order matters: recording a nonce before authenticating the
+request would let an unauthenticated caller spend a genuine request's nonce
+ahead of it, or fill the cache with nonces of its own.
+
+The memory cache checks and records a nonce atomically, so two concurrent
+copies of the same request cannot both be accepted by that cache.
+The `Distributed` cache type is built on `IDistributedCache`, which
+has no conditional write, so it stays check-then-set: two copies of a request
+arriving at the same moment on different instances can both pass.
+
 ## Choosing the window
 
 ```csharp
@@ -39,9 +53,10 @@ Minutes, not hours. The chart defaults to 60 seconds.
 
 | | `UseMemoryCache` | `UseDistributedCache` |
 | --- | --- | --- |
-| Backed by | in-process memory | Redis |
+| Backed by | in-process memory | any `IDistributedCache` |
 | Shared between instances | no | yes |
-| Safe for | a single instance | any number |
+| Atomic check and record | yes | no |
+| Deployment | a single instance | multiple instances, with the concurrency limitation above |
 
 {{% hm-note kind="warn" %}}
 The in-memory cache is per process. Behind a load balancer with two instances,
@@ -69,9 +84,12 @@ silently.
 ## In the TypeScript client
 
 The npm package verifies too, and applies the same two checks with the same
-rules. `maxAgeInSeconds` lives on the policy and the nonce store is the
-`NonceStore` interface — two methods, with an in-process implementation shipped
-as the default:
+rules, in the same order: date, signature, then the nonce. `maxAgeInSeconds`
+lives on the policy and the nonce store is the `NonceStore` interface — `has`
+and `set`, plus an optional `tryAdd` that checks and records in one atomic
+step. The in-process `MemoryNonceStore` is shipped as the default and
+implements `tryAdd`; a shared store should implement it with its own atomic
+primitive:
 
 ```ts
 new HmacManagerFactory(policies, false, myRedisNonceStore);

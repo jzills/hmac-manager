@@ -32,7 +32,7 @@ public class Test_NonceCache_Extensions_HasValidNonceAsync : TestServiceCollecti
     [TestCaseSource(typeof(TestCaseData), nameof(TestCaseData.GetNonces))]
     public async Task Test_HasValidNonceAsync_IsValid(Guid nonce)
     {
-        Assert.IsTrue(await Cache.IsValidNonceAsync(nonce, DateTimeOffset.Now));
+        Assert.IsTrue(await Cache.IsValidNonceAsync(nonce, DateTimeOffset.Now, TimeSpan.FromSeconds(MaxAgeInSeconds)));
     }
 
     [Test]
@@ -41,6 +41,6 @@ public class Test_NonceCache_Extensions_HasValidNonceAsync : TestServiceCollecti
     {
         await Cache.SetAsync(nonce, DateTimeOffset.Now);
    
-        Assert.IsFalse(await Cache.IsValidNonceAsync(nonce, DateTimeOffset.Now));
+        Assert.IsFalse(await Cache.IsValidNonceAsync(nonce, DateTimeOffset.Now, TimeSpan.FromSeconds(MaxAgeInSeconds)));
     }
 }

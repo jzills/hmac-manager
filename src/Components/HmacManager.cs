@@ -36,6 +36,8 @@ public class HmacManager : IHmacManager
     /// </summary>
     protected readonly ILogger Logger;
 
+    private readonly TimeProvider Clock;
+
     /// <summary>
     /// Creates a <see cref="HmacManager"/> object that does not log.
     /// </summary>
@@ -69,6 +71,17 @@ public class HmacManager : IHmacManager
         IHmacResultFactory resultFactory,
         INonceCache cache,
         ILogger<HmacManager> logger
+    ) : this(options, factory, resultFactory, cache, logger, TimeProvider.System)
+    {
+    }
+
+    internal HmacManager(
+        HmacManagerOptions options,
+        IHmacFactory factory,
+        IHmacResultFactory resultFactory,
+        INonceCache cache,
+        ILogger<HmacManager> logger,
+        TimeProvider clock
     )
     {
         Options = options;
@@ -76,6 +89,7 @@ public class HmacManager : IHmacManager
         ResultFactory = resultFactory;
         Cache = cache;
         Logger = logger;
+        Clock = clock;
     }
 
     /// <inheritdoc/>
@@ -94,17 +108,10 @@ public class HmacManager : IHmacManager
             return ResultFactory.Failure();
         }
 
-        if (!incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds))
+        if (!incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds, Clock))
         {
             HmacLog.VerificationRequestExpired(
                 Logger, Options.Policy, incomingHmac.DateRequested, Options.MaxAgeInSeconds);
-
-            return ResultFactory.Failure();
-        }
-
-        if (!await Cache.IsValidNonceAsync(incomingHmac.Nonce, incomingHmac.DateRequested))
-        {
-            HmacLog.VerificationNonceReplayed(Logger, Options.Policy, incomingHmac.Nonce);
 
             return ResultFactory.Failure();
         }
@@ -119,6 +126,23 @@ public class HmacManager : IHmacManager
                 hmacVerification.Signature,
                 hmacVerification.SigningContent,
                 incomingHmac.Signature);
+
+            return ResultFactory.Failure();
+        }
+
+        // The request can expire while its signature is computed. Nonce entries
+        // expire at dateRequested + maxAge, and some caches reject an expiry in the past.
+        if (!incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds, Clock))
+        {
+            HmacLog.VerificationRequestExpired(
+                Logger, Options.Policy, incomingHmac.DateRequested, Options.MaxAgeInSeconds);
+
+            return ResultFactory.Failure();
+        }
+
+        if (!await Cache.IsValidNonceAsync(incomingHmac.Nonce, incomingHmac.DateRequested, TimeSpan.FromSeconds(Options.MaxAgeInSeconds)))
+        {
+            HmacLog.VerificationNonceReplayed(Logger, Options.Policy, incomingHmac.Nonce);
 
             return ResultFactory.Failure();
         }

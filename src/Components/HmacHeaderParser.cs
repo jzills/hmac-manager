@@ -133,7 +133,14 @@ public class HmacHeaderParser : IHmacHeaderParser
         {
             if (long.TryParse(dateRequested, out var dateRequestedInMilliseconds))
             {
-                return DateTimeOffset.FromUnixTimeMilliseconds(dateRequestedInMilliseconds);
+                try
+                {
+                    return DateTimeOffset.FromUnixTimeMilliseconds(dateRequestedInMilliseconds);
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    throw new BadHeaderFormatException();
+                }
             }
             else
             {
