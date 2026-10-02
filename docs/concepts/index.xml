@@ -434,11 +434,17 @@ records the nonce — so a nonce is recorded only for a request whose signature
 is valid. The order matters: recording a nonce before authenticating the
 request would let an unauthenticated caller spend a genuine request&amp;rsquo;s nonce
 ahead of it, or fill the cache with nonces of its own.&lt;/p&gt;
-&lt;p&gt;The memory cache checks and records a nonce atomically, so two concurrent
-copies of the same request cannot both be accepted by that cache.
-The &lt;code&gt;Distributed&lt;/code&gt; cache type is built on &lt;code&gt;IDistributedCache&lt;/code&gt;, which
-has no conditional write, so it stays check-then-set: two copies of a request
-arriving at the same moment on different instances can both pass.&lt;/p&gt;
+&lt;p&gt;Recording is one operation: the cache is asked to &lt;strong&gt;claim&lt;/strong&gt; the nonce until
+&lt;code&gt;dateRequested + maxAgeInSeconds&lt;/code&gt;, and answers whether it was unused. A request
+can expire while its signature is computed, so the verifier checks the date
+again immediately before asking: an expired request never reaches the cache,
+and a refusal from it is always a replay.&lt;/p&gt;
+&lt;p&gt;A claim should be atomic, so two concurrent copies of the same request cannot
+both be accepted. The memory cache&amp;rsquo;s is. The &lt;code&gt;Distributed&lt;/code&gt; cache type is built
+on &lt;code&gt;IDistributedCache&lt;/code&gt;, which has no conditional write, so it stays
+check-then-set: two copies of a request arriving at the same moment on
+different instances can both pass. A store with an atomic primitive can back a
+&lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt; instead.&lt;/p&gt;
 &lt;h2&gt;Choosing the window&lt;span class="hx:absolute hx:-mt-20" id="choosing-the-window"&gt;&lt;/span&gt;
 &lt;a href="#choosing-the-window" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseMemoryCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
@@ -531,11 +537,10 @@ silently.&lt;/p&gt;
 &lt;h2&gt;In the TypeScript client&lt;span class="hx:absolute hx:-mt-20" id="in-the-typescript-client"&gt;&lt;/span&gt;
 &lt;a href="#in-the-typescript-client" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The npm package verifies too, and applies the same two checks with the same
 rules, in the same order: date, signature, then the nonce. &lt;code&gt;maxAgeInSeconds&lt;/code&gt;
-lives on the policy and the nonce store is the &lt;code&gt;NonceStore&lt;/code&gt; interface — &lt;code&gt;has&lt;/code&gt;
-and &lt;code&gt;set&lt;/code&gt;, plus an optional &lt;code&gt;tryAdd&lt;/code&gt; that checks and records in one atomic
-step. The in-process &lt;code&gt;MemoryNonceStore&lt;/code&gt; is shipped as the default and
-implements &lt;code&gt;tryAdd&lt;/code&gt;; a shared store should implement it with its own atomic
-primitive:&lt;/p&gt;
+lives on the policy and the nonce store is the &lt;code&gt;NonceStore&lt;/code&gt; interface, whose
+&lt;code&gt;tryAdd&lt;/code&gt; makes the same claim with the policy&amp;rsquo;s window passed on every call.
+The in-process &lt;code&gt;MemoryNonceStore&lt;/code&gt; is shipped as the default; a shared store
+should implement &lt;code&gt;tryAdd&lt;/code&gt; with its own atomic primitive:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;policies&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kc"&gt;false&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;myRedisNonceStore&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button

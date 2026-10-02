@@ -585,10 +585,11 @@ data-copied-label="Copied!"
 &lt;/table&gt;
 &lt;p&gt;The defaults pass through: &lt;code&gt;true&lt;/code&gt;, an empty &lt;code&gt;Claim[]&lt;/code&gt;, and an
 &lt;code&gt;HmacAuthenticationException&lt;/code&gt;. Setting none of them changes nothing.&lt;/p&gt;
-&lt;p&gt;A request that names an unknown policy, whose &lt;code&gt;Hmac-Policy&lt;/code&gt; header is missing
-or malformed, or whose consolidated &lt;code&gt;Hmac-Options&lt;/code&gt; header is not valid base64,
-fails authentication with an
-&lt;code&gt;HmacAuthenticationException&lt;/code&gt; instead of throwing. None of the events run for
+&lt;p&gt;A request that names an unknown policy, or whose HMAC headers are missing or
+malformed — the &lt;code&gt;Authorization&lt;/code&gt; value, &lt;code&gt;Hmac-Policy&lt;/code&gt;, a &lt;code&gt;Hmac-Nonce&lt;/code&gt; that is not
+a GUID, a &lt;code&gt;Hmac-DateRequested&lt;/code&gt; that is not a number or is out of range, or a
+consolidated &lt;code&gt;Hmac-Options&lt;/code&gt; header that is not valid base64 — fails
+authentication with an &lt;code&gt;HmacAuthenticationException&lt;/code&gt; instead of throwing. None of the events run for
 it: there is no policy to hand them.&lt;/p&gt;
 &lt;h2&gt;OnValidateKeysAsync&lt;span class="hx:absolute hx:-mt-20" id="onvalidatekeysasync"&gt;&lt;/span&gt;
 &lt;a href="#onvalidatekeysasync" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Runs before verification, with the keys the request named. Returning &lt;code&gt;false&lt;/code&gt;
@@ -873,7 +874,125 @@ an explicit, unambiguous formatting such as
 &lt;h2&gt;Checking it&lt;span class="hx:absolute hx:-mt-20" id="checking-it"&gt;&lt;/span&gt;
 &lt;a href="#checking-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Turn &lt;code&gt;Trace&lt;/code&gt; on for &lt;code&gt;HmacManager.Components.HmacManager&lt;/code&gt; on both ends and
 compare the content strings — event 1002 on the signer, event 1105 on the
-verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;logging&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</guid><description>
+verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;logging&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Custom nonce cache</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/custom-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/custom-nonce-cache/</guid><description>
+&lt;p&gt;The built-in caches cover one instance (&lt;code&gt;UseMemoryCache&lt;/code&gt;) and any
+&lt;code&gt;IDistributedCache&lt;/code&gt; (&lt;code&gt;UseDistributedCache&lt;/code&gt;). A custom cache is for a shared
+store that can claim a nonce &lt;strong&gt;atomically&lt;/strong&gt;, which &lt;code&gt;IDistributedCache&lt;/code&gt; cannot —
+see &lt;a href="../../concepts/nonce-and-replay/#verification-order"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;The contract&lt;span class="hx:absolute hx:-mt-20" id="the-contract"&gt;&lt;/span&gt;
+&lt;a href="#the-contract" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The verifier asks a cache one thing, through &lt;code&gt;INonceCache.TryAddAsync&lt;/code&gt;: claim
+this nonce until its request&amp;rsquo;s window closes, and say whether it was unused.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;TryAddAsync&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Guid&lt;/span&gt; &lt;span class="n"&gt;nonce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DateTimeOffset&lt;/span&gt; &lt;span class="n"&gt;dateRequested&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;TimeSpan&lt;/span&gt; &lt;span class="n"&gt;maxAge&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;An implementation must:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;check and record in one atomic step&lt;/strong&gt;, so two concurrent copies of a request
+cannot both be accepted;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;keep the entry until at least &lt;code&gt;dateRequested + maxAge&lt;/code&gt;&lt;/strong&gt; — the signature stays
+valid until then, and &lt;code&gt;maxAge&lt;/code&gt; is the policy&amp;rsquo;s, passed on every call because one
+cache serves every policy that selects it. Round a TTL up to your store&amp;rsquo;s
+resolution: &lt;code&gt;RedisCache&lt;/code&gt; truncates to whole seconds, so an entry written with
+0.8 seconds left is dropped at once;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;return &lt;code&gt;false&lt;/code&gt; rather than store an entry whose expiry has already passed&lt;/strong&gt;,
+since some stores throw on an expiry in the past.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The verifier checks the request&amp;rsquo;s date again immediately before the call, so a
+request that expired while its signature was computed never reaches the cache, and
+it reports any &lt;code&gt;false&lt;/code&gt; as a replay.&lt;/p&gt;
+&lt;h2&gt;Derive from &lt;code&gt;NonceCache&lt;/code&gt;&lt;span class="hx:absolute hx:-mt-20" id="derive-from-noncecache"&gt;&lt;/span&gt;
+&lt;a href="#derive-from-noncecache" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;NonceCache&lt;/code&gt; handles the last two rules: it refuses a request whose window has
+closed, and hands you the time left in it as a TTL — positive, relative to now, and
+rounded up to a whole second. What is left is the atomic claim:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="nn"&gt;HmacManager.Caching&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="nn"&gt;StackExchange.Redis&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;RedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt; &lt;span class="n"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;NonceCache&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kd"&gt;protected&lt;/span&gt; &lt;span class="kd"&gt;override&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;TryAddCoreAsync&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Guid&lt;/span&gt; &lt;span class="n"&gt;nonce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;TimeSpan&lt;/span&gt; &lt;span class="n"&gt;timeToLive&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;GetDatabase&lt;/span&gt;&lt;span class="p"&gt;().&lt;/span&gt;&lt;span class="n"&gt;StringSetAsync&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s"&gt;$&amp;#34;hmac:nonce:{nonce}&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;timeToLive&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;When&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NotExists&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;false&lt;/code&gt; from &lt;code&gt;TryAddCoreAsync&lt;/code&gt; means the nonce was already claimed — nothing else.
+The TTL is relative because a store reached over the network can see an absolute
+expiry pass on the way. &lt;code&gt;Clock&lt;/code&gt; is the &lt;code&gt;TimeProvider&lt;/code&gt; passed to the base
+constructor — &lt;code&gt;TimeProvider.System&lt;/code&gt; unless you supply one, which is what makes the
+expiry testable.&lt;/p&gt;
+&lt;h2&gt;Register it&lt;span class="hx:absolute hx:-mt-20" id="register-it"&gt;&lt;/span&gt;
+&lt;a href="#register-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Policies select a cache by type (&lt;code&gt;UseMemoryCache&lt;/code&gt;, &lt;code&gt;UseDistributedCache&lt;/code&gt;, or
+&lt;code&gt;CacheType&lt;/code&gt; in configuration). Register a cache collection &lt;strong&gt;after&lt;/strong&gt;
+&lt;code&gt;AddHmacManager&lt;/code&gt; to put yours behind the type your policies select:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddSingleton&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;(&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;ConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Connect&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;localhost:6379&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHmacManager&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddPolicy&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;MyPolicy&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;policy&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePublicKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;publicKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePrivateKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;privateKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseDistributedCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;60&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddScoped&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IComponentCollection&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;INonceCache&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;gt;(&lt;/span&gt;&lt;span class="n"&gt;services&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;var&lt;/span&gt; &lt;span class="n"&gt;caches&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;NonceCacheCollection&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;caches&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;NonceCacheType&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Distributed&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;GetRequiredService&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;()));&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;caches&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="hm-note hm-note--warn"&gt;
+&lt;p&gt;This replaces the whole collection, built-in caches included. Add a cache for
+every type your policies select: a policy whose type is missing is not verified,
+and is reported at &lt;code&gt;Warning&lt;/code&gt; (event 1201).&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Outside dependency injection, pass the collection to &lt;code&gt;HmacManagerFactory&lt;/code&gt;, or a
+single cache to the &lt;code&gt;HmacManager&lt;/code&gt; constructor.&lt;/p&gt;
+&lt;h2&gt;Migrating from &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt;&lt;span class="hx:absolute hx:-mt-20" id="migrating-from-setasync-and-containsasync"&gt;&lt;/span&gt;
+&lt;a href="#migrating-from-setasync-and-containsasync" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Before &lt;code&gt;TryAddAsync&lt;/code&gt;, a cache implemented &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt;. Both are
+obsolete and will be removed in the next major version. A cache that still
+implements only those keeps working: the default &lt;code&gt;TryAddAsync&lt;/code&gt; refuses an
+expired entry, then calls &lt;code&gt;ContainsAsync&lt;/code&gt; and &lt;code&gt;SetAsync&lt;/code&gt;. That is check-then-set,
+so it is not atomic, and the two-argument &lt;code&gt;SetAsync&lt;/code&gt; never learns the policy&amp;rsquo;s
+max age — your cache&amp;rsquo;s own TTL applies, and if it is shorter than the policy&amp;rsquo;s
+window a replay can get through after the entry expires.&lt;/p&gt;
+&lt;p&gt;To migrate, derive from &lt;code&gt;NonceCache&lt;/code&gt; and move the logic into &lt;code&gt;TryAddCoreAsync&lt;/code&gt;, or
+implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</guid><description>
 &lt;p&gt;HmacManager writes to &lt;code&gt;ILogger&lt;/code&gt; and needs no configuration to do so — register
 the library the usual way and every component picks up the host&amp;rsquo;s logger.
 Nothing is written when logging is not configured: each type falls back to
