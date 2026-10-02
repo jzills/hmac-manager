@@ -31,10 +31,10 @@ request would let an unauthenticated caller spend a genuine request's nonce
 ahead of it, or fill the cache with nonces of its own.
 
 Recording is one operation: the cache is asked to **claim** the nonce until
-`dateRequested + maxAgeInSeconds`, and answers whether it was unused. It
-refuses a nonce whose window has already closed — a request can expire while
-its signature is computed — and the verifier reports that as an expiry, not a
-replay.
+`dateRequested + maxAgeInSeconds`, and answers whether it was unused. A request
+can expire while its signature is computed, so the verifier checks the date
+again immediately before asking: an expired request never reaches the cache,
+and a refusal from it is always a replay.
 
 A claim should be atomic, so two concurrent copies of the same request cannot
 both be accepted. The memory cache's is. The `Distributed` cache type is built

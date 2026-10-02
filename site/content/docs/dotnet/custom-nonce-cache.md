@@ -24,15 +24,21 @@ An implementation must:
   cannot both be accepted;
 - **keep the entry until at least `dateRequested + maxAge`** — the signature stays
   valid until then, and `maxAge` is the policy's, passed on every call because one
-  cache serves every policy that selects it;
-- **return `false` rather than store an entry whose expiry has already passed.** A
-  request can expire while its signature is computed, and some stores throw on an
-  expiry in the past. The verifier reports that refusal as an expiry, not a replay.
+  cache serves every policy that selects it. Round a TTL up to your store's
+  resolution: `RedisCache` truncates to whole seconds, so an entry written with
+  0.8 seconds left is dropped at once;
+- **return `false` rather than store an entry whose expiry has already passed**,
+  since some stores throw on an expiry in the past.
+
+The verifier checks the request's date again immediately before the call, so a
+request that expired while its signature was computed never reaches the cache, and
+it reports any `false` as a replay.
 
 ## Derive from `NonceCache`
 
-`NonceCache` handles the last two rules: it computes the expiry and refuses one
-that has passed. What is left is the atomic claim:
+`NonceCache` handles the last two rules: it refuses a request whose window has
+closed, and hands you the time left in it as a TTL — positive, relative to now, and
+rounded up to a whole second. What is left is the atomic claim:
 
 ```csharp
 using HmacManager.Caching;
@@ -40,27 +46,17 @@ using StackExchange.Redis;
 
 public class RedisNonceCache(IConnectionMultiplexer redis) : NonceCache
 {
-    protected override async Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt)
-    {
-        // A TTL relative to now, not the absolute expiry: the store's clock decides, so
-        // a claim made milliseconds before expiry can never be rejected as "in the past".
-        var remaining = expiresAt - Clock.GetUtcNow();
-        if (remaining <= TimeSpan.Zero)
-        {
-            return false;
-        }
-
-        return await redis.GetDatabase().StringSetAsync(
-            $"hmac:nonce:{nonce}", 1, remaining, When.NotExists);
-    }
+    protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive) =>
+        redis.GetDatabase().StringSetAsync(
+            $"hmac:nonce:{nonce}", 1, timeToLive, When.NotExists);
 }
 ```
 
-`expiresAt` is in the future when `TryAddCoreAsync` is called, but a store reached
-over the network can still see it pass, so treat a remainder that has run out as
-a failed claim. `Clock` is the `TimeProvider` passed to the base constructor —
-`TimeProvider.System` unless you supply one, which is what makes the expiry
-testable.
+`false` from `TryAddCoreAsync` means the nonce was already claimed — nothing else.
+The TTL is relative because a store reached over the network can see an absolute
+expiry pass on the way. `Clock` is the `TimeProvider` passed to the base
+constructor — `TimeProvider.System` unless you supply one, which is what makes the
+expiry testable.
 
 ## Register it
 

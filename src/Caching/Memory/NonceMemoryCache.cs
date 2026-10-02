@@ -39,7 +39,7 @@ internal class NonceMemoryCache : NonceCache, INonceCache
     }
 
     /// <inheritdoc/>
-    protected override Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt)
+    protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive)
     {
         var key = Options.CreateKey(nonce);
         lock (GetLock(nonce))
@@ -49,7 +49,7 @@ internal class NonceMemoryCache : NonceCache, INonceCache
                 return Task.FromResult(false);
             }
 
-            Set(key, expiresAt);
+            Set(key, timeToLive);
             return Task.FromResult(true);
         }
     }
@@ -63,9 +63,12 @@ internal class NonceMemoryCache : NonceCache, INonceCache
     [Obsolete("Use TryAddAsync.")]
     public Task SetAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge)
     {
-        lock (GetLock(nonce))
+        if (TryGetTimeToLive(dateRequested + maxAge, out var timeToLive))
         {
-            Set(Options.CreateKey(nonce), dateRequested + maxAge);
+            lock (GetLock(nonce))
+            {
+                Set(Options.CreateKey(nonce), timeToLive);
+            }
         }
 
         return Task.CompletedTask;
@@ -77,8 +80,8 @@ internal class NonceMemoryCache : NonceCache, INonceCache
 
     private bool Contains(string key) => Cache.TryGetValue(key, out _);
 
-    private void Set(string key, DateTimeOffset expiresAt) =>
-        Cache.Set(key, true, new MemoryCacheEntryOptions { AbsoluteExpiration = expiresAt });
+    private void Set(string key, TimeSpan timeToLive) =>
+        Cache.Set(key, true, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeToLive });
 
     private static object GetLock(Guid nonce) => Locks[(nonce.GetHashCode() & int.MaxValue) % Locks.Length];
 }

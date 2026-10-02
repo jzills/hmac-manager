@@ -1,6 +1,7 @@
 import { assert, test, vi } from "vitest";
 import { HmacAuthenticationDefaults } from "../src/hmac-authentication-defaults";
 import HmacManagerFactory from "../src/hmac-manager-factory";
+import MemoryNonceStore from "../src/caching/memory-nonce-store";
 import HmacPolicy from "../src/components/hmac-policy";
 import HashAlgorithm from "../src/hash-algorithm";
 
@@ -262,21 +263,26 @@ test.each([4999, 5000, 5001])("HmacManager_Verify_Reports_A_Window_Closing_Durin
     }
 });
 
-test("HmacManager_Verify_Reports_A_Window_Closing_Inside_The_Store_As_Expired", async () => {
-    // A shared store's round trip can outlast the window too. It refuses the claim, and the
-    // refusal is an expiry rather than a replay.
+test("HmacManager_Verify_Reports_A_Replay_Whose_Store_Round_Trip_Crosses_The_Window_As_Replayed", async () => {
+    // The replay arrives with 5 ms of its window left and the shared store takes 10 ms to
+    // refuse it. The window has closed by the time the answer comes back, but the store
+    // refused a nonce it already held: that is a replay, and it must not be filed as one
+    // of the ordinary clock-skew expiries.
     const start = new Date("2026-01-01T00:00:00Z");
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(start);
 
     try {
         const policy = createPolicy({ maxAgeInSeconds: 5 });
+        const inner = new MemoryNonceStore();
+        let latency = 0;
         const store = {
             has: async () => false,
             set: async () => {},
-            tryAdd: async () => {
-                vi.setSystemTime(start.getTime() + 5_000);
-                return false;
+            tryAdd: async (nonce: string, dateRequested: Date, maxAgeInSeconds: number) => {
+                const claimed = await inner.tryAdd(nonce, dateRequested, maxAgeInSeconds);
+                vi.setSystemTime(Date.now() + latency);
+                return claimed;
             }
         };
         const signer = new HmacManagerFactory([policy]);
@@ -284,10 +290,14 @@ test("HmacManager_Verify_Reports_A_Window_Closing_Inside_The_Store_As_Expired", 
         const request = new Request(Url);
         assert.isTrue((await signer.create("Policy-A")!.sign(request)).isSuccess);
 
-        const result = await verifier.verify(request);
+        assert.isTrue((await verifier.verify(request.clone())).isSuccess);
 
-        assert.isFalse(result.isSuccess);
-        assert.equal(result.reason, "expired");
+        vi.setSystemTime(start.getTime() + 4_995);
+        latency = 10;
+        const replay = await verifier.verify(request);
+
+        assert.isFalse(replay.isSuccess);
+        assert.equal(replay.reason, "replayed");
     } finally {
         vi.useRealTimers();
     }

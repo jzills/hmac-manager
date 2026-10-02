@@ -214,7 +214,7 @@ whether it was unused. `maxAgeInSeconds` is the window of the policy the
 request was verified for, so one store serves every policy. An implementation
 must claim atomically, and return `false` rather than store an entry whose
 expiry has already passed. A nonce whose window has closed never reaches the
-store at all.
+store at all, so a `false` is always reported as `replayed`.
 
 `has` and `set` are deprecated, and verification calls them only for a store
 without `tryAdd`: check-then-set, which is not atomic, with a TTL the store has

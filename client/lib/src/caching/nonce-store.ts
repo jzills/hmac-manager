@@ -54,33 +54,40 @@ export default interface NonceStore {
 }
 
 /**
- * Claims a nonce for the rest of its request's window, returning whether it was unused.
+ * The outcome of claiming a nonce.
+ */
+export type NonceClaim = "claimed" | "replayed" | "expired";
+
+/**
+ * Claims a nonce for the rest of its request's window.
  *
  * Mirrors `INonceCache.TryAddAsync` on the .NET side. A nonce whose window has already
- * closed is refused before the store is touched — the request expired while its signature
- * was computed, and some stores reject an expiry in the past. A store with `tryAdd` is
- * then asked to claim it atomically; one with only the deprecated `has` and `set` falls
- * back to check-then-set, where two concurrent replays of the same request can both
- * observe the nonce as unused before either records it.
+ * closed is reported as expired before the store is touched — the request expired while
+ * its signature was computed, and some stores reject an expiry in the past. That is the
+ * only expiry decision: whatever the store answers afterwards, however long it takes, a
+ * refusal is a replay. A store with `tryAdd` is asked to claim the nonce atomically; one
+ * with only the deprecated `has` and `set` falls back to check-then-set, where two
+ * concurrent replays of the same request can both observe the nonce as unused before
+ * either records it.
  */
-export const isValidNonce = async (
+export const claimNonce = async (
     store: NonceStore,
     nonce: string,
     dateRequested: Date,
     maxAgeInSeconds: number
-): Promise<boolean> => {
+): Promise<NonceClaim> => {
     if (dateRequested.getTime() + maxAgeInSeconds * 1000 <= Date.now()) {
-        return false;
+        return "expired";
     }
 
     if (store.tryAdd) {
-        return store.tryAdd(nonce, dateRequested, maxAgeInSeconds);
+        return await store.tryAdd(nonce, dateRequested, maxAgeInSeconds) ? "claimed" : "replayed";
     }
 
     if (await store.has(nonce)) {
-        return false;
+        return "replayed";
     }
 
     await store.set(nonce, dateRequested);
-    return true;
+    return "claimed";
 };

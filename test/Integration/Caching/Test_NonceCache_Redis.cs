@@ -19,19 +19,9 @@ public class Test_NonceCache_Redis
     /// </summary>
     private class RedisNonceCache(IConnectionMultiplexer redis) : NonceCache
     {
-        protected override async Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt)
-        {
-            // A TTL relative to now, not the absolute expiry: the store's clock decides, so
-            // a claim made milliseconds before expiry can never be rejected as "in the past".
-            var remaining = expiresAt - Clock.GetUtcNow();
-            if (remaining <= TimeSpan.Zero)
-            {
-                return false;
-            }
-
-            return await redis.GetDatabase().StringSetAsync(
-                $"hmac:nonce:{nonce}", 1, remaining, When.NotExists);
-        }
+        protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive) =>
+            redis.GetDatabase().StringSetAsync(
+                $"hmac:nonce:{nonce}", 1, timeToLive, When.NotExists);
     }
 
     private static readonly TimeSpan MaxAge = TimeSpan.FromSeconds(30);
@@ -60,6 +50,35 @@ public class Test_NonceCache_Redis
         var nonce = Guid.NewGuid();
         Assert.IsTrue(await cache.TryAddAsync(nonce, DateTimeOffset.UtcNow, MaxAge));
         Assert.IsFalse(await cache.TryAddAsync(nonce, DateTimeOffset.UtcNow, MaxAge));
+    }
+
+    /// <summary>
+    /// <c>RedisCache</c> truncates a TTL to whole seconds: written as-is, an entry with 0.8s left gets no
+    /// TTL and is gone at once, and one with 1.6s left is gone after 1s. Either way a replay sent while
+    /// the signature still verifies would be accepted.
+    /// </summary>
+    [TestCase(800, 0)]
+    [TestCase(1600, 1100)]
+    public async Task Test_DistributedCache_OverRedis_RefusesAReplayForTheWholeWindow(int remainingMs, int replayAfterMs)
+    {
+        var services = new ServiceCollection()
+            .AddStackExchangeRedisCache(options => options.Configuration = Configuration)
+            .AddHmacManager(_ => { });
+
+        await using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var cache = scope.ServiceProvider
+            .GetRequiredService<IComponentCollection<INonceCache>>()
+            .Get(nameof(NonceCacheType.Distributed))!;
+
+        var nonce = Guid.NewGuid();
+        var dateRequested = DateTimeOffset.UtcNow - MaxAge + TimeSpan.FromMilliseconds(remainingMs);
+
+        Assert.IsTrue(await cache.TryAddAsync(nonce, dateRequested, MaxAge));
+        await Task.Delay(replayAfterMs);
+
+        Assume.That(dateRequested + MaxAge, Is.GreaterThan(DateTimeOffset.UtcNow), "the window must still be open");
+        Assert.IsFalse(await cache.TryAddAsync(nonce, dateRequested, MaxAge));
     }
 
     [Test]

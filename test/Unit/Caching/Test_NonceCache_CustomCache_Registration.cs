@@ -16,10 +16,10 @@ public class Test_NonceCache_CustomCache_Registration : TestBase
 {
     private class DictionaryNonceCache : NonceCache
     {
-        private readonly ConcurrentDictionary<Guid, DateTimeOffset> Nonces = new();
+        private readonly ConcurrentDictionary<Guid, TimeSpan> Nonces = new();
 
-        protected override Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt) =>
-            Task.FromResult(Nonces.TryAdd(nonce, expiresAt));
+        protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive) =>
+            Task.FromResult(Nonces.TryAdd(nonce, timeToLive));
 
         public int Count => Nonces.Count;
     }

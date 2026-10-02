@@ -37,7 +37,7 @@ internal class NonceDistributedCache : NonceCache, INonceCache
     }
 
     /// <inheritdoc/>
-    protected override async Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt)
+    protected override async Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive)
     {
         var key = Options.CreateKey(nonce);
         if (await ExistsAsync(key))
@@ -45,7 +45,8 @@ internal class NonceDistributedCache : NonceCache, INonceCache
             return false;
         }
 
-        return await WriteAsync(key, expiresAt);
+        await WriteAsync(key, timeToLive);
+        return true;
     }
 
     /// <inheritdoc/>
@@ -56,7 +57,9 @@ internal class NonceDistributedCache : NonceCache, INonceCache
     /// <inheritdoc/>
     [Obsolete("Use TryAddAsync.")]
     public Task SetAsync(Guid nonce, DateTimeOffset dateRequested, TimeSpan maxAge) =>
-        WriteAsync(Options.CreateKey(nonce), dateRequested + maxAge);
+        TryGetTimeToLive(dateRequested + maxAge, out var timeToLive)
+            ? WriteAsync(Options.CreateKey(nonce), timeToLive)
+            : Task.CompletedTask;
 
     /// <inheritdoc/>
     [Obsolete("Use TryAddAsync.")]
@@ -65,25 +68,13 @@ internal class NonceDistributedCache : NonceCache, INonceCache
     private async Task<bool> ExistsAsync(string key) => await Cache.GetAsync(key) is not null;
 
     /// <summary>
-    /// Writes the entry with a TTL relative to now rather than an absolute expiry. The read before
-    /// the write is a network round trip, so an expiry checked before it can be in the past by the
-    /// time the store sees it, and stores such as <c>RedisCache</c> throw on that. A relative TTL is
-    /// in the future by the store's own clock; a remainder that has already run out means the
-    /// request's window closed, so there is nothing left to guard and the claim fails.
+    /// Writes the entry with a TTL relative to now, measured before the read that precedes it. The
+    /// entry outlives the window by that round trip at most, and the store never sees an expiry
+    /// that passed on the way.
     /// </summary>
-    private async Task<bool> WriteAsync(string key, DateTimeOffset expiresAt)
-    {
-        var remaining = expiresAt - Clock.GetUtcNow();
-        if (remaining <= TimeSpan.Zero)
-        {
-            return false;
-        }
-
-        await Cache.SetStringAsync(
+    private Task WriteAsync(string key, TimeSpan timeToLive) =>
+        Cache.SetStringAsync(
             key,
-            expiresAt.ToString("O"),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = remaining });
-
-        return true;
-    }
+            "1",
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeToLive });
 }

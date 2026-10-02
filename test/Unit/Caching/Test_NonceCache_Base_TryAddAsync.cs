@@ -7,15 +7,15 @@ public class Test_NonceCache_Base_TryAddAsync
 {
     private class RecordingNonceCache : NonceCache
     {
-        public readonly List<(Guid Nonce, DateTimeOffset ExpiresAt)> Claims = new();
+        public readonly List<(Guid Nonce, TimeSpan TimeToLive)> Claims = new();
 
         public RecordingNonceCache(TimeProvider clock) : base(clock)
         {
         }
 
-        protected override Task<bool> TryAddCoreAsync(Guid nonce, DateTimeOffset expiresAt)
+        protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive)
         {
-            Claims.Add((nonce, expiresAt));
+            Claims.Add((nonce, timeToLive));
             return Task.FromResult(true);
         }
     }
@@ -25,13 +25,29 @@ public class Test_NonceCache_Base_TryAddAsync
     private static readonly TimeSpan MaxAge = TimeSpan.FromSeconds(30);
 
     [Test]
-    public async Task Test_TryAddAsync_InWindow_ClaimsUntilDateRequestedPlusMaxAge()
+    public async Task Test_TryAddAsync_InWindow_ClaimsForTheRestOfTheWindow()
     {
         var cache = new RecordingNonceCache(new FakeTimeProvider(Now));
         var nonce = Guid.NewGuid();
 
         Assert.IsTrue(await cache.TryAddAsync(nonce, Now.AddSeconds(-10), MaxAge));
-        Assert.That(cache.Claims, Is.EqualTo(new[] { (nonce, Now.AddSeconds(20)) }));
+        Assert.That(cache.Claims, Is.EqualTo(new[] { (nonce, TimeSpan.FromSeconds(20)) }));
+    }
+
+    // RedisCache truncates a TTL to whole seconds, so anything less than the remainder rounded up
+    // drops the entry while its signature still verifies.
+    [TestCase(1, 1, Description = "1 ms left")]
+    [TestCase(800, 1, Description = "Under a second left: truncated, it would be dropped at once")]
+    [TestCase(1000, 1, Description = "Exactly a second left")]
+    [TestCase(1001, 2, Description = "Just over a second left")]
+    [TestCase(29_700, 30, Description = "Truncated, it would be dropped 0.7s early")]
+    public async Task Test_TryAddAsync_RoundsTheTimeToLiveUpToAWholeSecond(int remainingMilliseconds, int expectedSeconds)
+    {
+        var cache = new RecordingNonceCache(new FakeTimeProvider(Now));
+        var dateRequested = Now - MaxAge + TimeSpan.FromMilliseconds(remainingMilliseconds);
+
+        Assert.IsTrue(await cache.TryAddAsync(Guid.NewGuid(), dateRequested, MaxAge));
+        Assert.That(cache.Claims.Single().TimeToLive, Is.EqualTo(TimeSpan.FromSeconds(expectedSeconds)));
     }
 
     [TestCase(0, Description = "Expires exactly now")]
@@ -54,6 +70,6 @@ public class Test_NonceCache_Base_TryAddAsync
         var cache = new RecordingNonceCache(new FakeTimeProvider(Now));
 
         Assert.IsTrue(await cache.TryAddAsync(Guid.NewGuid(), Now.AddSeconds(5), MaxAge));
-        Assert.That(cache.Claims.Single().ExpiresAt, Is.EqualTo(Now.AddSeconds(35)));
+        Assert.That(cache.Claims.Single().TimeToLive, Is.EqualTo(TimeSpan.FromSeconds(35)));
     }
 }

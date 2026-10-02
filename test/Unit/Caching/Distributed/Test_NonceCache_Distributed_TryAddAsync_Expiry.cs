@@ -7,7 +7,8 @@ namespace Unit.Tests.Caching.Distributed;
 
 /// <summary>
 /// The read before the write is a network round trip, so a request inside its window when the claim
-/// starts can be outside it by the time the entry is written.
+/// starts can be outside it by the time the entry is written. The TTL is fixed before the read, so
+/// the store never sees an expiry in the past, and a refusal only ever means the nonce was held.
 /// </summary>
 public class Test_NonceCache_Distributed_TryAddAsync_Expiry
 {
@@ -62,7 +63,7 @@ public class Test_NonceCache_Distributed_TryAddAsync_Expiry
     private static readonly TimeSpan MaxAge = TimeSpan.FromSeconds(30);
 
     [Test]
-    public async Task Test_TryAddAsync_WindowClosesDuringRead_RefusesWithoutThrowing()
+    public async Task Test_TryAddAsync_WindowClosesDuringRead_ClaimsWithoutThrowing()
     {
         var clock = new FakeTimeProvider(Now);
         var store = new RoundTripDistributedCache(clock, TimeSpan.FromMilliseconds(5));
@@ -71,12 +72,12 @@ public class Test_NonceCache_Distributed_TryAddAsync_Expiry
         // 2 ms left when the claim starts, 5 ms spent reading.
         var dateRequested = Now - MaxAge + TimeSpan.FromMilliseconds(2);
 
-        Assert.IsFalse(await cache.TryAddAsync(Guid.NewGuid(), dateRequested, MaxAge));
-        Assert.That(store.Writes, Is.Empty);
+        Assert.IsTrue(await cache.TryAddAsync(Guid.NewGuid(), dateRequested, MaxAge));
+        Assert.That(store.Writes.Single().AbsoluteExpirationRelativeToNow, Is.EqualTo(TimeSpan.FromSeconds(1)));
     }
 
     [Test]
-    public async Task Test_TryAddAsync_WritesTtlRelativeToNow_FromAfterTheRead()
+    public async Task Test_TryAddAsync_WritesTtlRelativeToNow_FromBeforeTheRead()
     {
         var clock = new FakeTimeProvider(Now);
         var store = new RoundTripDistributedCache(clock, TimeSpan.FromMilliseconds(5));
@@ -86,6 +87,6 @@ public class Test_NonceCache_Distributed_TryAddAsync_Expiry
 
         var write = store.Writes.Single();
         Assert.That(write.AbsoluteExpiration, Is.Null);
-        Assert.That(write.AbsoluteExpirationRelativeToNow, Is.EqualTo(MaxAge - TimeSpan.FromMilliseconds(5)));
+        Assert.That(write.AbsoluteExpirationRelativeToNow, Is.EqualTo(MaxAge));
     }
 }

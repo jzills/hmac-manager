@@ -58,7 +58,8 @@ public interface INonceCache
     /// <list type="bullet">
     /// <item>check and record in one atomic step, so two concurrent copies of a request cannot both be accepted;</item>
     /// <item>keep the entry until at least <paramref name="dateRequested"/> plus <paramref name="maxAge"/>,
-    /// because the request's signature stays valid until then;</item>
+    /// because the request's signature stays valid until then — round a TTL up to the store's resolution,
+    /// since <c>RedisCache</c>, for one, truncates to whole seconds;</item>
     /// <item>return <c>false</c> rather than store an entry whose expiry has already passed — some stores
     /// throw on an expiry in the past.</item>
     /// </list>
