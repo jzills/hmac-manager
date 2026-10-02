@@ -4,6 +4,9 @@ using Microsoft.Extensions.Options;
 using HmacManager.Caching;
 using HmacManager.Caching.Distributed;
 
+// The obsolete members are still supported on the built-in caches until they are removed.
+#pragma warning disable CS0618
+
 namespace Unit.Tests.Caching.Memory;
 
 [TestFixture(1)]

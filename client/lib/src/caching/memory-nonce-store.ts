@@ -22,20 +22,24 @@ export default class MemoryNonceStore implements NonceStore {
     private readonly entries = new Map<string, number>();
 
     /**
-     * How long an entry is kept, in milliseconds.
+     * How long an entry recorded through the deprecated {@link set} is kept, in
+     * milliseconds. {@link tryAdd} is told each policy's window per call instead.
      */
     private readonly maxAgeInMilliseconds: number;
 
     /**
-     * @param maxAgeInSeconds How long a signature stays valid. Entries are held for the
-     * same span, dated from when the request was signed: a nonce that outlives its
-     * signature's window guards nothing, since the request is already rejected as
-     * expired. Defaults to 30 seconds, matching `Nonce.MaxAgeInSeconds` on the .NET side.
+     * @param maxAgeInSeconds How long an entry recorded through the deprecated
+     * {@link set} is kept, dated from when the request was signed. Defaults to 30
+     * seconds, matching `Nonce.MaxAgeInSeconds` on the .NET side. Entries claimed with
+     * {@link tryAdd} use the window passed with them.
      */
     constructor(maxAgeInSeconds: number = 30) {
         this.maxAgeInMilliseconds = maxAgeInSeconds * 1000;
     }
 
+    /**
+     * @deprecated Use {@link tryAdd}. Removed in the next major version.
+     */
     has = async (nonce: string): Promise<boolean> => {
         const expiresAt = this.entries.get(nonce);
         if (expiresAt === undefined) {
@@ -52,42 +56,66 @@ export default class MemoryNonceStore implements NonceStore {
         return true;
     };
 
+    /**
+     * @deprecated Use {@link tryAdd}. Removed in the next major version.
+     */
     set = async (nonce: string, dateRequested: Date): Promise<void> => {
-        this.evictExpired();
-        this.entries.set(nonce, dateRequested.getTime() + this.maxAgeInMilliseconds);
+        this.record(nonce, dateRequested.getTime() + this.maxAgeInMilliseconds);
     };
 
     /**
      * Checks and records the nonce with no `await` in between, so no other call can
      * interleave on the event loop.
+     *
+     * @param maxAgeInSeconds The window of the policy the request was verified for.
+     * Optional only so a caller written against the two-argument form keeps compiling;
+     * without it, the constructor's window applies.
      */
-    tryAdd = async (nonce: string, dateRequested: Date): Promise<boolean> => {
-        const expiresAt = this.entries.get(nonce);
-        if (expiresAt !== undefined && expiresAt > Date.now()) {
+    tryAdd = async (nonce: string, dateRequested: Date, maxAgeInSeconds?: number): Promise<boolean> => {
+        const now = Date.now();
+        const expiresAt = dateRequested.getTime() +
+            (maxAgeInSeconds === undefined ? this.maxAgeInMilliseconds : maxAgeInSeconds * 1000);
+        if (expiresAt <= now) {
             return false;
         }
 
-        this.evictExpired();
-        this.entries.set(nonce, dateRequested.getTime() + this.maxAgeInMilliseconds);
+        const existing = this.entries.get(nonce);
+        if (existing !== undefined && existing > now) {
+            return false;
+        }
+
+        this.record(nonce, expiresAt);
         return true;
     };
 
     /**
+     * Records an entry at the end of the map. Deleted first because `Map.set` on a key
+     * already present keeps its original position, and an entry the sweep has not reached
+     * yet would otherwise sit early in the order with a late expiry, stopping every sweep.
+     */
+    private record(nonce: string, expiresAt: number): void {
+        this.evictExpired();
+        this.entries.delete(nonce);
+        this.entries.set(nonce, expiresAt);
+    }
+
+    /**
      * Drops the entries that have lapsed.
      *
-     * Every entry gets the same TTL and `Map` iterates in insertion order, so the
-     * expired ones are always a prefix — the sweep can stop at the first live entry
-     * instead of walking the whole map, making it O(expired) rather than O(size).
+     * `Map` iterates in insertion order, which roughly tracks expiry, so the sweep
+     * stops at the first live entry instead of walking the whole map — O(expired) rather
+     * than O(size).
      *
      * Deliberately no timer. A `setInterval` here would keep a Node process alive for as
      * long as the store existed, which is not a decision a library gets to make for its
      * host; sweeping on write costs nothing on an idle store because an idle store is
      * not being written to.
      *
-     * Insertion order tracks `dateRequested`, not arrival, so a request signed earlier
-     * but received later sorts out of place. It can only be *more* expired than its
-     * neighbours, so the sweep stops one entry early and collects it on the next pass —
-     * the entry is still never reported as a hit, because `has` re-checks.
+     * Only roughly, though. A request signed earlier but received later sorts out of
+     * place, and so does an entry from a policy with a shorter window than its
+     * neighbours. Either way the sweep stops early and the entry waits for a later pass,
+     * held no longer than the longest window in use — and it is never reported as a hit
+     * meanwhile, because every read re-checks the expiry.
      */
     private evictExpired(): void {
         const now = Date.now();

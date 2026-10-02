@@ -11,7 +11,7 @@ import HmacVerificationResultFactory from "./components/hmac-verification-result
 import SigningContentBuilder from "./builders/signing-content-builder";
 import SigningContentBuilderAccessor from "./builders/signing-content-builder-accessor";
 import HmacHeaderParserFactory from "./parsers/hmac-header-parser-factory";
-import NonceStore, { isValidNonce } from "./caching/nonce-store";
+import NonceStore, { claimNonce } from "./caching/nonce-store";
 import MemoryNonceStore from "./caching/memory-nonce-store";
 import BadHeaderFormatError from "./exceptions/bad-header-format-error";
 import MissingHeaderError from "./exceptions/missing-header-error";
@@ -95,8 +95,7 @@ export default class HmacManager {
         this.maxAgeInSeconds = policy.maxAgeInSeconds ?? DefaultMaxAgeInSeconds;
         this.headerParserFactory = verification.headerParserFactory ??
             new HmacHeaderParserFactory(false);
-        this.nonceStore = verification.nonceStore ??
-            new MemoryNonceStore(this.maxAgeInSeconds);
+        this.nonceStore = verification.nonceStore ?? new MemoryNonceStore();
 
         const signingContentBuilder = this.policy.signingContentAccessor ? 
             new SigningContentBuilderAccessor(this.policy.signingContentAccessor) :
@@ -214,14 +213,11 @@ export default class HmacManager {
             return this.verificationResultFactory.failure("signature-mismatch");
         }
 
-        // The request can expire while its signature is computed. Recheck before
-        // accessing a nonce store that may reject a nonpositive remaining lifetime.
-        if (!this.hasValidDateRequested(incoming.dateRequested)) {
-            return this.verificationResultFactory.failure("expired");
-        }
-
-        if (!await isValidNonce(this.nonceStore, incoming.nonce, incoming.dateRequested)) {
-            return this.verificationResultFactory.failure("replayed");
+        // Expired if the window closed while the signature was computed; otherwise the
+        // store's refusal is a replay, however long the store took to give it.
+        const claim = await claimNonce(this.nonceStore, incoming.nonce, incoming.dateRequested, this.maxAgeInSeconds);
+        if (claim !== "claimed") {
+            return this.verificationResultFactory.failure(claim);
         }
 
         const hmac: Hmac = {

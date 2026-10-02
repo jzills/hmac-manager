@@ -31,10 +31,11 @@ builder.Services
 The defaults pass through: `true`, an empty `Claim[]`, and an
 `HmacAuthenticationException`. Setting none of them changes nothing.
 
-A request that names an unknown policy, whose `Hmac-Policy` header is missing
-or malformed, or whose consolidated `Hmac-Options` header is not valid base64,
-fails authentication with an
-`HmacAuthenticationException` instead of throwing. None of the events run for
+A request that names an unknown policy, or whose HMAC headers are missing or
+malformed — the `Authorization` value, `Hmac-Policy`, a `Hmac-Nonce` that is not
+a GUID, a `Hmac-DateRequested` that is not a number or is out of range, or a
+consolidated `Hmac-Options` header that is not valid base64 — fails
+authentication with an `HmacAuthenticationException` instead of throwing. None of the events run for
 it: there is no policy to hand them.
 
 ## OnValidateKeysAsync

@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Caching;
-using HmacManager.Caching.Extensions;
 using HmacManager.Diagnostics;
 using HmacManager.Extensions;
 
@@ -130,8 +129,11 @@ public class HmacManager : IHmacManager
             return ResultFactory.Failure();
         }
 
-        // The request can expire while its signature is computed. Nonce entries
-        // expire at dateRequested + maxAge, and some caches reject an expiry in the past.
+        // The request can expire while its signature is computed. Checked again here, before the
+        // cache, because a cache implementing TryAddAsync directly need not guard against an
+        // expiry in the past, and some stores throw on one. It is also what makes the cache's
+        // answer unambiguous: a refusal after this point is a replay, however long the store
+        // takes to give it.
         if (!incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds, Clock))
         {
             HmacLog.VerificationRequestExpired(
@@ -140,7 +142,7 @@ public class HmacManager : IHmacManager
             return ResultFactory.Failure();
         }
 
-        if (!await Cache.IsValidNonceAsync(incomingHmac.Nonce, incomingHmac.DateRequested, TimeSpan.FromSeconds(Options.MaxAgeInSeconds)))
+        if (!await Cache.TryAddAsync(incomingHmac.Nonce, incomingHmac.DateRequested, TimeSpan.FromSeconds(Options.MaxAgeInSeconds)))
         {
             HmacLog.VerificationNonceReplayed(Logger, Options.Policy, incomingHmac.Nonce);
 

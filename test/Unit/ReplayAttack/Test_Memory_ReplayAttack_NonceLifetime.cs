@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using HmacManager.Caching;
-using HmacManager.Caching.Extensions;
 using HmacManager.Caching.Memory;
 
 namespace Unit.Tests;
@@ -19,7 +18,7 @@ public class Test_Memory_ReplayAttack_NonceLifetime
         var nonce = Guid.NewGuid();
         var dateRequested = DateTimeOffset.UtcNow.AddSeconds(-60);
 
-        Assert.IsTrue(await cache.IsValidNonceAsync(nonce, dateRequested, TimeSpan.FromSeconds(120)));
-        Assert.IsFalse(await cache.IsValidNonceAsync(nonce, dateRequested, TimeSpan.FromSeconds(120)));
+        Assert.IsTrue(await cache.TryAddAsync(nonce, dateRequested, TimeSpan.FromSeconds(120)));
+        Assert.IsFalse(await cache.TryAddAsync(nonce, dateRequested, TimeSpan.FromSeconds(120)));
     }
 }

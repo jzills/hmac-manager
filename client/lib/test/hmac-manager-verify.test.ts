@@ -1,6 +1,7 @@
 import { assert, test, vi } from "vitest";
 import { HmacAuthenticationDefaults } from "../src/hmac-authentication-defaults";
 import HmacManagerFactory from "../src/hmac-manager-factory";
+import MemoryNonceStore from "../src/caching/memory-nonce-store";
 import HmacPolicy from "../src/components/hmac-policy";
 import HashAlgorithm from "../src/hash-algorithm";
 
@@ -216,7 +217,7 @@ test("HmacManager_Verify_Rejects_A_Signature_Older_Than_The_Policy_Window", asyn
     assert.equal(result.reason, "expired");
 });
 
-test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computation_At_%i_ms", async elapsed => {
+test.each([4999, 5000, 5001])("HmacManager_Verify_Reports_A_Window_Closing_During_Computation_As_Expired_At_%i_ms", async elapsed => {
     const start = new Date("2026-01-01T00:00:00Z");
     let verifying = false;
     let computedDuringVerification = false;
@@ -237,7 +238,7 @@ test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computat
         const store = {
             has: vi.fn(async () => false),
             set: vi.fn(async () => {}),
-            tryAdd: vi.fn(async () => true)
+            tryAdd: vi.fn(async (_nonce: string, _dateRequested: Date, _maxAgeInSeconds: number) => true)
         };
         const signer = new HmacManagerFactory([policy]);
         const verifier = new HmacManagerFactory([policy], false, store);
@@ -250,9 +251,53 @@ test.each([4999, 5000, 5001])("HmacManager_Verify_Rechecks_Expiry_After_Computat
         assert.isTrue(computedDuringVerification);
         assert.equal(result.isSuccess, elapsed < 5000);
         assert.equal(result.reason, elapsed < 5000 ? undefined : "expired");
+        // A lapsed nonce never reaches the store; a live one is claimed with the policy's window.
         assert.equal(store.tryAdd.mock.calls.length, elapsed < 5000 ? 1 : 0);
+        if (elapsed < 5000) {
+            assert.equal(store.tryAdd.mock.calls[0][2], 5);
+        }
         assert.equal(store.has.mock.calls.length, 0);
         assert.equal(store.set.mock.calls.length, 0);
+    } finally {
+        vi.useRealTimers();
+    }
+});
+
+test("HmacManager_Verify_Reports_A_Replay_Whose_Store_Round_Trip_Crosses_The_Window_As_Replayed", async () => {
+    // The replay arrives with 5 ms of its window left and the shared store takes 10 ms to
+    // refuse it. The window has closed by the time the answer comes back, but the store
+    // refused a nonce it already held: that is a replay, and it must not be filed as one
+    // of the ordinary clock-skew expiries.
+    const start = new Date("2026-01-01T00:00:00Z");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(start);
+
+    try {
+        const policy = createPolicy({ maxAgeInSeconds: 5 });
+        const inner = new MemoryNonceStore();
+        let latency = 0;
+        const store = {
+            has: async () => false,
+            set: async () => {},
+            tryAdd: async (nonce: string, dateRequested: Date, maxAgeInSeconds: number) => {
+                const claimed = await inner.tryAdd(nonce, dateRequested, maxAgeInSeconds);
+                vi.setSystemTime(Date.now() + latency);
+                return claimed;
+            }
+        };
+        const signer = new HmacManagerFactory([policy]);
+        const verifier = new HmacManagerFactory([policy], false, store);
+        const request = new Request(Url);
+        assert.isTrue((await signer.create("Policy-A")!.sign(request)).isSuccess);
+
+        assert.isTrue((await verifier.verify(request.clone())).isSuccess);
+
+        vi.setSystemTime(start.getTime() + 4_995);
+        latency = 10;
+        const replay = await verifier.verify(request);
+
+        assert.isFalse(replay.isSuccess);
+        assert.equal(replay.reason, "replayed");
     } finally {
         vi.useRealTimers();
     }
