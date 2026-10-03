@@ -55,6 +55,36 @@ jobs:
         working-directory: ./test/Operator
         run: dotnet test --no-build --verbosity normal
 
+  service-tests:
+    name: Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Redis
+        uses: supercharge/redis-github-action@1.8.1
+        with:
+          redis-version: 7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        working-directory: ./test/Service
+        run: dotnet restore
+
+      - name: Build
+        working-directory: ./test/Service
+        run: dotnet build --no-restore
+
+      - name: Test
+        working-directory: ./test/Service
+        run: dotnet test --no-build --verbosity normal
+
   client-tests:
     name: Client Tests
     runs-on: ubuntu-latest
