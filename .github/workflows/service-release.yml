@@ -32,6 +32,10 @@ jobs:
         working-directory: ./test/Integration
         run: dotnet test --verbosity normal
 
+      - name: Run service tests
+        working-directory: ./test/Service
+        run: dotnet test --verbosity normal
+
   publish:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest

@@ -59,7 +59,7 @@ Signature computation lives in `HmacSignatureProvider` → `HmacFactory` → has
 
 ### Nonce caching
 
-`INonceCache` (`src/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the past-expiry guard and the TTL: `TryAddCoreAsync(nonce, timeToLive)` receives the time left in the window, relative and rounded up to a whole second, because `RedisCache` truncates TTLs to seconds and would otherwise drop an entry while its signature still verifies. A `false` from `TryAddCoreAsync` therefore only ever means already-claimed. `HmacManager.VerifyAsync` re-checks the request date immediately before the cache, so an expired request never reaches it (a cache implementing `TryAddAsync` directly need not guard) and any refusal is logged as a replay, not an expiry. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, TTL fixed before its read so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
+`INonceCache` (`src/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the past-expiry guard and the TTL: `TryAddCoreAsync(nonce, timeToLive)` receives the time left in the window, relative and rounded up to a whole second, because `RedisCache` truncates TTLs to seconds and would otherwise drop an entry while its signature still verifies. A `false` from `TryAddCoreAsync` therefore only ever means already-claimed. `HmacManager.VerifyAsync` re-checks the request date immediately before the cache, so an expired request never reaches it (a cache implementing `TryAddAsync` directly need not guard) and any refusal is logged as a replay, not an expiry. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, TTL fixed before its read so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. The ext-authz service does not use `NonceDistributedCache`: with a Redis connection string it serves the `Distributed` type from its own `RedisNonceCache` (`kubernetes/service/Caching/`, one atomic `SET NX`, same key as the library's cache so rolling upgrades stay safe), wrapping the collection `AddHmacManager` registers so `Memory` keeps the library's cache. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
 
 ### Logging
 
@@ -196,7 +196,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 
 **Trigger**: Any pull request opened or updated targeting `main` or `develop`.
 
-**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, client, CI-script, sample, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
+**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, service, client, CI-script, sample, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
 
 **Jobs**:
 
@@ -213,6 +213,14 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 3. Restores dependencies in `test/Operator`.
 4. Builds `test/Operator`.
 5. Runs the operator test suite via `dotnet test` (rendering, mapping, validation, and status reconciliation for the `HmacPolicy` CRD controller under `kubernetes/operator/`).
+
+#### `service-tests`
+1. Checks out the repository.
+2. Starts a Redis 7 instance using `supercharge/redis-github-action`.
+3. Installs .NET `8.0.x` and `10.0.x`.
+4. Restores, builds and runs `test/Service` — the ext-authz service's `RedisNonceCache` against a real Redis, including two service providers sharing it as two replicas, where concurrent copies of one signed request must yield exactly one acceptance.
+
+This is also the only PR job that compiles `kubernetes/service`; before it, the service was built only by `kubernetes-pr.yml`'s e2e run and at release time. `service-release.yml` runs the same suite before publishing the image.
 
 #### `client-tests`
 1. Checks out the repository.
@@ -255,7 +263,7 @@ command — `bash .github/scripts/verify-samples.sh`.
 6. Builds `test/Integration`.
 7. Runs the integration test suite via `dotnet test`.
 
-**Branch protection**: The `Unit Tests`, `Operator Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
+**Branch protection**: The `Unit Tests`, `Operator Tests`, `Service Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
 
 ---
 
