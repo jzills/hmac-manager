@@ -23,7 +23,7 @@ Requests are signed and verified against named **policies**. A policy carries a 
 
 - Policy-based signing and verification — validate requests against multiple named policies.
 - Schemes — require specific header values per policy, with automatic mapping of those headers to claims.
-- Built-in nonce management for replay protection, in-memory or Redis-backed.
+- Built-in nonce management for replay protection, in-memory or over any `IDistributedCache` — plus an atomic Redis cache shared between instances in the opt-in [`HmacManager.StackExchangeRedis`](https://www.nuget.org/packages/HmacManager.StackExchangeRedis/) package.
 - Dynamic policies — a singleton collection, or pulled at runtime from a database or other store.
 - First-class ASP.NET Core authentication/authorization integration, plus client-side request signing via an `HttpClient` handler.
 - Structured `ILogger` diagnostics with stable event ids — every rejection reports *which* check failed, and no message can carry a private key.

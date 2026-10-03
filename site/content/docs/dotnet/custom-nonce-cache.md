@@ -9,6 +9,10 @@ The built-in caches cover one instance (`UseMemoryCache`) and any
 store that can claim a nonce **atomically**, which `IDistributedCache` cannot —
 see [nonce and replay](../../concepts/nonce-and-replay/#verification-order).
 
+For Redis, that cache already exists: use the
+[`HmacManager.StackExchangeRedis`](../redis-nonce-cache/) package. The Redis
+example below shows the contract, not a replacement for it.
+
 ## The contract
 
 The verifier asks a cache one thing, through `INonceCache.TryAddAsync`: claim
