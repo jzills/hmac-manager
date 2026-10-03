@@ -1,6 +1,6 @@
 # Releasing
 
-This project has five independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
+This project has six independently versioned artifacts, each with its own release pipeline. All releases follow Gitflow: work lands on `develop` via feature branches, gets stabilized on a release branch, merges into `main` **via a pull request**, and is tagged automatically at that merge commit.
 
 Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whose head branch starts with `release/` is merged into `main`, extracts the artifact and version from the branch name (`.github/scripts/extract-version.sh`), and pushes the matching prefixed tag. That tag push — and the follow-up back-merge PR it opens into `develop` — use the **`RELEASE_PAT`** secret, not the built-in `GITHUB_TOKEN`: tags pushed with `GITHUB_TOKEN` are deliberately blocked from triggering the per-artifact release workflows, and a PR opened by `GITHUB_TOKEN` does not run checks without a manual approval. Merging into `main` with a direct `git push` (bypassing a PR) will **not** trigger a release — the merge must go through a PR for `tag.yml` to fire.
 
@@ -13,6 +13,7 @@ The back-merge into `develop` is fully automatic: `tag.yml` opens the PR and ret
 | Artifact | Release branch | Tag format | Trigger |
 |---|---|---|---|
 | NuGet package | `release/vX.Y.Z` | `nuget/vX.Y.Z` | `.github/workflows/release.yml` |
+| NuGet package (Redis nonce cache) | `release/redis/vX.Y.Z` | `redis/vX.Y.Z` | `.github/workflows/redis-release.yml` |
 | Docker image (ext-authz service) | `release/service/vX.Y.Z` | `service/vX.Y.Z` | `.github/workflows/service-release.yml` |
 | Docker image (policy operator) | `release/operator/vX.Y.Z` | `operator/vX.Y.Z` | `.github/workflows/operator-release.yml` |
 | Helm chart | `release/chart/vX.Y.Z` | `chart/vX.Y.Z` | `.github/workflows/chart-release.yml` |
@@ -25,7 +26,7 @@ auto-generated from the merged PRs since the previous release of the *same*
 artifact. Releases are notes-only — the artifacts themselves live on nuget.org,
 npmjs.com, Docker Hub, and GHCR / the gh-pages HTTP repo.
 
-The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `HmacManager.Operator.csproj`'s `<Version>` for the operator, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion` — and `client/lib/package.json`'s `version` for npm) so that:
+The published version always comes from the tag, not from any source file. Even so, each release branch must bump its own version file (`HmacManager.csproj`'s `<Version>` for NuGet, `HmacManager.StackExchangeRedis.csproj`'s `<Version>` for the Redis package, `HmacManager.Kubernetes.csproj`'s `<Version>` for the service, `HmacManager.Operator.csproj`'s `<Version>` for the operator, `Chart.yaml`'s `version` for the chart — see [Helm chart release](#helm-chart) for `appVersion` — and `client/lib/package.json`'s `version` for npm) so that:
 
 - local/manual builds report the right version, and
 - the release branch has a real commit to bring back into `develop`. If a release branch has no changes vs `develop` at merge time, `tag.yml`'s `merge-back` job fails loudly with an error telling you to bump the version — it does not silently skip.
@@ -60,6 +61,41 @@ git branch -d release/v2.7.0
 ```
 
 **Required secret:** `NUGET_API_KEY` (Settings → Secrets → Actions).
+
+---
+
+## NuGet Package (Redis nonce cache) {#redis-package}
+
+Covers changes to `extensions/StackExchangeRedis/`, published as [`HmacManager.StackExchangeRedis`](https://www.nuget.org/packages/HmacManager.StackExchangeRedis/).
+
+**Release `HmacManager` first** whenever `src/` has changed since its last release. The package references `src/` as a project, and packing turns that reference into a dependency on `HmacManager` at the version in `src/HmacManager.csproj`. If the package were published with `src/` ahead of that release, it would declare a dependency on an `HmacManager` that lacks code it calls. The `publish` job refuses to run in that state (`.github/scripts/check-core-released.sh`): it needs the `nuget/v` tag for `src/HmacManager.csproj`'s version to exist, and `src/` (its README aside) to be unchanged since.
+
+```bash
+# 1. Cut a release branch from develop
+git checkout develop && git pull origin develop
+git checkout -b release/redis/v1.0.0
+
+# 2. Bump the version and stabilize
+#    Edit extensions/StackExchangeRedis/HmacManager.StackExchangeRedis.csproj: <Version>1.0.0</Version>
+git commit -am "chore: bump redis package version to 1.0.0"
+git push origin release/redis/v1.0.0
+
+# 3. Open a PR release/redis/v1.0.0 -> main and merge it once checks pass.
+#    Merging the PR automatically:
+#      - tags main as redis/v1.0.0 (triggers redis-release.yml: test, check, pack, publish)
+#      - opens, waits for checks on, and merges a PR to back-merge release/redis/v1.0.0 into develop
+gh pr create --base main --head release/redis/v1.0.0 --title "release: redis v1.0.0" --fill
+gh pr checks --watch --required --fail-fast
+gh pr merge --merge
+
+# 4. Once the back-merge PR has merged, delete the release branch
+git push origin --delete release/redis/v1.0.0
+git branch -d release/redis/v1.0.0
+```
+
+The version is set from the tag through `-p:RedisPackageVersion`, not `-p:Version`. A `-p:` property is global: `Version` would reach the `HmacManager` project reference as well, and the package would declare a dependency on `HmacManager` at the package's own version number.
+
+**Required secret:** `NUGET_API_KEY`, the same one `release.yml` uses. Its package scope must cover `HmacManager.StackExchangeRedis` as well as `HmacManager` — a glob of `HmacManager*` does both.
 
 ---
 
@@ -235,6 +271,8 @@ The pipeline sets the published version from the tag (`npm version --no-git-tag-
 
 ## Releasing Multiple Artifacts Together
 
+When the Redis package needs a change in `src/`, release `HmacManager` first and the Redis package after its back-merge has landed in `develop` — see [NuGet Package (Redis nonce cache)](#redis-package).
+
 When a service change also requires chart changes (e.g., new env var in values.yaml), release them in order:
 
 1. **Service first** — merge `release/service/vX.Y.Z` → `main`, tag `service/vX.Y.Z`
@@ -248,7 +286,7 @@ This ensures the Docker image exists on Docker Hub before the chart that referen
 
 | Secret | Used by | Where to obtain |
 |---|---|---|
-| `NUGET_API_KEY` | `release.yml` | nuget.org → Account → API Keys (push-only, scoped to HmacManager) |
+| `NUGET_API_KEY` | `release.yml`, `redis-release.yml` | nuget.org → Account → API Keys (push-only, scoped to `HmacManager` and `HmacManager.StackExchangeRedis`, or the glob `HmacManager*`) |
 | `NPM_TOKEN` | `npm-release.yml` | npmjs.com → Access Tokens (granular, publish-only, scoped to `hmac-manager`) |
 | `DOCKERHUB_USERNAME` | `service-release.yml`, `operator-release.yml` | Your Docker Hub username |
 | `DOCKERHUB_TOKEN` | `service-release.yml`, `operator-release.yml` | Docker Hub → Account Settings → Security → Access Tokens |
