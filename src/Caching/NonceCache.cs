@@ -40,6 +40,21 @@ public abstract class NonceCache : INonceCache
     protected abstract Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive);
 
     /// <summary>
+    /// The key the built-in cache for <paramref name="cacheType"/> records <paramref name="nonce"/> under.
+    /// </summary>
+    /// <remarks>
+    /// Key entries with it when your cache takes over a store a built-in cache has been writing to,
+    /// such as a <c>RedisCache</c> behind <c>UseDistributedCache</c>. A nonce the built-in cache recorded
+    /// then stays claimed across the switch; under any other key it is unclaimed again, and a request
+    /// captured before the switch can be replayed after it.
+    /// </remarks>
+    /// <param name="cacheType">The type of the built-in cache.</param>
+    /// <param name="nonce">The nonce.</param>
+    /// <returns>The key, before any prefix the store adds of its own (<c>RedisCache</c>'s <c>InstanceName</c>).</returns>
+    protected internal static string CreateKey(NonceCacheType cacheType, Guid nonce) =>
+        $"{nameof(HmacManager)}:{Enum.GetName(cacheType)}:{nonce}";
+
+    /// <summary>
     /// The time left until <paramref name="expiresAt"/>, rounded up to a whole second, or
     /// <c>false</c> if none is left.
     /// </summary>

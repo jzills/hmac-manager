@@ -48,7 +48,7 @@ public class RedisNonceCache(IConnectionMultiplexer redis) : NonceCache
 {
     protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive) =>
         redis.GetDatabase().StringSetAsync(
-            $"hmac:nonce:{nonce}", 1, timeToLive, When.NotExists);
+            CreateKey(NonceCacheType.Distributed, nonce), 1, timeToLive, When.NotExists);
 }
 ```
 
@@ -57,6 +57,15 @@ The TTL is relative because a store reached over the network can see an absolute
 expiry pass on the way. `Clock` is the `TimeProvider` passed to the base
 constructor — `TimeProvider.System` unless you supply one, which is what makes the
 expiry testable.
+
+`CreateKey(NonceCacheType.Distributed, nonce)` is the key the built-in
+distributed cache records a nonce under. Use it when your cache takes over a
+store the built-in one has been writing to, as this one would in an application
+that used `UseDistributedCache` over `AddStackExchangeRedisCache`: a nonce
+recorded before the switch then stays claimed after it. Under a key of your own
+it would be unclaimed again, and a request captured just before the switch could
+be replayed just after it. `RedisCache` prefixes every key with its
+`InstanceName`, if you set one; add the same prefix.
 
 ## Register it
 
