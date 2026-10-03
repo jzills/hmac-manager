@@ -111,6 +111,9 @@ jobs:
       - name: Test create-release.sh
         run: bash .github/scripts/create-release.test.sh
 
+      - name: Test check-core-released.sh
+        run: bash .github/scripts/check-core-released.test.sh
+
   sample-builds:
     name: Sample Builds
     runs-on: ubuntu-latest
@@ -141,6 +144,42 @@ jobs:
 
       - name: Build every sample, round-trip the Node ones
         run: bash .github/scripts/verify-samples.sh
+
+  redis-package-tests:
+    name: Redis Package Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Redis
+        uses: supercharge/redis-github-action@1.8.1
+        with:
+          redis-version: 7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        working-directory: ./test/StackExchangeRedis
+        run: dotnet restore
+
+      - name: Build
+        working-directory: ./test/StackExchangeRedis
+        run: dotnet build --no-restore
+
+      # The fixtures connect once, in a one-time setup. A restore and build served from cache can
+      # finish before the container accepts connections, and one refused connection there fails
+      # every test in the fixture.
+      - name: Wait for Redis
+        run: bash .github/scripts/wait-for-redis.sh
+
+      - name: Test
+        working-directory: ./test/StackExchangeRedis
+        run: dotnet test --no-build --verbosity normal
 
   integration-tests:
     name: Integration Tests
