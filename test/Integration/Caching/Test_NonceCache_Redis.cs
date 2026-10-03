@@ -21,7 +21,7 @@ public class Test_NonceCache_Redis
     {
         protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive) =>
             redis.GetDatabase().StringSetAsync(
-                $"hmac:nonce:{nonce}", 1, timeToLive, When.NotExists);
+                CreateKey(NonceCacheType.Distributed, nonce), 1, timeToLive, When.NotExists);
     }
 
     private static readonly TimeSpan MaxAge = TimeSpan.FromSeconds(30);
@@ -108,7 +108,7 @@ public class Test_NonceCache_Redis
 
         Assert.IsTrue(await cache.TryAddAsync(nonce, DateTimeOffset.UtcNow.AddSeconds(-10), MaxAge));
 
-        var ttl = await redis.GetDatabase().KeyTimeToLiveAsync($"hmac:nonce:{nonce}");
+        var ttl = await redis.GetDatabase().KeyTimeToLiveAsync($"HmacManager:Distributed:{nonce}");
         Assert.That(ttl, Is.GreaterThan(TimeSpan.FromSeconds(18)).And.LessThanOrEqualTo(TimeSpan.FromSeconds(20)));
     }
 }

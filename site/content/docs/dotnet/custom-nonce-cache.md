@@ -48,7 +48,7 @@ public class RedisNonceCache(IConnectionMultiplexer redis) : NonceCache
 {
     protected override Task<bool> TryAddCoreAsync(Guid nonce, TimeSpan timeToLive) =>
         redis.GetDatabase().StringSetAsync(
-            $"hmac:nonce:{nonce}", 1, timeToLive, When.NotExists);
+            CreateKey(NonceCacheType.Distributed, nonce), 1, timeToLive, When.NotExists);
 }
 ```
 
@@ -58,11 +58,20 @@ expiry pass on the way. `Clock` is the `TimeProvider` passed to the base
 constructor — `TimeProvider.System` unless you supply one, which is what makes the
 expiry testable.
 
+`CreateKey(NonceCacheType.Distributed, nonce)` is the key the built-in
+distributed cache records a nonce under. Use it when your cache takes over a
+store the built-in one has been writing to, as this one would in an application
+that used `UseDistributedCache` over `AddStackExchangeRedisCache`: a nonce
+recorded before the switch then stays claimed after it. Under a key of your own
+it would be unclaimed again, and a request captured just before the switch could
+be replayed just after it. `RedisCache` prefixes every key with its
+`InstanceName`, if you set one; add the same prefix.
+
 ## Register it
 
 Policies select a cache by type (`UseMemoryCache`, `UseDistributedCache`, or
-`CacheType` in configuration). Register a cache collection **after**
-`AddHmacManager` to put yours behind the type your policies select:
+`CacheType` in configuration). `AddNonceCache` puts yours behind one type, and
+policies on the other keep the built-in cache:
 
 ```csharp
 builder.Services.AddSingleton<IConnectionMultiplexer>(
@@ -78,23 +87,32 @@ builder.Services.AddHmacManager(options =>
     });
 });
 
-builder.Services.AddScoped<IComponentCollection<INonceCache>>(services =>
-{
-    var caches = new NonceCacheCollection();
-    caches.Add(NonceCacheType.Distributed,
-        new RedisNonceCache(services.GetRequiredService<IConnectionMultiplexer>()));
-    return caches;
-});
+builder.Services.AddNonceCache<RedisNonceCache>(NonceCacheType.Distributed);
 ```
 
+The cache is a singleton, shared by every request, so it must be safe to call
+concurrently. `AddNonceCache<T>` resolves `T` from the container if you
+registered it there, and otherwise constructs it with its dependencies resolved
+from the container. The other overload takes a factory:
+
+```csharp
+builder.Services.AddNonceCache(NonceCacheType.Distributed, services =>
+    new RedisNonceCache(services.GetRequiredService<IConnectionMultiplexer>()));
+```
+
+It can come before or after `AddHmacManager`, and the last registration for a
+type wins. The built-in cache it replaces is never constructed, so the store
+behind it (the `IDistributedCache`, here) is never resolved.
+
 {{% hm-note kind="warn" %}}
-This replaces the whole collection, built-in caches included. Add a cache for
-every type your policies select: a policy whose type is missing is not verified,
-and is reported at `Warning` (event 1201).
+Registering an `IComponentCollection<INonceCache>` of your own after
+`AddHmacManager` still works, but it replaces every type's cache, built-ins
+included. A policy whose type is missing from it is not verified, and is
+reported at `Warning` (event 1201).
 {{% /hm-note %}}
 
-Outside dependency injection, pass the collection to `HmacManagerFactory`, or a
-single cache to the `HmacManager` constructor.
+Outside dependency injection, pass a `NonceCacheCollection` to
+`HmacManagerFactory`, or a single cache to the `HmacManager` constructor.
 
 ## Migrating from `SetAsync` and `ContainsAsync`
 

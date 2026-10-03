@@ -22,5 +22,5 @@ internal class NonceCacheOptions
     /// </summary>
     /// <param name="nonce">The nonce for which to generate a cache key.</param>
     /// <returns>A string representing the cache key for the specified nonce.</returns>
-    public string CreateKey(Guid nonce) => $"{nameof(HmacManager)}:{Enum.GetName(CacheType)}:{nonce}";
+    public string CreateKey(Guid nonce) => NonceCache.CreateKey(CacheType, nonce);
 }
