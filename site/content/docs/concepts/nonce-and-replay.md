@@ -40,8 +40,8 @@ A claim should be atomic, so two concurrent copies of the same request cannot
 both be accepted. The memory cache's is. The `Distributed` cache type is built
 on `IDistributedCache`, which has no conditional write, so it stays
 check-then-set: two copies of a request arriving at the same moment on
-different instances can both pass. A store with an atomic primitive can back a
-[custom nonce cache](../../dotnet/custom-nonce-cache/) instead.
+different instances can both pass. A store with an atomic primitive can take
+its place as a [custom nonce cache](../../dotnet/custom-nonce-cache/).
 
 ## Choosing the window
 

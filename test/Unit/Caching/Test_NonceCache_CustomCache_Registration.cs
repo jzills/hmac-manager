@@ -8,9 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Unit.Tests.Caching;
 
 /// <summary>
-/// The registration documented in <c>site/content/docs/dotnet/custom-nonce-cache.md</c>: a cache
-/// derived from <see cref="NonceCache"/>, registered after <c>AddHmacManager</c> in place of the
-/// built-in cache for the type its policies select.
+/// The registration <c>site/content/docs/dotnet/custom-nonce-cache.md</c> still supports alongside
+/// <c>AddNonceCache</c>: a whole cache collection, registered after <c>AddHmacManager</c> in place of
+/// the one it registers.
 /// </summary>
 public class Test_NonceCache_CustomCache_Registration : TestBase
 {
