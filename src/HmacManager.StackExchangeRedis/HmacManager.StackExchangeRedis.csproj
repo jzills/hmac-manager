@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>library</OutputType>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>HmacManager.Caching.StackExchangeRedis</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>HmacManager.StackExchangeRedis</PackageId>
+    <!-- Unreleased until a release/redis/vX.Y.Z branch bumps it, as RELEASING.md describes. -->
+    <Version>0.0.0</Version>
+    <!-- redis-release.yml sets the published version through this, not -p:Version. Version is a
+         global property, so it would reach the HmacManager project reference as well, and the
+         package would declare a dependency on HmacManager at its own version number. -->
+    <Version Condition="'$(RedisPackageVersion)' != ''">$(RedisPackageVersion)</Version>
+    <Authors>Joshua Zillwood</Authors>
+    <Description>Atomic, Redis-backed replay protection for HmacManager: every policy on the Distributed nonce cache claims each nonce with a single SET NX, so exactly one copy of a request is accepted across every instance sharing the Redis.</Description>
+    <Company></Company>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/jzills/hmac-manager</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jzills/hmac-manager.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>Icon.jpg</PackageIcon>
+    <PackageTags>hmac;authentication;redis;nonce;replay</PackageTags>
+    <Copyright>Copyright © Joshua Zillwood</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="../../assets/Icon.jpg" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" Version="2.13.17" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../HmacManager/HmacManager.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HmacManager.StackExchangeRedis.Tests" />
+  </ItemGroup>
+
+</Project>

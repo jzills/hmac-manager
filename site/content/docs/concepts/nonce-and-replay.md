@@ -40,8 +40,10 @@ A claim should be atomic, so two concurrent copies of the same request cannot
 both be accepted. The memory cache's is. The `Distributed` cache type is built
 on `IDistributedCache`, which has no conditional write, so it stays
 check-then-set: two copies of a request arriving at the same moment on
-different instances can both pass. A store with an atomic primitive can take
-its place as a [custom nonce cache](../../dotnet/custom-nonce-cache/).
+different instances can both pass. In .NET, the
+[`HmacManager.StackExchangeRedis`](../../dotnet/redis-nonce-cache/) package
+takes its place with an atomic claim in Redis, and another store with an atomic
+primitive can do the same as a [custom nonce cache](../../dotnet/custom-nonce-cache/).
 
 ## Choosing the window
 
@@ -58,12 +60,12 @@ Minutes, not hours. The chart defaults to 60 seconds.
 
 ## Which cache
 
-| | `UseMemoryCache` | `UseDistributedCache` |
-| --- | --- | --- |
-| Backed by | in-process memory | any `IDistributedCache` |
-| Shared between instances | no | yes |
-| Atomic check and record | yes | no |
-| Deployment | a single instance | multiple instances, with the concurrency limitation above |
+| | `UseMemoryCache` | `UseDistributedCache` | `UseDistributedCache` with [`HmacManager.StackExchangeRedis`](../../dotnet/redis-nonce-cache/) |
+| --- | --- | --- | --- |
+| Backed by | in-process memory | any `IDistributedCache` | Redis |
+| Shared between instances | no | yes | yes |
+| Atomic check and record | yes | no | yes |
+| Deployment | a single instance | multiple instances, with the concurrency limitation above | multiple instances |
 
 {{% hm-note kind="warn" %}}
 The in-memory cache is per process. Behind a load balancer with two instances,
