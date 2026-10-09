@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="../assets/Icon.jpg" Pack="true" PackagePath="" />
+    <None Include="../../assets/Icon.jpg" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup> 
-    <InternalsVisibleTo Include="Unit" /> 
+    <InternalsVisibleTo Include="HmacManager.Tests" /> 
   </ItemGroup>
 
 </Project>

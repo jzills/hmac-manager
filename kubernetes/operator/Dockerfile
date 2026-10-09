@@ -7,7 +7,7 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /repo
 COPY ["kubernetes/operator/HmacManager.Operator.csproj", "kubernetes/operator/"]
-COPY ["src/HmacManager.csproj", "src/"]
+COPY ["src/HmacManager/HmacManager.csproj", "src/HmacManager/"]
 RUN dotnet restore "kubernetes/operator/HmacManager.Operator.csproj"
 COPY . .
 RUN dotnet publish "kubernetes/operator/HmacManager.Operator.csproj" -c Release -f net8.0 -o /app/publish
