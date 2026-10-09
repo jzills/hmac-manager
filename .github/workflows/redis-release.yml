@@ -25,14 +25,14 @@ jobs:
             10.0.x
 
       - name: Build
-        working-directory: ./test/StackExchangeRedis
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
         run: dotnet build
 
       - name: Wait for Redis
         run: bash .github/scripts/wait-for-redis.sh
 
       - name: Run package tests
-        working-directory: ./test/StackExchangeRedis
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
         run: dotnet test --no-build --verbosity normal
 
   publish:
@@ -56,8 +56,8 @@ jobs:
           fi
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
-      # The package depends on HmacManager at the version in src/HmacManager.csproj. Publishing
-      # before that HmacManager is released, or with src/ changed since it was, would ship a
+      # The package depends on HmacManager at the version in src/HmacManager/HmacManager.csproj. Publishing
+      # before that HmacManager is released, or with src/HmacManager/ changed since it was, would ship a
       # dependency that lacks code the package calls.
       - name: Check the HmacManager it depends on is released
         run: bash .github/scripts/check-core-released.sh
@@ -73,7 +73,7 @@ jobs:
       # HmacManager project reference too and the package would depend on HmacManager at its own
       # version number. See HmacManager.StackExchangeRedis.csproj.
       - name: Pack
-        working-directory: ./extensions/StackExchangeRedis
+        working-directory: ./src/HmacManager.StackExchangeRedis
         run: >
           dotnet pack
           --configuration Release
@@ -81,7 +81,7 @@ jobs:
           --output ./nupkg
 
       - name: Push to NuGet
-        working-directory: ./extensions/StackExchangeRedis
+        working-directory: ./src/HmacManager.StackExchangeRedis
         run: >
           dotnet nuget push ./nupkg/*.nupkg
           --api-key ${{ secrets.NUGET_API_KEY }}

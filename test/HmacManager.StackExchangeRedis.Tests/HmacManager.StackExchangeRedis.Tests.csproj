@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\extensions\StackExchangeRedis\HmacManager.StackExchangeRedis.csproj" />
+    <ProjectReference Include="..\..\src\HmacManager.StackExchangeRedis\HmacManager.StackExchangeRedis.csproj" />
   </ItemGroup>
 
 </Project>

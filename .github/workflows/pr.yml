@@ -164,11 +164,11 @@ jobs:
             10.0.x
 
       - name: Restore
-        working-directory: ./test/StackExchangeRedis
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
         run: dotnet restore
 
       - name: Build
-        working-directory: ./test/StackExchangeRedis
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
         run: dotnet build --no-restore
 
       # The fixtures connect once, in a one-time setup. A restore and build served from cache can
@@ -178,7 +178,7 @@ jobs:
         run: bash .github/scripts/wait-for-redis.sh
 
       - name: Test
-        working-directory: ./test/StackExchangeRedis
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
         run: dotnet test --no-build --verbosity normal
 
   integration-tests:

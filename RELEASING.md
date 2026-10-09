@@ -66,9 +66,9 @@ git branch -d release/v2.7.0
 
 ## NuGet Package (Redis nonce cache) {#redis-package}
 
-Covers changes to `extensions/StackExchangeRedis/`, published as [`HmacManager.StackExchangeRedis`](https://www.nuget.org/packages/HmacManager.StackExchangeRedis/).
+Covers changes to `src/HmacManager.StackExchangeRedis/`, published as [`HmacManager.StackExchangeRedis`](https://www.nuget.org/packages/HmacManager.StackExchangeRedis/).
 
-**Release `HmacManager` first** whenever `src/` has changed since its last release. The package references `src/` as a project, and packing turns that reference into a dependency on `HmacManager` at the version in `src/HmacManager.csproj`. If the package were published with `src/` ahead of that release, it would declare a dependency on an `HmacManager` that lacks code it calls. The `publish` job refuses to run in that state (`.github/scripts/check-core-released.sh`): it needs the `nuget/v` tag for `src/HmacManager.csproj`'s version to exist, and `src/` (its README aside) to be unchanged since.
+**Release `HmacManager` first** whenever `src/HmacManager/` has changed since its last release. The package references `src/HmacManager` as a project, and packing turns that reference into a dependency on `HmacManager` at the version in `src/HmacManager/HmacManager.csproj`. If the package were published with the library ahead of that release, it would declare a dependency on an `HmacManager` that lacks code it calls. The `publish` job refuses to run in that state (`.github/scripts/check-core-released.sh`): it needs the `nuget/v` tag for that version to exist, and `src/HmacManager/` (its README aside) to be unchanged since. Changes to the package itself don't count.
 
 ```bash
 # 1. Cut a release branch from develop
@@ -76,7 +76,7 @@ git checkout develop && git pull origin develop
 git checkout -b release/redis/v1.0.0
 
 # 2. Bump the version and stabilize
-#    Edit extensions/StackExchangeRedis/HmacManager.StackExchangeRedis.csproj: <Version>1.0.0</Version>
+#    Edit src/HmacManager.StackExchangeRedis/HmacManager.StackExchangeRedis.csproj: <Version>1.0.0</Version>
 git commit -am "chore: bump redis package version to 1.0.0"
 git push origin release/redis/v1.0.0
 

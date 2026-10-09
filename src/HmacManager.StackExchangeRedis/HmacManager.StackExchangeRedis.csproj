@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/HmacManager.csproj" />
+    <ProjectReference Include="../HmacManager/HmacManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>
