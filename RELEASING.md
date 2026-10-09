@@ -34,7 +34,7 @@ The published version always comes from the tag, not from any source file. Even 
 
 ## NuGet Package
 
-Covers changes to the core library under `src/`.
+Covers changes to the core library under `src/HmacManager/`.
 
 ```bash
 # 1. Cut a release branch from develop
@@ -42,7 +42,7 @@ git checkout develop && git pull origin develop
 git checkout -b release/v2.7.0
 
 # 2. Bump the version and stabilize (bug fixes, changelog, etc.)
-#    Edit src/HmacManager.csproj: <Version>2.7.0</Version>
+#    Edit src/HmacManager/HmacManager.csproj: <Version>2.7.0</Version>
 git commit -am "chore: bump version to 2.7.0"
 git push origin release/v2.7.0
 

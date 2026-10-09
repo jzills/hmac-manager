@@ -89,7 +89,7 @@ public class Test_SigningContentParity
 
     private static IEnumerable<ParityCase> LoadCases()
     {
-        // Copied next to the assembly by Unit.csproj — the fixture lives at
+        // Copied next to the assembly by HmacManager.Tests.csproj — the fixture lives at
         // test/fixtures/ because it belongs to neither suite.
         var path = Path.Combine(
             TestContext.CurrentContext.TestDirectory, "fixtures", "signing-parity.json");
