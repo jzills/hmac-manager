@@ -443,8 +443,10 @@ and a refusal from it is always a replay.&lt;/p&gt;
 both be accepted. The memory cache&amp;rsquo;s is. The &lt;code&gt;Distributed&lt;/code&gt; cache type is built
 on &lt;code&gt;IDistributedCache&lt;/code&gt;, which has no conditional write, so it stays
 check-then-set: two copies of a request arriving at the same moment on
-different instances can both pass. A store with an atomic primitive can take
-its place as a &lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt;.&lt;/p&gt;
+different instances can both pass. In .NET, the
+&lt;a href="../../dotnet/redis-nonce-cache/"&gt;&lt;code&gt;HmacManager.StackExchangeRedis&lt;/code&gt;&lt;/a&gt; package
+takes its place with an atomic claim in Redis, and another store with an atomic
+primitive can do the same as a &lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Choosing the window&lt;span class="hx:absolute hx:-mt-20" id="choosing-the-window"&gt;&lt;/span&gt;
 &lt;a href="#choosing-the-window" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseMemoryCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
@@ -471,6 +473,7 @@ captured request stays replayable for longer, and the cache holds more.&lt;/p&gt
 &lt;th&gt;&lt;/th&gt;
 &lt;th&gt;&lt;code&gt;UseMemoryCache&lt;/code&gt;&lt;/th&gt;
 &lt;th&gt;&lt;code&gt;UseDistributedCache&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;UseDistributedCache&lt;/code&gt; with &lt;a href="../../dotnet/redis-nonce-cache/"&gt;&lt;code&gt;HmacManager.StackExchangeRedis&lt;/code&gt;&lt;/a&gt;&lt;/th&gt;
 &lt;/tr&gt;
 &lt;/thead&gt;
 &lt;tbody&gt;
@@ -478,21 +481,25 @@ captured request stays replayable for longer, and the cache holds more.&lt;/p&gt
 &lt;td&gt;Backed by&lt;/td&gt;
 &lt;td&gt;in-process memory&lt;/td&gt;
 &lt;td&gt;any &lt;code&gt;IDistributedCache&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Redis&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Shared between instances&lt;/td&gt;
 &lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Atomic check and record&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
 &lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;Deployment&lt;/td&gt;
 &lt;td&gt;a single instance&lt;/td&gt;
 &lt;td&gt;multiple instances, with the concurrency limitation above&lt;/td&gt;
+&lt;td&gt;multiple instances&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;

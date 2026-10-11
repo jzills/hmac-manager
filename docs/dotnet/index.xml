@@ -879,6 +879,9 @@ verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;loggin
 &lt;code&gt;IDistributedCache&lt;/code&gt; (&lt;code&gt;UseDistributedCache&lt;/code&gt;). A custom cache is for a shared
 store that can claim a nonce &lt;strong&gt;atomically&lt;/strong&gt;, which &lt;code&gt;IDistributedCache&lt;/code&gt; cannot —
 see &lt;a href="../../concepts/nonce-and-replay/#verification-order"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For Redis, that cache already exists: use the
+&lt;a href="../redis-nonce-cache/"&gt;&lt;code&gt;HmacManager.StackExchangeRedis&lt;/code&gt;&lt;/a&gt; package. The Redis
+example below shows the contract, not a replacement for it.&lt;/p&gt;
 &lt;h2&gt;The contract&lt;span class="hx:absolute hx:-mt-20" id="the-contract"&gt;&lt;/span&gt;
 &lt;a href="#the-contract" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The verifier asks a cache one thing, through &lt;code&gt;INonceCache.TryAddAsync&lt;/code&gt;: claim
 this nonce until its request&amp;rsquo;s window closes, and say whether it was unused.&lt;/p&gt;
@@ -1016,7 +1019,187 @@ so it is not atomic, and the two-argument &lt;code&gt;SetAsync&lt;/code&gt; neve
 max age — your cache&amp;rsquo;s own TTL applies, and if it is shorter than the policy&amp;rsquo;s
 window a replay can get through after the entry expires.&lt;/p&gt;
 &lt;p&gt;To migrate, derive from &lt;code&gt;NonceCache&lt;/code&gt; and move the logic into &lt;code&gt;TryAddCoreAsync&lt;/code&gt;, or
-implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</guid><description>
+implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Redis nonce cache</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/</guid><description>
+&lt;p&gt;The built-in &lt;code&gt;Distributed&lt;/code&gt; cache works through &lt;code&gt;IDistributedCache&lt;/code&gt;, which has
+no conditional write. It checks for a nonce and then records it, so two copies
+of a request reaching two instances at the same moment can both be accepted —
+see &lt;a href="../../concepts/nonce-and-replay/#verification-order"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;HmacManager.StackExchangeRedis&lt;/code&gt; claims each nonce with one Redis &lt;code&gt;SET NX&lt;/code&gt;
+instead. However many instances share the Redis, exactly one copy of a request
+is accepted.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;dotnet add package HmacManager.StackExchangeRedis&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h2&gt;Register it&lt;span class="hx:absolute hx:-mt-20" id="register-it"&gt;&lt;/span&gt;
+&lt;a href="#register-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddHmacManager&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddPolicy&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;MyPolicy&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;policy&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePublicKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;publicKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UsePrivateKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;privateKey&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseDistributedCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;60&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddStackExchangeRedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Configuration&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#34;localhost:6379&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Every policy on &lt;code&gt;UseDistributedCache&lt;/code&gt; (or &lt;code&gt;CacheType: Distributed&lt;/code&gt; in
+configuration) is then protected by Redis, and policies on &lt;code&gt;UseMemoryCache&lt;/code&gt;
+keep the in-process cache. Policies do not change. It can come before or after
+&lt;code&gt;AddHmacManager&lt;/code&gt;, and no &lt;code&gt;IDistributedCache&lt;/code&gt; needs to be registered for it.&lt;/p&gt;
+&lt;p&gt;It is built on &lt;a href="../custom-nonce-cache/#register-it"&gt;&lt;code&gt;AddNonceCache&lt;/code&gt;&lt;/a&gt;, the same
+extension point a custom cache uses.&lt;/p&gt;
+&lt;h2&gt;Connecting&lt;span class="hx:absolute hx:-mt-20" id="connecting"&gt;&lt;/span&gt;
+&lt;a href="#connecting" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The options have the same names as &lt;code&gt;AddStackExchangeRedisCache&lt;/code&gt;&amp;rsquo;s, so settings
+copy across:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Option&lt;/th&gt;
+&lt;th&gt;Purpose&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Configuration&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A StackExchange.Redis configuration string, such as &lt;code&gt;localhost:6379,password=…&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;ConfigurationOptions&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A &lt;code&gt;ConfigurationOptions&lt;/code&gt;, used as given in place of &lt;code&gt;Configuration&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;ConnectionMultiplexerFactory&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Supplies the connection, in place of either. The cache does not dispose it&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;InstanceName&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A prefix for every key — see &lt;a href="#switching-from-usedistributedcache"&gt;switching from &lt;code&gt;UseDistributedCache&lt;/code&gt;&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;One of the first three must be set, or the host fails to start with an
+&lt;code&gt;OptionsValidationException&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The connection is opened on the first claim, asynchronously, so no thread
+waits on it and a Redis that is slow to start does not hold up the host. A
+configuration string connects with &lt;code&gt;abortConnect=false&lt;/code&gt; unless it sets
+&lt;code&gt;abortConnect&lt;/code&gt; itself, so a Redis that is not up yet is retried in the
+background rather than failing every claim until the process restarts.&lt;/p&gt;
+&lt;p&gt;To share a connection the application already has:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddSingleton&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;(&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;ConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Connect&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;localhost:6379&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddStackExchangeRedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;_&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="p"&gt;});&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddOptions&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;RedisNonceCacheOptions&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;()&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Configure&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;((&lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ConnectionMultiplexerFactory&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;FromResult&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h2&gt;When Redis is unavailable&lt;span class="hx:absolute hx:-mt-20" id="when-redis-is-unavailable"&gt;&lt;/span&gt;
+&lt;a href="#when-redis-is-unavailable" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A claim that Redis cannot answer throws, so the request fails instead of being
+accepted without replay protection. Behind &lt;code&gt;AddHmac&lt;/code&gt; that is an unhandled
+exception from authentication, and the host&amp;rsquo;s response is a &lt;code&gt;500&lt;/code&gt;. Each failure
+is logged at &lt;code&gt;Warning&lt;/code&gt; as event 1400.&lt;/p&gt;
+&lt;p&gt;While the connection is down, StackExchange.Redis holds a claim in its backlog
+for up to &lt;code&gt;syncTimeout&lt;/code&gt; (5 seconds by default) in case the connection comes
+back, and fails it after that. To fail at once instead, set
+&lt;code&gt;BacklogPolicy = BacklogPolicy.FailFast&lt;/code&gt; on the &lt;code&gt;ConfigurationOptions&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The connection dropping and coming back are logged too, as events 1401 and
+1402.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Id&lt;/th&gt;
+&lt;th&gt;Level&lt;/th&gt;
+&lt;th&gt;Event&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;1400&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Warning&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A nonce claim failed. The request fails&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1401&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Warning&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;The Redis connection was lost&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1402&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Information&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;The Redis connection was restored&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;None of these can be caused by a caller at will: a nonce is only claimed for a
+request whose signature has already been verified. No message includes the
+connection configuration, which can hold a password.&lt;/p&gt;
+&lt;h2&gt;Switching from &lt;code&gt;UseDistributedCache&lt;/code&gt;&lt;span class="hx:absolute hx:-mt-20" id="switching-from-usedistributedcache"&gt;&lt;/span&gt;
+&lt;a href="#switching-from-usedistributedcache" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The keys are the ones the built-in distributed cache writes. If an application
+was using &lt;code&gt;UseDistributedCache&lt;/code&gt; over &lt;code&gt;AddStackExchangeRedisCache&lt;/code&gt;, set
+&lt;code&gt;InstanceName&lt;/code&gt; to the &lt;code&gt;RedisCache&lt;/code&gt;&amp;rsquo;s own &lt;code&gt;InstanceName&lt;/code&gt;, if it had one, and a
+nonce recorded before the switch stays claimed after it.&lt;/p&gt;
+&lt;p&gt;During a rolling switch, an instance still on the built-in cache reads every
+key as a hash, and Redis refuses that read with &lt;code&gt;WRONGTYPE&lt;/code&gt; for a key this
+cache wrote. That only
+happens for a copy of a request another instance has already accepted, and the
+copy is still not accepted — it fails as an error instead of being rejected.
+Two instances both still on the built-in cache can both accept concurrent
+copies, as before the switch; the one-copy guarantee holds once every instance
+is on this cache.&lt;/p&gt;
+&lt;h2&gt;Outside dependency injection&lt;span class="hx:absolute hx:-mt-20" id="outside-dependency-injection"&gt;&lt;/span&gt;
+&lt;a href="#outside-dependency-injection" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;await&lt;/span&gt; &lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="nn"&gt;var&lt;/span&gt; &lt;span class="n"&gt;cache&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Options&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Create&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RedisNonceCacheOptions&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;Configuration&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#34;localhost:6379&amp;#34;&lt;/span&gt; &lt;span class="p"&gt;}));&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Pass it to the &lt;code&gt;HmacManager&lt;/code&gt; constructor, or put it in a &lt;code&gt;NonceCacheCollection&lt;/code&gt;
+for &lt;code&gt;HmacManagerFactory&lt;/code&gt;. Dispose it to close the connection it opened.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;RedisNonceCache&lt;/code&gt; implements &lt;code&gt;TryAddAsync&lt;/code&gt;, which is all the library calls.
+The obsolete &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt; throw &lt;code&gt;NotSupportedException&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</guid><description>
 &lt;p&gt;HmacManager writes to &lt;code&gt;ILogger&lt;/code&gt; and needs no configuration to do so — register
 the library the usual way and every component picks up the host&amp;rsquo;s logger.
 Nothing is written when logging is not configured: each type falls back to
