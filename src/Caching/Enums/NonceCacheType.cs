@@ -6,12 +6,14 @@ namespace HmacManager.Caching;
 public enum NonceCacheType
 {
     /// <summary>
-    /// Represents a cache injected through the <see cref="Microsoft.Extensions.Caching.Memory.IMemoryCache"/> interface.
+    /// Represents a cache injected through the <see cref="Microsoft.Extensions.Caching.Memory.IMemoryCache"/> interface,
+    /// or the cache <c>AddNonceCache</c> registers for this type.
     /// </summary>
     Memory,
 
     /// <summary>
-    /// Represents a cache injected through the <see cref="Microsoft.Extensions.Caching.Distributed.IDistributedCache"/> interface.
+    /// Represents a cache injected through the <see cref="Microsoft.Extensions.Caching.Distributed.IDistributedCache"/> interface,
+    /// or the cache <c>AddNonceCache</c> registers for this type.
     /// </summary>
     Distributed
 }

@@ -26,20 +26,40 @@ internal static class NonceCacheCollectionExtensions
         };
 
     /// <summary>
-    /// Adds the default memory and distributed caches to the <see cref="NonceCacheCollection"/>.
+    /// Adds the caches registered with <c>AddNonceCache</c> to the <see cref="NonceCacheCollection"/>,
+    /// then the built-in memory and distributed caches for whichever types they leave uncovered.
     /// </summary>
     /// <param name="source">The <see cref="NonceCacheCollection"/> to add caches to.</param>
     /// <param name="serviceProvider">The <see cref="IServiceProvider"/> used to retrieve cache-related services.</param>
     /// <returns>The <see cref="NonceCacheCollection"/> with the added caches.</returns>
-    /// <remarks>
-    /// This method adds both in-memory and distributed caches for storing nonces.
-    /// </remarks>
     public static NonceCacheCollection AddDefaultCaches(
         this NonceCacheCollection source, 
         IServiceProvider serviceProvider
-    ) => source
-            .AddDefaultMemoryCache(serviceProvider)
-            .AddDefaultDistributedCache(serviceProvider);
+    )
+    {
+        // Reversed because the collection keeps the first cache added for a type, and the last
+        // registration should win, as it does for any other service.
+        foreach (var registration in serviceProvider.GetServices<NonceCacheRegistration>().Reverse())
+        {
+            source.Add(registration.CacheType, registration.Cache);
+        }
+
+        // Only for the types left uncovered: a replaced cache's store need not exist at all.
+        if (source.IsMissing(NonceCacheType.Memory))
+        {
+            source.AddDefaultMemoryCache(serviceProvider);
+        }
+
+        if (source.IsMissing(NonceCacheType.Distributed))
+        {
+            source.AddDefaultDistributedCache(serviceProvider);
+        }
+
+        return source;
+    }
+
+    private static bool IsMissing(this NonceCacheCollection source, NonceCacheType cacheType) =>
+        source.Get(Enum.GetName(cacheType)!) is null;
 
     /// <summary>
     /// Adds a default memory cache to the <see cref="NonceCacheCollection"/>.

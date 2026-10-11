@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using HmacManager.Caching;
 using HmacManager.Mvc.Extensions.Internal;
 
 namespace HmacManager.Mvc.Extensions;
@@ -63,5 +64,47 @@ public static class IServiceCollectionExtensions
             reloader.UseLogger(provider.GetRequiredService<ILogger<HmacPolicyCollectionReloader>>()));
 
         return services;
+    }
+
+    /// <summary>
+    /// Serves every policy whose nonce cache type is <paramref name="cacheType"/> from
+    /// <typeparamref name="TCache"/>. Policies on any other type keep the built-in cache.
+    /// </summary>
+    /// <typeparam name="TCache">The cache. Resolved from the container if it is registered there,
+    /// otherwise constructed with its dependencies resolved from it.</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="cacheType">The <see cref="NonceCacheType"/> whose policies the cache protects.</param>
+    /// <returns>An <see cref="IServiceCollection"/> that can be used to further configure services.</returns>
+    /// <inheritdoc cref="AddNonceCache(IServiceCollection, NonceCacheType, Func{IServiceProvider, INonceCache})" path="/remarks"/>
+    public static IServiceCollection AddNonceCache<TCache>(
+        this IServiceCollection services,
+        NonceCacheType cacheType
+    ) where TCache : class, INonceCache =>
+        services.AddNonceCache(cacheType, ActivatorUtilities.GetServiceOrCreateInstance<TCache>);
+
+    /// <summary>
+    /// Serves every policy whose nonce cache type is <paramref name="cacheType"/> from the cache
+    /// <paramref name="implementationFactory"/> creates. Policies on any other type keep the built-in cache.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="cacheType">The <see cref="NonceCacheType"/> whose policies the cache protects.</param>
+    /// <param name="implementationFactory">Creates the cache. Called once.</param>
+    /// <returns>An <see cref="IServiceCollection"/> that can be used to further configure services.</returns>
+    /// <remarks>
+    /// The cache is a singleton: created once, the first time a request needs a nonce cache, and
+    /// shared by every request after it. It can be registered before or after <c>AddHmacManager</c>,
+    /// and the last registration for a type wins. The built-in cache for that type is never
+    /// constructed, so the store behind it is never resolved.
+    /// </remarks>
+    public static IServiceCollection AddNonceCache(
+        this IServiceCollection services,
+        NonceCacheType cacheType,
+        Func<IServiceProvider, INonceCache> implementationFactory
+    )
+    {
+        ArgumentNullException.ThrowIfNull(implementationFactory);
+
+        return services.AddSingleton(provider =>
+            new NonceCacheRegistration(cacheType, implementationFactory(provider)));
     }
 }
