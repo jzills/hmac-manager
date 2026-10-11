@@ -662,6 +662,27 @@ external Redis cluster to provision.&lt;/p&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;h2&gt;Atomic claims&lt;span class="hx:absolute hx:-mt-20" id="atomic-claims"&gt;&lt;/span&gt;
+&lt;a href="#atomic-claims" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The verifier claims each nonce in Redis with a single &lt;code&gt;SET … NX&lt;/code&gt;, through the
+&lt;a href="../../dotnet/redis-nonce-cache/"&gt;&lt;code&gt;HmacManager.StackExchangeRedis&lt;/code&gt;&lt;/a&gt; package. Of
+several copies of one request arriving at the same moment, on one replica or
+spread across them, exactly one is accepted. Policies on &lt;code&gt;Memory&lt;/code&gt; are
+unaffected.&lt;/p&gt;
+&lt;p&gt;A Redis fault fails the check rather than letting the request through, and is
+logged as event 1400; losing and regaining the connection are events 1401 and
+1402. See the &lt;a href="../../reference/log-events/"&gt;event reference&lt;/a&gt;.&lt;/p&gt;
+&lt;h3&gt;Upgrading from 0.4.2 or earlier&lt;span class="hx:absolute hx:-mt-20" id="upgrading-from-042-or-earlier"&gt;&lt;/span&gt;
+&lt;a href="#upgrading-from-042-or-earlier" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Until every replica runs the new version, the guarantee is only as strong as
+the oldest pod. Earlier versions check for a nonce and then record it, through
+&lt;code&gt;IDistributedCache&lt;/code&gt;, and on 0.4.2 and before an entry can expire up to a second
+before its request&amp;rsquo;s window closes. So during the rollout two old pods can
+both accept concurrent copies of a request, and a replay that arrives in that
+last second can be accepted, by an old pod or a new one. Once the rollout completes, exactly one copy
+is accepted.&lt;/p&gt;
+&lt;p&gt;Both versions key a nonce the same way, so a new pod refuses a nonce an old pod
+recorded. An old pod that receives a replay of a nonce a new pod recorded fails
+the check with a Redis &lt;code&gt;WRONGTYPE&lt;/code&gt; error: still a denial, though an error
+rather than a clean rejection, and it stops once the rollout completes.&lt;/p&gt;
 &lt;h2&gt;Turning it off&lt;span class="hx:absolute hx:-mt-20" id="turning-it-off"&gt;&lt;/span&gt;
 &lt;a href="#turning-it-off" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
