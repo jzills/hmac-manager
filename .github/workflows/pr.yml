@@ -19,15 +19,15 @@ jobs:
             10.0.x
 
       - name: Restore
-        working-directory: ./test/Unit
+        working-directory: ./test/HmacManager.Tests
         run: dotnet restore
 
       - name: Build
-        working-directory: ./test/Unit
+        working-directory: ./test/HmacManager.Tests
         run: dotnet build --no-restore
 
       - name: Test
-        working-directory: ./test/Unit
+        working-directory: ./test/HmacManager.Tests
         run: dotnet test --no-build --verbosity normal
 
   operator-tests:
@@ -44,15 +44,15 @@ jobs:
             10.0.x
 
       - name: Restore
-        working-directory: ./test/Operator
+        working-directory: ./test/HmacManager.Operator.Tests
         run: dotnet restore
 
       - name: Build
-        working-directory: ./test/Operator
+        working-directory: ./test/HmacManager.Operator.Tests
         run: dotnet build --no-restore
 
       - name: Test
-        working-directory: ./test/Operator
+        working-directory: ./test/HmacManager.Operator.Tests
         run: dotnet test --no-build --verbosity normal
 
   client-tests:
@@ -161,13 +161,13 @@ jobs:
             10.0.x
 
       - name: Restore
-        working-directory: ./test/Integration
+        working-directory: ./test/HmacManager.IntegrationTests
         run: dotnet restore
 
       - name: Build
-        working-directory: ./test/Integration
+        working-directory: ./test/HmacManager.IntegrationTests
         run: dotnet build --no-restore
 
       - name: Test
-        working-directory: ./test/Integration
+        working-directory: ./test/HmacManager.IntegrationTests
         run: dotnet test --no-build --verbosity normal

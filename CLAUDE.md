@@ -8,22 +8,22 @@ All commands run from the respective project directory.
 
 ```bash
 # Build the library
-cd src && dotnet build
+cd src/HmacManager && dotnet build
 
 # Run all unit tests
-cd test/Unit && dotnet test
+cd test/HmacManager.Tests && dotnet test
 
 # Run a single test class
-cd test/Unit && dotnet test --filter "ClassName=Test_InMemory_ReplayAttack"
+cd test/HmacManager.Tests && dotnet test --filter "ClassName=Test_InMemory_ReplayAttack"
 
 # Run a single test method
-cd test/Unit && dotnet test --filter "FullyQualifiedName~MethodName"
+cd test/HmacManager.Tests && dotnet test --filter "FullyQualifiedName~MethodName"
 
 # Run with coverage
-cd test/Unit && dotnet test --collect:"XPlat Code Coverage"
+cd test/HmacManager.Tests && dotnet test --collect:"XPlat Code Coverage"
 ```
 
-The library targets `net8.0` and `net10.0`. Integration tests (`test/Integration`) require a running Redis instance on the default port.
+The library targets `net8.0` and `net10.0`. Integration tests (`test/HmacManager.IntegrationTests`) require a running Redis instance on the default port.
 
 The TypeScript client is a separate toolchain, in `client/lib`:
 
@@ -42,28 +42,28 @@ Run all three. `npm run build` does not check types and `vitest` does not either
 
 HmacManager is an ASP.NET Core HMAC authentication library. It supports both server-side request verification and client-side request signing via `HttpClient`. The two primary integration paths are:
 
-1. **Server (verifying)**: Register via `services.AddHmacManager(...)` + `builder.AddHmac(...)`. Requests are validated by `HmacAuthenticationHandler` (in `src/Mvc/`).
+1. **Server (verifying)**: Register via `services.AddHmacManager(...)` + `builder.AddHmac(...)`. Requests are validated by `HmacAuthenticationHandler` (in `src/HmacManager/Mvc/`).
 2. **Client (signing)**: Register via `httpClientBuilder.AddHmacHttpMessageHandler(...)`. `HmacDelegatingHandler` signs outgoing requests automatically.
 
 ### Core signing flow
 
-`IHmacManager` (`src/Components/HmacManager.cs`) is the central type. `SignAsync(HttpRequestMessage)` creates an `Hmac`, computes a signature, and attaches headers. `VerifyAsync(HttpRequestMessage)` parses incoming headers, recomputes the signature, and compares.
+`IHmacManager` (`src/HmacManager/Components/HmacManager.cs`) is the central type. `SignAsync(HttpRequestMessage)` creates an `Hmac`, computes a signature, and attaches headers. `VerifyAsync(HttpRequestMessage)` parses incoming headers, recomputes the signature, and compares.
 
-Signature computation lives in `HmacSignatureProvider` → `HmacFactory` → hash generators in `src/Components/Hashing/Generators/`. The signing content string (method + URI + date + public key + content hash + scheme header values + nonce) is built by implementations of `ISigningContentBuilder`.
+Signature computation lives in `HmacSignatureProvider` → `HmacFactory` → hash generators in `src/HmacManager/Components/Hashing/Generators/`. The signing content string (method + URI + date + public key + content hash + scheme header values + nonce) is built by implementations of `ISigningContentBuilder`.
 
 ### Policies and schemes
 
-- **`HmacPolicy`** (`src/Policies/`) is the top-level configuration unit: it holds `KeyCredentials`, hash `Algorithms`, an optional `Nonce` cache config, and a `SchemeCollection`.
-- **`Scheme`** (`src/Schemes/`) is a named set of required HTTP headers whose values are included in the signature, enabling scoped authentication contexts.
+- **`HmacPolicy`** (`src/HmacManager/Policies/`) is the top-level configuration unit: it holds `KeyCredentials`, hash `Algorithms`, an optional `Nonce` cache config, and a `SchemeCollection`.
+- **`Scheme`** (`src/HmacManager/Schemes/`) is a named set of required HTTP headers whose values are included in the signature, enabling scoped authentication contexts.
 - Policies are stored in `IHmacPolicyCollection`, which is registered as either singleton (static) or scoped (dynamic/DB-driven).
 
 ### Nonce caching
 
-`INonceCache` (`src/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the past-expiry guard and the TTL: `TryAddCoreAsync(nonce, timeToLive)` receives the time left in the window, relative and rounded up to a whole second, because `RedisCache` truncates TTLs to seconds and would otherwise drop an entry while its signature still verifies. A `false` from `TryAddCoreAsync` therefore only ever means already-claimed. `HmacManager.VerifyAsync` re-checks the request date immediately before the cache, so an expired request never reaches it (a cache implementing `TryAddAsync` directly need not guard) and any refusal is logged as a replay, not an expiry. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, TTL fixed before its read so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. `AddNonceCache(NonceCacheType, …)` (`src/Mvc/Extensions/IServiceCollectionExtensions.cs`) is the extension point: it puts an application's cache behind one type and leaves the built-in behind the other, which is then never constructed. It registers a plain singleton `NonceCacheRegistration`, not a keyed service, because the collection is built on every request and resolving a keyed service throws on a container without keyed support. A replacement on a store a built-in has been writing to keys with `NonceCache.CreateKey`, so nonces recorded before the switch stay claimed. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
+`INonceCache` (`src/HmacManager/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the past-expiry guard and the TTL: `TryAddCoreAsync(nonce, timeToLive)` receives the time left in the window, relative and rounded up to a whole second, because `RedisCache` truncates TTLs to seconds and would otherwise drop an entry while its signature still verifies. A `false` from `TryAddCoreAsync` therefore only ever means already-claimed. `HmacManager.VerifyAsync` re-checks the request date immediately before the cache, so an expired request never reaches it (a cache implementing `TryAddAsync` directly need not guard) and any refusal is logged as a replay, not an expiry. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, TTL fixed before its read so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. `AddNonceCache(NonceCacheType, …)` (`src/HmacManager/Mvc/Extensions/IServiceCollectionExtensions.cs`) is the extension point: it puts an application's cache behind one type and leaves the built-in behind the other, which is then never constructed. It registers a plain singleton `NonceCacheRegistration`, not a keyed service, because the collection is built on every request and resolving a keyed service throws on a container without keyed support. A replacement on a store a built-in has been writing to keys with `NonceCache.CreateKey`, so nonces recorded before the switch stay claimed. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
 
 ### Logging
 
-Every log message the library can emit is declared in one place: `src/Diagnostics/HmacLog.cs`, an
+Every log message the library can emit is declared in one place: `src/HmacManager/Diagnostics/HmacLog.cs`, an
 `internal static partial class` of `[LoggerMessage]` source-generated methods. The two container
 projects have their own equivalents — `kubernetes/operator/Diagnostics/OperatorLog.cs` and
 `kubernetes/service/Diagnostics/ServiceLog.cs`.
@@ -76,8 +76,8 @@ Rules when adding a message:
 - **Event ids are a contract.** Take the next free id in the right range (documented at the top of
   each catalogue); never reuse an id for a different event. The library's ids are published in
   `site/content/docs/reference/log-events.md`, which is the page a reader is pointed at from
-  `src/README.md` and from the logging docs — add the id there in the same change.
-- **Never log a private key.** `test/Unit/Diagnostics/` asserts this over the full sign/verify path
+  `src/HmacManager/README.md` and from the logging docs — add the id there in the same change.
+- **Never log a private key.** `test/HmacManager.Tests/Diagnostics/` asserts this over the full sign/verify path
   with all levels enabled.
 - **Levels**: `Information` only for events an operator needs unprompted (the live policy set
   changing); `Warning` for a recognized signing attempt that was rejected (expired, replayed,
@@ -100,28 +100,28 @@ it the real logger (`UseLogger`) and so it can report the live policy set at sta
 
 ### DI wiring
 
-`IServiceCollectionExtensions.AddHmacManager()` (`src/Mvc/Extensions/`) registers all internal services. `IHmacManagerFactory` is the DI-resolvable entry point to obtain an `IHmacManager` for a named policy at runtime.
+`IServiceCollectionExtensions.AddHmacManager()` (`src/HmacManager/Mvc/Extensions/`) registers all internal services. `IHmacManagerFactory` is the DI-resolvable entry point to obtain an `IHmacManager` for a named policy at runtime.
 
 ### Key types at a glance
 
 | Type | Location | Purpose |
 |---|---|---|
-| `IHmacManager` | `src/Components/Interfaces/` | Sign / verify requests |
-| `IHmacManagerFactory` | `src/Components/Interfaces/` | Resolve manager by policy name |
-| `HmacPolicy` | `src/Policies/` | Top-level auth configuration |
-| `Scheme` | `src/Schemes/` | Named header set included in signature |
-| `HmacResult` | `src/Components/` | Result of sign/verify (success + `Hmac` snapshot) |
-| `HmacDelegatingHandler` | `src/Mvc/` | Auto-signs outgoing `HttpClient` requests |
-| `HmacAuthenticationHandler` | `src/Mvc/` | ASP.NET Core auth scheme handler |
-| `HmacEvents` | `src/Mvc/` | Hooks: `OnValidateKeys`, `OnAuthSuccess`, `OnAuthFailure` |
+| `IHmacManager` | `src/HmacManager/Components/Interfaces/` | Sign / verify requests |
+| `IHmacManagerFactory` | `src/HmacManager/Components/Interfaces/` | Resolve manager by policy name |
+| `HmacPolicy` | `src/HmacManager/Policies/` | Top-level auth configuration |
+| `Scheme` | `src/HmacManager/Schemes/` | Named header set included in signature |
+| `HmacResult` | `src/HmacManager/Components/` | Result of sign/verify (success + `Hmac` snapshot) |
+| `HmacDelegatingHandler` | `src/HmacManager/Mvc/` | Auto-signs outgoing `HttpClient` requests |
+| `HmacAuthenticationHandler` | `src/HmacManager/Mvc/` | ASP.NET Core auth scheme handler |
+| `HmacEvents` | `src/HmacManager/Mvc/` | Hooks: `OnValidateKeys`, `OnAuthSuccess`, `OnAuthFailure` |
 
 ### Test layout
 
-Tests mirror the source structure under `test/Unit/`. Shared test data and helpers are in `test/Unit/Common/`. The `src` project exposes internals to the `Unit` project via `InternalsVisibleTo`. The TypeScript client has its own flat suite under `client/lib/test/`.
+Every shipped project has its own directory under `src/` (`src/HmacManager/HmacManager.csproj`), and every test project its own under `test/`, named after the project it tests (`test/HmacManager.Tests`, `test/HmacManager.IntegrationTests`, `test/HmacManager.Operator.Tests`); `test/fixtures/` and `test/Data/` are shared. Keep it that way: an SDK project compiles every `.cs` file beneath its directory, so a project nested inside another one's folder is compiled into it. The unit tests mirror the source structure under `test/HmacManager.Tests/`. Shared test data and helpers are in `test/HmacManager.Tests/Common/`. The library exposes internals to `HmacManager.Tests` via `InternalsVisibleTo`. The TypeScript client has its own flat suite under `client/lib/test/`.
 
 **`test/fixtures/signing-parity.json` is the contract between the two.** It holds requests with their
 expected signing content and signature, and both suites assert against it —
-`test/Unit/Components/SigningContent/Test_SigningContentParity.cs` and
+`test/HmacManager.Tests/Components/SigningContent/Test_SigningContentParity.cs` and
 `client/lib/test/signing-parity.test.ts`. It is the only thing that stops the two implementations
 drifting into being perfectly self-consistent and unable to talk to each other, which is what had
 already happened: the signing content was hashed as UTF-8 in .NET and as one byte per UTF-16 code
@@ -166,7 +166,7 @@ makes the set worth having.
 User-facing documentation lives in **one** place: `site/content/docs/`, published to
 <https://jzills.github.io/hmac-manager/>. The READMEs are deliberately thin — each is a summary,
 an install snippet and links into the site — because each one is rendered by a host that shows
-nothing else (`src/README.md` on nuget.org via `PackageReadmeFile`, `client/lib/README.md` on
+nothing else (`src/HmacManager/README.md` on nuget.org via `PackageReadmeFile`, `client/lib/README.md` on
 npmjs.com, `kubernetes/chart/README.md` on Artifact Hub, the two `kubernetes/*/README.md` on Docker
 Hub). Those three keep their reference tables, since those platforms will not follow a link.
 
@@ -203,15 +203,15 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 #### `unit-tests`
 1. Checks out the repository.
 2. Installs .NET `8.0.x` and `10.0.x` (matching the library's target frameworks).
-3. Restores dependencies in `test/Unit`.
-4. Builds `test/Unit`.
+3. Restores dependencies in `test/HmacManager.Tests`.
+4. Builds `test/HmacManager.Tests`.
 5. Runs the unit test suite via `dotnet test`.
 
 #### `operator-tests`
 1. Checks out the repository.
 2. Installs .NET `8.0.x` and `10.0.x`.
-3. Restores dependencies in `test/Operator`.
-4. Builds `test/Operator`.
+3. Restores dependencies in `test/HmacManager.Operator.Tests`.
+4. Builds `test/HmacManager.Operator.Tests`.
 5. Runs the operator test suite via `dotnet test` (rendering, mapping, validation, and status reconciliation for the `HmacPolicy` CRD controller under `kubernetes/operator/`).
 
 #### `client-tests`
@@ -251,8 +251,8 @@ command — `bash .github/scripts/verify-samples.sh`.
 2. Starts a Redis 7 instance using `supercharge/redis-github-action`.
 3. Pings Redis to confirm it is accepting connections before proceeding.
 4. Installs .NET `8.0.x` and `10.0.x`.
-5. Restores dependencies in `test/Integration`.
-6. Builds `test/Integration`.
+5. Restores dependencies in `test/HmacManager.IntegrationTests`.
+6. Builds `test/HmacManager.IntegrationTests`.
 7. Runs the integration test suite via `dotnet test`.
 
 **Branch protection**: The `Unit Tests`, `Operator Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
@@ -275,8 +275,8 @@ command — `bash .github/scripts/verify-samples.sh`.
 1. Checks out the repository.
 2. Starts a Redis 7 instance and verifies it is running.
 3. Installs .NET `8.0.x` and `10.0.x`.
-4. Runs the full unit test suite (`test/Unit`).
-5. Runs the full integration test suite (`test/Integration`).
+4. Runs the full unit test suite (`test/HmacManager.Tests`).
+5. Runs the full integration test suite (`test/HmacManager.IntegrationTests`).
 
 #### `publish` (runs only if `test` passes)
 1. Checks out the repository with full git history (`fetch-depth: 0`).
@@ -292,7 +292,7 @@ command — `bash .github/scripts/verify-samples.sh`.
 
 **Typical workflow**:
 ```bash
-# Cut a release branch, bump src/HmacManager.csproj <Version>, then open a PR to main.
+# Cut a release branch, bump src/HmacManager/HmacManager.csproj <Version>, then open a PR to main.
 # Merging the PR tags nuget/vX.Y.Z, which triggers this pipeline. See RELEASING.md.
 git checkout -b release/v2.7.0
 # bump <Version>, commit, push, then: gh pr create --base main ... && gh pr merge
@@ -372,7 +372,7 @@ git checkout -b release/v2.7.0
 1. Checks out the repository.
 2. Initializes the CodeQL analyzer for the `csharp` language.
 3. Installs .NET `8.0.x` and `10.0.x`.
-4. Builds the library (`src/`) so CodeQL can trace the compiled output.
+4. Builds the library (`src/HmacManager/`) so CodeQL can trace the compiled output.
 5. Runs the CodeQL analysis and uploads results to GitHub Security.
 
 **Required permissions**: The job declares `security-events: write` so it can upload findings to the Security tab. No secrets required — this uses the built-in `GITHUB_TOKEN`.
@@ -398,4 +398,4 @@ The samples under `/samples` deliberately have no npm entry: their only dependen
 `file:` link to `client/lib`, so there is nothing external to pin and no lockfile is
 committed. `sample-builds` keeps them honest instead.
 
-NuGet updates cover packages declared in `src/HmacManager.csproj` (e.g., `System.Runtime.Caching`). GitHub Actions updates cover the action versions pinned across all workflow files (e.g., `actions/checkout`, `actions/setup-dotnet`, `supercharge/redis-github-action`).
+NuGet updates cover packages declared in `src/HmacManager/HmacManager.csproj` (e.g., `System.Runtime.Caching`). GitHub Actions updates cover the action versions pinned across all workflow files (e.g., `actions/checkout`, `actions/setup-dotnet`, `supercharge/redis-github-action`).

@@ -1,7 +1,7 @@
 # Third-party notices
 
 The HmacManager library, the ext-authz service and the operator declare their
-dependencies in the usual places — `src/HmacManager.csproj`,
+dependencies in the usual places — `src/HmacManager/HmacManager.csproj`,
 `kubernetes/service/HmacManager.Kubernetes.csproj`,
 `kubernetes/operator/HmacManager.Operator.csproj` and
 `client/lib/package.json` — and those are restored from their registries at

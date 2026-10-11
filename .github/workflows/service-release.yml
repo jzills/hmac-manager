@@ -25,11 +25,11 @@ jobs:
             10.0.x
 
       - name: Run unit tests
-        working-directory: ./test/Unit
+        working-directory: ./test/HmacManager.Tests
         run: dotnet test --verbosity normal
 
       - name: Run integration tests
-        working-directory: ./test/Integration
+        working-directory: ./test/HmacManager.IntegrationTests
         run: dotnet test --verbosity normal
 
   publish:

@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>library</OutputType>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>HmacManager</PackageId>
+    <Version>2.11.0</Version>
+    <Authors>Joshua Zillwood</Authors>
+    <Description>Integrate hmac authentication seamlessly into your ASP.NET Core applications, fortifying security measures and ensuring robust authentication protocols.</Description>
+    <Company></Company>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/jzills/hmac-manager</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jzills/hmac-manager.git</RepositoryUrl> 
+    <RepositoryType>git</RepositoryType> 
+    <PackageIcon>Icon.jpg</PackageIcon>
+    <PackageTags>hmac;authentication</PackageTags>
+    <Copyright>Copyright © Joshua Zillwood</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../assets/Icon.jpg" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <_CachingVersion Condition="'$(TargetFramework)' == 'net8.0'">8.0.0</_CachingVersion>
+    <_CachingVersion Condition="'$(TargetFramework)' == 'net10.0'">10.0.0</_CachingVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Runtime.Caching" Version="$(_CachingVersion)" />
+  </ItemGroup>
+
+  <ItemGroup> 
+    <InternalsVisibleTo Include="HmacManager.Tests" /> 
+  </ItemGroup>
+
+</Project>
