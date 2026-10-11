@@ -19,19 +19,19 @@ builder.Configuration.AddJsonFile("/etc/hmac-manager/config.json", optional: tru
 // and reloaded — see kubernetes/chart/templates/deployment.yaml.
 builder.Configuration.AddKeyPerFile("/etc/hmac-manager/secrets", optional: true, reloadOnChange: true);
 
-// Register a shared distributed cache for nonce storage when a Redis connection
-// string is provided. This must run BEFORE AddHmacManager: the library calls
-// TryAddSingleton<IDistributedCache, MemoryDistributedCache>(), so without a real
-// IDistributedCache registered first, CacheType=Distributed silently falls back to
-// an in-process cache that is not shared across replicas.
+builder.Services.AddHmacManager(builder.Configuration.GetSection("HmacManager"));
+
+// With a Redis connection string, policies on the Distributed nonce cache (every policy, when the
+// chart enables Redis) claim each nonce in Redis with one atomic SET NX, so of several copies of a
+// request spread across replicas exactly one is accepted. Without one, the Distributed type falls
+// back to the library's in-process cache, which is not shared — hence the warning below. The keys
+// are the ones the earlier IDistributedCache-based cache wrote, so a rolling upgrade keeps them.
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
-    builder.Services.AddStackExchangeRedisCache(options =>
+    builder.Services.AddStackExchangeRedisNonceCache(options =>
         options.Configuration = redisConnectionString);
 }
-
-builder.Services.AddHmacManager(builder.Configuration.GetSection("HmacManager"));
 builder.Services.AddScoped<ExtAuthzHandler>();
 builder.Services.AddScoped<SignHandler>();
 
