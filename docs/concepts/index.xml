@@ -443,8 +443,8 @@ and a refusal from it is always a replay.&lt;/p&gt;
 both be accepted. The memory cache&amp;rsquo;s is. The &lt;code&gt;Distributed&lt;/code&gt; cache type is built
 on &lt;code&gt;IDistributedCache&lt;/code&gt;, which has no conditional write, so it stays
 check-then-set: two copies of a request arriving at the same moment on
-different instances can both pass. A store with an atomic primitive can back a
-&lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt; instead.&lt;/p&gt;
+different instances can both pass. A store with an atomic primitive can take
+its place as a &lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Choosing the window&lt;span class="hx:absolute hx:-mt-20" id="choosing-the-window"&gt;&lt;/span&gt;
 &lt;a href="#choosing-the-window" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseMemoryCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;

@@ -3314,8 +3314,8 @@ and a refusal from it is always a replay.&lt;/p&gt;
 both be accepted. The memory cache&amp;rsquo;s is. The &lt;code&gt;Distributed&lt;/code&gt; cache type is built
 on &lt;code&gt;IDistributedCache&lt;/code&gt;, which has no conditional write, so it stays
 check-then-set: two copies of a request arriving at the same moment on
-different instances can both pass. A store with an atomic primitive can back a
-&lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt; instead.&lt;/p&gt;
+different instances can both pass. A store with an atomic primitive can take
+its place as a &lt;a href="../../dotnet/custom-nonce-cache/"&gt;custom nonce cache&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Choosing the window&lt;span class="hx:absolute hx:-mt-20" id="choosing-the-window"&gt;&lt;/span&gt;
 &lt;a href="#choosing-the-window" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;policy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;UseMemoryCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxAgeInSeconds&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="m"&gt;300&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
@@ -4670,7 +4670,7 @@ rounded up to a whole second. What is left is the atomic claim:&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kd"&gt;protected&lt;/span&gt; &lt;span class="kd"&gt;override&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="kt"&gt;bool&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;TryAddCoreAsync&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Guid&lt;/span&gt; &lt;span class="n"&gt;nonce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;TimeSpan&lt;/span&gt; &lt;span class="n"&gt;timeToLive&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;redis&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;GetDatabase&lt;/span&gt;&lt;span class="p"&gt;().&lt;/span&gt;&lt;span class="n"&gt;StringSetAsync&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="s"&gt;$&amp;#34;hmac:nonce:{nonce}&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;timeToLive&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;When&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NotExists&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;CreateKey&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;NonceCacheType&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Distributed&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;nonce&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;timeToLive&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;When&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NotExists&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -4688,10 +4688,18 @@ The TTL is relative because a store reached over the network can see an absolute
 expiry pass on the way. &lt;code&gt;Clock&lt;/code&gt; is the &lt;code&gt;TimeProvider&lt;/code&gt; passed to the base
 constructor — &lt;code&gt;TimeProvider.System&lt;/code&gt; unless you supply one, which is what makes the
 expiry testable.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;CreateKey(NonceCacheType.Distributed, nonce)&lt;/code&gt; is the key the built-in
+distributed cache records a nonce under. Use it when your cache takes over a
+store the built-in one has been writing to, as this one would in an application
+that used &lt;code&gt;UseDistributedCache&lt;/code&gt; over &lt;code&gt;AddStackExchangeRedisCache&lt;/code&gt;: a nonce
+recorded before the switch then stays claimed after it. Under a key of your own
+it would be unclaimed again, and a request captured just before the switch could
+be replayed just after it. &lt;code&gt;RedisCache&lt;/code&gt; prefixes every key with its
+&lt;code&gt;InstanceName&lt;/code&gt;, if you set one; add the same prefix.&lt;/p&gt;
 &lt;h2&gt;Register it&lt;span class="hx:absolute hx:-mt-20" id="register-it"&gt;&lt;/span&gt;
 &lt;a href="#register-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Policies select a cache by type (&lt;code&gt;UseMemoryCache&lt;/code&gt;, &lt;code&gt;UseDistributedCache&lt;/code&gt;, or
-&lt;code&gt;CacheType&lt;/code&gt; in configuration). Register a cache collection &lt;strong&gt;after&lt;/strong&gt;
-&lt;code&gt;AddHmacManager&lt;/code&gt; to put yours behind the type your policies select:&lt;/p&gt;
+&lt;code&gt;CacheType&lt;/code&gt; in configuration). &lt;code&gt;AddNonceCache&lt;/code&gt; puts yours behind one type, and
+policies on the other keep the built-in cache:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddSingleton&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;(&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;ConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Connect&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;localhost:6379&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
@@ -4706,13 +4714,7 @@ expiry testable.&lt;/p&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;});&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddScoped&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IComponentCollection&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;INonceCache&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;&amp;gt;(&lt;/span&gt;&lt;span class="n"&gt;services&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="kt"&gt;var&lt;/span&gt; &lt;span class="n"&gt;caches&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;NonceCacheCollection&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;caches&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Add&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;NonceCacheType&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Distributed&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;GetRequiredService&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;()));&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;caches&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;});&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddNonceCache&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;RedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;(&lt;/span&gt;&lt;span class="n"&gt;NonceCacheType&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Distributed&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
@@ -4724,13 +4726,35 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;div class="hm-note hm-note--warn"&gt;
-&lt;p&gt;This replaces the whole collection, built-in caches included. Add a cache for
-every type your policies select: a policy whose type is missing is not verified,
-and is reported at &lt;code&gt;Warning&lt;/code&gt; (event 1201).&lt;/p&gt;
+&lt;p&gt;The cache is a singleton, shared by every request, so it must be safe to call
+concurrently. &lt;code&gt;AddNonceCache&amp;lt;T&amp;gt;&lt;/code&gt; resolves &lt;code&gt;T&lt;/code&gt; from the container if you
+registered it there, and otherwise constructs it with its dependencies resolved
+from the container. The other overload takes a factory:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;NonceCacheType&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Distributed&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;services&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;RedisNonceCache&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;GetRequiredService&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;()));&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
 &lt;/div&gt;
-&lt;p&gt;Outside dependency injection, pass the collection to &lt;code&gt;HmacManagerFactory&lt;/code&gt;, or a
-single cache to the &lt;code&gt;HmacManager&lt;/code&gt; constructor.&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;It can come before or after &lt;code&gt;AddHmacManager&lt;/code&gt;, and the last registration for a
+type wins. The built-in cache it replaces is never constructed, so the store
+behind it (the &lt;code&gt;IDistributedCache&lt;/code&gt;, here) is never resolved.&lt;/p&gt;
+&lt;div class="hm-note hm-note--warn"&gt;
+&lt;p&gt;Registering an &lt;code&gt;IComponentCollection&amp;lt;INonceCache&amp;gt;&lt;/code&gt; of your own after
+&lt;code&gt;AddHmacManager&lt;/code&gt; still works, but it replaces every type&amp;rsquo;s cache, built-ins
+included. A policy whose type is missing from it is not verified, and is
+reported at &lt;code&gt;Warning&lt;/code&gt; (event 1201).&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Outside dependency injection, pass a &lt;code&gt;NonceCacheCollection&lt;/code&gt; to
+&lt;code&gt;HmacManagerFactory&lt;/code&gt;, or a single cache to the &lt;code&gt;HmacManager&lt;/code&gt; constructor.&lt;/p&gt;
 &lt;h2&gt;Migrating from &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt;&lt;span class="hx:absolute hx:-mt-20" id="migrating-from-setasync-and-containsasync"&gt;&lt;/span&gt;
 &lt;a href="#migrating-from-setasync-and-containsasync" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Before &lt;code&gt;TryAddAsync&lt;/code&gt;, a cache implemented &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt;. Both are
 obsolete and will be removed in the next major version. A cache that still
