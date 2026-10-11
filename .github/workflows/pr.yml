@@ -55,6 +55,33 @@ jobs:
         working-directory: ./test/HmacManager.Operator.Tests
         run: dotnet test --no-build --verbosity normal
 
+  service-tests:
+    name: Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        working-directory: ./test/HmacManager.Kubernetes.Tests
+        run: dotnet restore
+
+      - name: Build
+        working-directory: ./test/HmacManager.Kubernetes.Tests
+        run: dotnet build --no-restore
+
+      # The service's own startup, through WebApplicationFactory: which nonce cache it wires up with
+      # and without a Redis connection string. Resolving the cache does not connect, so no Redis.
+      - name: Test
+        working-directory: ./test/HmacManager.Kubernetes.Tests
+        run: dotnet test --no-build --verbosity normal
+
   client-tests:
     name: Client Tests
     runs-on: ubuntu-latest

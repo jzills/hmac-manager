@@ -63,7 +63,7 @@ For advanced use cases or deployments without Helm.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ConnectionStrings__Redis` | No | Redis connection string. When set, enables the shared distributed nonce cache for multi-replica deployments. |
+| `ConnectionStrings__Redis` | No | Redis connection string. When set, every `Distributed` policy claims its nonces in Redis with an atomic `SET NX`, shared across replicas. |
 | `ASPNETCORE_ENVIRONMENT` | No | `Production` (default) or `Development`. `Development` activates the signing helper on port 8081. |
 | `ASPNETCORE_URLS` | No | Listening URL (default: `http://+:8080`). |
 | `SignPort` | No | Port for the dev-only signing helper (default: `8081`). |
