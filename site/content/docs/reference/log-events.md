@@ -31,6 +31,9 @@ event**, so it is safe to alert on one.
 | 1303 | `Warning` | Authentication failed |
 | 1304 | `Debug` | Authentication rejected because a required HMAC header is missing or malformed |
 | 1310 | `Debug` | Requested policy not registered |
+| 1400 | `Warning` | Nonce claim failed in Redis; the request fails |
+| 1401 | `Warning` | Redis connection lost |
+| 1402 | `Information` | Redis connection restored |
 
 ## Ranges
 
@@ -40,6 +43,7 @@ event**, so it is safe to alert on one.
 | 1100–1199 | Verification |
 | 1200–1299 | Factory resolution and policy reloading |
 | 1300–1399 | The authentication handler |
+| 1400–1499 | The [Redis nonce cache](../../dotnet/redis-nonce-cache/), from `HmacManager.StackExchangeRedis` |
 
 ## Reading a rejection
 

@@ -25,6 +25,13 @@ cd test/HmacManager.Tests && dotnet test --collect:"XPlat Code Coverage"
 
 The library targets `net8.0` and `net10.0`. Integration tests (`test/HmacManager.IntegrationTests`) require a running Redis instance on the default port.
 
+The opt-in Redis nonce cache package is its own project beside the library:
+
+```bash
+cd src/HmacManager.StackExchangeRedis && dotnet build
+cd test/HmacManager.StackExchangeRedis.Tests && dotnet test     # needs Redis on the default port, like test/HmacManager.IntegrationTests
+```
+
 The TypeScript client is a separate toolchain, in `client/lib`:
 
 ```bash
@@ -59,7 +66,7 @@ Signature computation lives in `HmacSignatureProvider` → `HmacFactory` → has
 
 ### Nonce caching
 
-`INonceCache` (`src/HmacManager/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the past-expiry guard and the TTL: `TryAddCoreAsync(nonce, timeToLive)` receives the time left in the window, relative and rounded up to a whole second, because `RedisCache` truncates TTLs to seconds and would otherwise drop an entry while its signature still verifies. A `false` from `TryAddCoreAsync` therefore only ever means already-claimed. `HmacManager.VerifyAsync` re-checks the request date immediately before the cache, so an expired request never reaches it (a cache implementing `TryAddAsync` directly need not guard) and any refusal is logged as a replay, not an expiry. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, TTL fixed before its read so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. `AddNonceCache(NonceCacheType, …)` (`src/HmacManager/Mvc/Extensions/IServiceCollectionExtensions.cs`) is the extension point: it puts an application's cache behind one type and leaves the built-in behind the other, which is then never constructed. It registers a plain singleton `NonceCacheRegistration`, not a keyed service, because the collection is built on every request and resolving a keyed service throws on a container without keyed support. A replacement on a store a built-in has been writing to keys with `NonceCache.CreateKey`, so nonces recorded before the switch stay claimed. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
+`INonceCache` (`src/HmacManager/Caching/`) prevents replay attacks. Its contract is one operation, `TryAddAsync(nonce, dateRequested, maxAge)`: claim the nonce until `dateRequested + maxAge`, atomically, and refuse one whose expiry has passed. It is the only member the library calls; `SetAsync`/`ContainsAsync` are `[Obsolete]` and go in 3.0. The public `NonceCache` base class owns the past-expiry guard and the TTL: `TryAddCoreAsync(nonce, timeToLive)` receives the time left in the window, relative and rounded up to a whole second, because `RedisCache` truncates TTLs to seconds and would otherwise drop an entry while its signature still verifies. A `false` from `TryAddCoreAsync` therefore only ever means already-claimed. `HmacManager.VerifyAsync` re-checks the request date immediately before the cache, so an expired request never reaches it (a cache implementing `TryAddAsync` directly need not guard) and any refusal is logged as a replay, not an expiry. The built-ins are `NonceMemoryCache` (in-process, atomic under striped locks) and `NonceDistributedCache` (any `IDistributedCache`, check-then-set, TTL fixed before its read so `RedisCache` never sees a past expiry); they re-declare `INonceCache` so its obsolete members map to their own implementations rather than the interface's throwing defaults. The `Nonce` config on a policy selects which to use. `AddNonceCache(NonceCacheType, …)` (`src/HmacManager/Mvc/Extensions/IServiceCollectionExtensions.cs`) is the extension point: it puts an application's cache behind one type and leaves the built-in behind the other, which is then never constructed. It registers a plain singleton `NonceCacheRegistration`, not a keyed service, because the collection is built on every request and resolving a keyed service throws on a container without keyed support. A replacement on a store a built-in has been writing to keys with `NonceCache.CreateKey`, so nonces recorded before the switch stay claimed. The opt-in `HmacManager.StackExchangeRedis` package (`src/HmacManager.StackExchangeRedis/`) is the first such replacement: `AddStackExchangeRedisNonceCache` puts `RedisNonceCache` (one `SET NX` per claim) behind `Distributed`, so no new `NonceCacheType` exists and configuration, the operator and the chart are unchanged. It connects lazily and asynchronously on the first claim, owns and disposes a connection only if it opened it, rethrows a Redis fault after logging it (fail closed: the request errors rather than being accepted unprotected), and has its own log catalogue, `Diagnostics/RedisNonceCacheLog.cs`, in the range 1400–1499. Its options mirror `RedisCacheOptions` so `InstanceName` lines its keys up with a `RedisCache` the built-in cache was using. The TypeScript `NonceStore.tryAdd` mirrors the same contract.
 
 ### Logging
 
@@ -117,7 +124,7 @@ it the real logger (`UseLogger`) and so it can report the live policy set at sta
 
 ### Test layout
 
-Every shipped project has its own directory under `src/` (`src/HmacManager/HmacManager.csproj`), and every test project its own under `test/`, named after the project it tests (`test/HmacManager.Tests`, `test/HmacManager.IntegrationTests`, `test/HmacManager.Operator.Tests`); `test/fixtures/` and `test/Data/` are shared. Keep it that way: an SDK project compiles every `.cs` file beneath its directory, so a project nested inside another one's folder is compiled into it. The unit tests mirror the source structure under `test/HmacManager.Tests/`. Shared test data and helpers are in `test/HmacManager.Tests/Common/`. The library exposes internals to `HmacManager.Tests` via `InternalsVisibleTo`. The TypeScript client has its own flat suite under `client/lib/test/`.
+Every shipped project has its own directory under `src/` (`src/HmacManager/HmacManager.csproj`, `src/HmacManager.StackExchangeRedis/HmacManager.StackExchangeRedis.csproj`), and every test project its own under `test/`, named after the project it tests (`test/HmacManager.Tests`, `test/HmacManager.IntegrationTests`, `test/HmacManager.Operator.Tests`, `test/HmacManager.StackExchangeRedis.Tests`); `test/fixtures/` and `test/Data/` are shared. Keep it that way: an SDK project compiles every `.cs` file beneath its directory, so a project nested inside another one's folder is compiled into it. The unit tests mirror the source structure under `test/HmacManager.Tests/`. Shared test data and helpers are in `test/HmacManager.Tests/Common/`. The library exposes internals to `HmacManager.Tests` via `InternalsVisibleTo`. The TypeScript client has its own flat suite under `client/lib/test/`. The Redis package's suite is `test/HmacManager.StackExchangeRedis.Tests/`, against a real Redis: it includes switching from `UseDistributedCache` over `RedisCache`, two service providers sharing one Redis, and the full ASP.NET Core pipeline with Redis unreachable.
 
 **`test/fixtures/signing-parity.json` is the contract between the two.** It holds requests with their
 expected signing content and signature, and both suites assert against it —
@@ -166,7 +173,7 @@ makes the set worth having.
 User-facing documentation lives in **one** place: `site/content/docs/`, published to
 <https://jzills.github.io/hmac-manager/>. The READMEs are deliberately thin — each is a summary,
 an install snippet and links into the site — because each one is rendered by a host that shows
-nothing else (`src/HmacManager/README.md` on nuget.org via `PackageReadmeFile`, `client/lib/README.md` on
+nothing else (`src/HmacManager/README.md` and `src/HmacManager.StackExchangeRedis/README.md` on nuget.org via `PackageReadmeFile`, `client/lib/README.md` on
 npmjs.com, `kubernetes/chart/README.md` on Artifact Hub, the two `kubernetes/*/README.md` on Docker
 Hub). Those three keep their reference tables, since those platforms will not follow a link.
 
@@ -186,7 +193,7 @@ All pipelines are defined under `.github/workflows/`. Dependabot is configured s
 
 `pages.yml` builds and publishes the documentation site under `site/` (Hugo + Hextra) to the `gh-pages` branch, which it shares with the Helm chart HTTP repository — see its section below before changing anything that writes to that branch.
 
-The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-release.yml` for the TypeScript client npm package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md). Each of these pipelines also creates a GitHub Release for its tag via `.github/scripts/create-release.sh` (uniform `HmacManager (<Kind>)` titles, marked latest, with install info and an auto-generated changelog scoped to the previous same-prefix tag).
+The per-artifact release pipelines (`release.yml` for the NuGet package, `redis-release.yml` for the `HmacManager.StackExchangeRedis` NuGet package, `npm-release.yml` for the TypeScript client npm package, `service-release.yml` for the ext-authz service image, `operator-release.yml` for the policy operator image, and `chart-release.yml` for the Helm chart) are driven by prefixed tags that `tag.yml` pushes on a release-branch merge — the end-to-end release process for each artifact is documented in [RELEASING.md](RELEASING.md). Each of these pipelines also creates a GitHub Release for its tag via `.github/scripts/create-release.sh` (uniform `HmacManager (<Kind>)` titles, marked latest, with install info and an auto-generated changelog scoped to the previous same-prefix tag).
 
 ---
 
@@ -196,7 +203,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `npm-re
 
 **Trigger**: Any pull request opened or updated targeting `main` or `develop`.
 
-**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, client, CI-script, sample, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
+**Purpose**: Gate merges by verifying the full test suite passes. Runs unit, operator, client, CI-script, sample, Redis package, and integration tests as parallel jobs so a failure in one does not block feedback from the others.
 
 **Jobs**:
 
@@ -229,7 +236,7 @@ The gate runs against `client/lib/tsconfig.typecheck.json`, which exists only be
 #### `ci-script-tests`
 1. Checks out the repository.
 2. Runs `shellcheck` over `.github/scripts/*.sh`.
-3. Runs the offline shell test suites for the release helpers: `previous-tag.test.sh` and `create-release.test.sh` (stubbed `gh`, no network).
+3. Runs the offline shell test suites for the release helpers: `previous-tag.test.sh`, `create-release.test.sh` (stubbed `gh`, no network) and `check-core-released.test.sh` (a throwaway git repository).
 
 #### `sample-builds`
 1. Checks out the repository.
@@ -246,6 +253,15 @@ named a directory that held no project. A build alone catches only the second, w
 why the Node samples are **run** rather than compiled. The script is also the local
 command — `bash .github/scripts/verify-samples.sh`.
 
+#### `redis-package-tests`
+1. Checks out the repository.
+2. Starts a Redis 7 instance using `supercharge/redis-github-action`.
+3. Installs .NET `8.0.x` and `10.0.x`, then restores and builds `test/HmacManager.StackExchangeRedis.Tests`.
+4. Waits for Redis to answer `PING` (`.github/scripts/wait-for-redis.sh`, RESP over `/dev/tcp`, no `redis-cli` needed). The fixtures connect once in a one-time setup, so a build served from cache that beats the container would fail every test in the fixture.
+5. Runs the Redis package suite via `dotnet test`.
+
+`redis-release.yml` runs the same suite before publishing.
+
 #### `integration-tests`
 1. Checks out the repository.
 2. Starts a Redis 7 instance using `supercharge/redis-github-action`.
@@ -255,7 +271,7 @@ command — `bash .github/scripts/verify-samples.sh`.
 6. Builds `test/HmacManager.IntegrationTests`.
 7. Runs the integration test suite via `dotnet test`.
 
-**Branch protection**: The `Unit Tests`, `Operator Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
+**Branch protection**: The `Unit Tests`, `Operator Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, `Redis Package Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
 
 ---
 
@@ -297,6 +313,28 @@ command — `bash .github/scripts/verify-samples.sh`.
 git checkout -b release/v2.7.0
 # bump <Version>, commit, push, then: gh pr create --base main ... && gh pr merge
 ```
+
+---
+
+### `redis-release.yml` — Pack and Publish the Redis Nonce Cache to NuGet
+
+**File**: `.github/workflows/redis-release.yml`
+
+**Trigger**: Push of a tag matching `redis/v*`, created by `tag.yml` when a `release/redis/vX.Y.Z` PR is merged into `main` (see [RELEASING.md](RELEASING.md#redis-package)).
+
+**Jobs**:
+
+#### `test`
+Starts Redis 7, builds `test/HmacManager.StackExchangeRedis.Tests`, waits for Redis to answer `PING`, and runs the suite.
+
+#### `publish` (runs only if `test` passes)
+1. Extracts the version by stripping the `redis/v` tag prefix (fails if not `X.Y.Z`).
+2. Runs `.github/scripts/check-core-released.sh`: the package's project reference to `src/HmacManager` becomes a NuGet dependency on `HmacManager` at `src/HmacManager/HmacManager.csproj`'s `<Version>`, so it fails unless that version's `nuget/v` tag exists and `src/HmacManager/` (README aside) is unchanged since. Changes to the package itself do not count. Otherwise the package could ship depending on an `HmacManager` that lacks code it calls. Release `HmacManager` first.
+3. Packs `src/HmacManager.StackExchangeRedis` with **`-p:RedisPackageVersion`**, never `-p:Version`: a `-p:` property is global, so `Version` reaches the project reference too and the packed dependency becomes `HmacManager >= <the package's own version>`. Checked by packing both ways.
+4. Pushes to NuGet with `NUGET_API_KEY` (`--skip-duplicate`), whose scope must cover `HmacManager.StackExchangeRedis`.
+5. Creates a GitHub Release titled `HmacManager (Redis) vX.Y.Z`, with a changelog scoped to the previous `redis/v*` tag.
+
+The project's own `<Version>` is `0.0.0` until the first release branch bumps it, because `tag.yml`'s `merge-back` fails a release branch with no changes against `develop`.
 
 ---
 
@@ -372,7 +410,7 @@ git checkout -b release/v2.7.0
 1. Checks out the repository.
 2. Initializes the CodeQL analyzer for the `csharp` language.
 3. Installs .NET `8.0.x` and `10.0.x`.
-4. Builds the library (`src/HmacManager/`) so CodeQL can trace the compiled output.
+4. Builds the library (`src/HmacManager/`) and the Redis package (`src/HmacManager.StackExchangeRedis/`) so CodeQL can trace the compiled output.
 5. Runs the CodeQL analysis and uploads results to GitHub Security.
 
 **Required permissions**: The job declares `security-events: write` so it can upload findings to the Security tab. No secrets required — this uses the built-in `GITHUB_TOKEN`.

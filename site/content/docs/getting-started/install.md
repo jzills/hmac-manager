@@ -22,6 +22,15 @@ dotnet add package HmacManager
 Targets `net8.0` and `net10.0`. It signs outgoing requests, verifies incoming
 ones, or both. Continue with the [.NET quickstart](../dotnet-quickstart/).
 
+For replay protection shared between instances, add the Redis nonce cache. It
+is versioned separately and needs an `HmacManager` that has `AddNonceCache`:
+
+```bash
+dotnet add package HmacManager.StackExchangeRedis
+```
+
+See [Redis nonce cache](../../dotnet/redis-nonce-cache/).
+
 ## Kubernetes
 
 ```bash

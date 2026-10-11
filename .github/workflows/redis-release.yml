@@ -1,0 +1,101 @@
+name: Redis Package Release
+
+on:
+  push:
+    tags:
+      - "redis/v*"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Redis
+        uses: supercharge/redis-github-action@1.8.1
+        with:
+          redis-version: 7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Build
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
+        run: dotnet build
+
+      - name: Wait for Redis
+        run: bash .github/scripts/wait-for-redis.sh
+
+      - name: Run package tests
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
+        run: dotnet test --no-build --verbosity normal
+
+  publish:
+    name: Pack and Publish
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#redis/v}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid tag format: $GITHUB_REF_NAME (expected redis/vX.Y.Z)" >&2
+            exit 1
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # The package depends on HmacManager at the version in src/HmacManager/HmacManager.csproj. Publishing
+      # before that HmacManager is released, or with src/HmacManager/ changed since it was, would ship a
+      # dependency that lacks code the package calls.
+      - name: Check the HmacManager it depends on is released
+        run: bash .github/scripts/check-core-released.sh
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      # RedisPackageVersion, not Version: a -p: property is global, so Version would reach the
+      # HmacManager project reference too and the package would depend on HmacManager at its own
+      # version number. See HmacManager.StackExchangeRedis.csproj.
+      - name: Pack
+        working-directory: ./src/HmacManager.StackExchangeRedis
+        run: >
+          dotnet pack
+          --configuration Release
+          -p:RedisPackageVersion=${{ steps.version.outputs.value }}
+          --output ./nupkg
+
+      - name: Push to NuGet
+        working-directory: ./src/HmacManager.StackExchangeRedis
+        run: >
+          dotnet nuget push ./nupkg/*.nupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash .github/scripts/create-release.sh "$GITHUB_REF_NAME" "HmacManager (Redis) v${{ steps.version.outputs.value }}" <<'BODY'
+          **HmacManager.StackExchangeRedis (NuGet)** — atomic, Redis-backed replay protection for HmacManager.
+
+          Install: `dotnet add package HmacManager.StackExchangeRedis --version ${{ steps.version.outputs.value }}`
+
+          📦 https://www.nuget.org/packages/HmacManager.StackExchangeRedis/${{ steps.version.outputs.value }}
+          BODY

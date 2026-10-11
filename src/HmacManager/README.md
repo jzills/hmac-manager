@@ -64,6 +64,7 @@ The full documentation lives at
 | [Events](https://jzills.github.io/hmac-manager/docs/dotnet/events/) | `OnValidateKeys`, `OnAuthSuccess`, `OnAuthFailure` |
 | [Dynamic policies](https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/) | Policies from a database, or changed at runtime |
 | [Custom signing content](https://jzills.github.io/hmac-manager/docs/dotnet/custom-signing-content/) | Replacing the default signing string |
+| [Redis nonce cache](https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/) | Atomic replay protection across instances, from `HmacManager.StackExchangeRedis` |
 | [Logging](https://jzills.github.io/hmac-manager/docs/dotnet/logging/) | Categories, levels, and diagnosing a mismatch |
 
 Concepts shared with the Kubernetes verifier and the TypeScript client —
