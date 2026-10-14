@@ -217,6 +217,31 @@ public class Test_RedisNonceCache
         Assert.That(attempts, Is.EqualTo(2));
     }
 
+    // Claims arriving while a connect is in flight share it, failure included. Otherwise each would
+    // make its own attempt in turn and the last would wait for all of them.
+    [Test]
+    public async Task Test_TryAddAsync_ConcurrentClaimsShareOneFailedConnect()
+    {
+        var attempts = 0;
+        await using var cache = CreateCache(options => options.ConnectionMultiplexerFactory = async () =>
+        {
+            Interlocked.Increment(ref attempts);
+            await Task.Delay(TimeSpan.FromMilliseconds(200));
+            throw new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Redis is not up yet.");
+        });
+
+        var claims = Enumerable.Range(0, 10)
+            .Select(_ => cache.TryAddAsync(Guid.NewGuid(), DateTimeOffset.UtcNow, MaxAge))
+            .ToArray();
+
+        foreach (var claim in claims)
+        {
+            Assert.That(async () => await claim, Throws.InstanceOf<RedisConnectionException>());
+        }
+
+        Assert.That(attempts, Is.EqualTo(1));
+    }
+
     [Test]
     public async Task Test_DisposeAsync_LeavesASuppliedConnectionOpen()
     {

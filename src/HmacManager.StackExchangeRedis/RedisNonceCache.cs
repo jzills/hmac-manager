@@ -33,10 +33,17 @@ public sealed class RedisNonceCache : NonceCache, IDisposable, IAsyncDisposable
     private readonly ILogger Logger;
 
     /// <summary>
-    /// Serializes connecting, so a burst of first claims opens one connection rather than one each.
-    /// Waited on asynchronously, so none of them holds a thread while it waits.
+    /// Guards <see cref="PendingConnect"/>. Held only to read or replace it, never while connecting.
     /// </summary>
-    private readonly SemaphoreSlim ConnectionLock = new(1, 1);
+    private readonly object ConnectGate = new();
+
+    /// <summary>
+    /// The connect in flight, or the last one. Every claim that arrives while it runs awaits it, so a
+    /// burst of claims opens one connection rather than one each, and a connect that fails fails them
+    /// all at once rather than each making its own attempt in turn. Once it has completed the next
+    /// claim that finds no <see cref="Connection"/> starts another.
+    /// </summary>
+    private Task<IConnectionMultiplexer>? PendingConnect;
 
     private IConnectionMultiplexer? Connection;
 
@@ -92,50 +99,74 @@ public sealed class RedisNonceCache : NonceCache, IDisposable, IAsyncDisposable
         }
     }
 
-    private async ValueTask<IConnectionMultiplexer> GetConnectionAsync()
+    private async Task<IConnectionMultiplexer> GetConnectionAsync()
     {
         if (Volatile.Read(ref Connection) is { } connection)
         {
             return connection;
         }
 
-        await ConnectionLock.WaitAsync();
-        try
+        Task<IConnectionMultiplexer> pending;
+        TaskCompletionSource<IConnectionMultiplexer>? connecting = null;
+        lock (ConnectGate)
         {
             if (Connection is { } existing)
             {
                 return existing;
             }
 
-            // Not assigned until it has connected: a factory or connect that throws leaves nothing
-            // behind, and the next claim tries again.
-            var (opened, owned) = Options.ConnectionMultiplexerFactory is { } factory
-                ? (await factory(), false)
-                : (await ConnectionMultiplexer.ConnectAsync(Options.GetConfigurationOptions()), true);
-
-            opened.ConnectionFailed += OnConnectionFailed;
-            opened.ConnectionRestored += OnConnectionRestored;
-
-            OwnsConnection = owned;
-            Volatile.Write(ref Connection, opened);
-
-            // Disposed while connecting: nothing else will close it.
-            if (IsDisposed)
+            if (PendingConnect is { IsCompleted: false } inFlight)
             {
-                if (Detach() is { } orphaned)
-                {
-                    await orphaned.DisposeAsync();
-                }
+                pending = inFlight;
+            }
+            else
+            {
+                connecting = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                pending = PendingConnect = connecting.Task;
+            }
+        }
 
-                throw new ObjectDisposedException(nameof(RedisNonceCache));
+        if (connecting is not null)
+        {
+            try
+            {
+                connecting.SetResult(await ConnectAsync());
+            }
+            catch (Exception exception)
+            {
+                connecting.SetException(exception);
+            }
+        }
+
+        return await pending;
+    }
+
+    private async Task<IConnectionMultiplexer> ConnectAsync()
+    {
+        // Not assigned until it has connected: a factory or connect that throws leaves nothing
+        // behind, and the next claim tries again.
+        var (opened, owned) = Options.ConnectionMultiplexerFactory is { } factory
+            ? (await factory(), false)
+            : (await ConnectionMultiplexer.ConnectAsync(Options.GetConfigurationOptions()), true);
+
+        opened.ConnectionFailed += OnConnectionFailed;
+        opened.ConnectionRestored += OnConnectionRestored;
+
+        OwnsConnection = owned;
+        Volatile.Write(ref Connection, opened);
+
+        // Disposed while connecting: nothing else will close it.
+        if (IsDisposed)
+        {
+            if (Detach() is { } orphaned)
+            {
+                await orphaned.DisposeAsync();
             }
 
-            return opened;
+            throw new ObjectDisposedException(nameof(RedisNonceCache));
         }
-        finally
-        {
-            ConnectionLock.Release();
-        }
+
+        return opened;
     }
 
     // The subscription connection fails and recovers alongside the interactive one; this cache does
