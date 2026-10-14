@@ -61,12 +61,8 @@ export default class HmacManagerFactory {
         this.policies = new HmacPolicyCollection(policies);
         this.headerBuilderFactory = new HmacHeaderBuilderFactory(isConsolidatedHeadersEnabled);
         this.headerParserFactory = new HmacHeaderParserFactory(isConsolidatedHeadersEnabled);
-        this.nonceStore = nonceStore ?? new MemoryNonceStore(
-            // The longest window any policy allows. A single shared store cannot hold a
-            // per-policy TTL, and erring long is the safe direction: an entry kept longer
-            // than its policy's window costs memory, while one dropped early stops
-            // guarding a signature that is still valid.
-            Math.max(30, ...policies.map(policy => policy.maxAgeInSeconds ?? 30)));
+        // One store for every policy: each claim carries its own policy's window.
+        this.nonceStore = nonceStore ?? new MemoryNonceStore();
     }
 
     /**

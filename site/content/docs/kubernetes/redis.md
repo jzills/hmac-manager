@@ -14,6 +14,33 @@ external Redis cluster to provision.
 | --- | --- | --- |
 | `redis.enabled` | `true` | Deploy bundled Redis and use the distributed nonce cache |
 
+## Atomic claims
+
+The verifier claims each nonce in Redis with a single `SET … NX`, through the
+[`HmacManager.StackExchangeRedis`](../../dotnet/redis-nonce-cache/) package. Of
+several copies of one request arriving at the same moment, on one replica or
+spread across them, exactly one is accepted. Policies on `Memory` are
+unaffected.
+
+A Redis fault fails the check rather than letting the request through, and is
+logged as event 1400; losing and regaining the connection are events 1401 and
+1402. See the [event reference](../../reference/log-events/).
+
+### Upgrading from 0.4.2 or earlier
+
+Until every replica runs the new version, the guarantee is only as strong as
+the oldest pod. Earlier versions check for a nonce and then record it, through
+`IDistributedCache`, and on 0.4.2 and before an entry can expire up to a second
+before its request's window closes. So during the rollout two old pods can
+both accept concurrent copies of a request, and a replay that arrives in that
+last second can be accepted, by an old pod or a new one. Once the rollout completes, exactly one copy
+is accepted.
+
+Both versions key a nonce the same way, so a new pod refuses a nonce an old pod
+recorded. An old pod that receives a replay of a nonce a new pod recorded fails
+the check with a Redis `WRONGTYPE` error: still a denial, though an error
+rather than a clean rejection, and it stops once the rollout completes.
+
 ## Turning it off
 
 ```yaml

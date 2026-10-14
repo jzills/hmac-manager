@@ -10,7 +10,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG DOTNET_VERSION
 WORKDIR /repo
 COPY ["kubernetes/service/HmacManager.Kubernetes.csproj", "kubernetes/service/"]
-COPY ["src/HmacManager.csproj", "src/"]
+COPY ["src/HmacManager/HmacManager.csproj", "src/HmacManager/"]
+COPY ["src/HmacManager.StackExchangeRedis/HmacManager.StackExchangeRedis.csproj", "src/HmacManager.StackExchangeRedis/"]
 RUN dotnet restore "kubernetes/service/HmacManager.Kubernetes.csproj"
 COPY . .
 RUN dotnet build "kubernetes/service/HmacManager.Kubernetes.csproj" \

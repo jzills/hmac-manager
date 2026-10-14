@@ -20,7 +20,7 @@ jobs:
             10.0.x
 
       - name: Run operator tests
-        working-directory: ./test/Operator
+        working-directory: ./test/HmacManager.Operator.Tests
         run: dotnet test --verbosity normal
 
   publish:

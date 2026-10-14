@@ -82,7 +82,7 @@ inside its window — the same mechanism as the
 in-process:
 
 ```ts
-new HmacManagerFactory(policies); // MemoryNonceStore, covering the longest policy window
+new HmacManagerFactory(policies); // MemoryNonceStore
 ```
 
 {{% hm-note kind="warn" %}}
@@ -92,9 +92,9 @@ accepted, and the protection quietly does nothing. Any multi-replica deployment
 needs a shared store.
 {{% /hm-note %}}
 
-Supply a shared store by implementing `NonceStore`. Alongside the required
-`has` and `set` methods, provide `tryAdd` so verification can check and record
-the nonce in one atomic operation. This Redis example uses `SET … PX … NX`:
+Supply a shared store by implementing `NonceStore`. Verification calls only
+`tryAdd`, which claims the nonce for the rest of its policy's window in one
+atomic operation — this Redis example uses `SET … PX … NX`:
 
 ```ts
 import Redis from "ioredis";
@@ -102,41 +102,33 @@ import { HmacManagerFactory } from "hmac-manager";
 import type { NonceStore } from "hmac-manager";
 
 const redis = new Redis(process.env.REDIS_URL!);
-// One store serves all policies, so keep nonces for the longest allowed window.
-const maxAgeInMilliseconds =
-  Math.max(30, ...policies.map(policy => policy.maxAgeInSeconds ?? 30)) * 1000;
-const remainingTtl = (dateRequested: Date) =>
-  Math.ceil(dateRequested.getTime() + maxAgeInMilliseconds - Date.now());
 
 const store: NonceStore = {
-  has: async nonce => (await redis.exists(`hmac:nonce:${nonce}`)) === 1,
-  set: async (nonce, dateRequested) => {
-    // Expiry is measured from when the request was signed.
-    const remaining = remainingTtl(dateRequested);
-    if (remaining > 0) {
-      await redis.set(`hmac:nonce:${nonce}`, "1", "PX", remaining);
-    }
-  },
-  tryAdd: async (nonce, dateRequested) => {
-    const remaining = remainingTtl(dateRequested);
+  tryAdd: async (nonce, dateRequested, maxAgeInSeconds) => {
+    // Dated from when the request was signed, in the window of the policy it was
+    // verified for. A remainder that has run out means the window closed on the way.
+    const remaining = Math.ceil(
+      dateRequested.getTime() + maxAgeInSeconds * 1000 - Date.now());
     if (remaining <= 0) {
       return false;
     }
 
     const result = await redis.set(`hmac:nonce:${nonce}`, "1", "PX", remaining, "NX");
     return result === "OK";
-  }
+  },
+  // Deprecated and never called while tryAdd exists; required until the next major version.
+  has: async () => { throw new Error("Use tryAdd."); },
+  set: async () => { throw new Error("Use tryAdd."); }
 };
 
 const verifier = new HmacManagerFactory(policies, false, store);
 ```
 
-The store keeps nonces for the longest policy window and rejects entries
-that have already expired. Both client and .NET memory stores also record
-nonces atomically. Client stores without `tryAdd` fall back to separate `has`
-and `set` calls, so concurrent replays can pass. The .NET distributed cache
-has the same limitation because `IDistributedCache` has no atomic conditional
-write.
+A store without `tryAdd` falls back to the deprecated `has` and `set` as
+separate calls, so concurrent replays can both pass, and its entries live for
+whatever TTL it picks rather than the policy's window. The .NET distributed
+cache has the same check-then-set limitation, because `IDistributedCache` has
+no atomic conditional write.
 
 ## Node, Express and friends
 

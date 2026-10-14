@@ -31,7 +31,11 @@ jobs:
             10.0.x
 
       - name: Build
-        working-directory: ./src
+        working-directory: ./src/HmacManager
+        run: dotnet build
+
+      - name: Build the Redis nonce cache package
+        working-directory: ./src/HmacManager.StackExchangeRedis
         run: dotnet build
 
       - name: Perform CodeQL Analysis

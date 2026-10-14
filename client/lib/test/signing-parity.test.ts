@@ -4,7 +4,7 @@ import HmacSignatureProvider from "../src/components/hmac-signature-provider";
 import SigningContentBuilder from "../src/builders/signing-content-builder";
 import HashAlgorithm from "../src/hash-algorithm";
 
-// The other half of test/Unit/Components/SigningContent/Test_SigningContentParity.cs.
+// The other half of test/HmacManager.Tests/Components/SigningContent/Test_SigningContentParity.cs.
 // Both read the same fixture and must reproduce the same strings from the same inputs.
 //
 // This is the only thing that holds the two implementations to one wire format. Every

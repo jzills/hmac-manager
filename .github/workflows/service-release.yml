@@ -25,11 +25,23 @@ jobs:
             10.0.x
 
       - name: Run unit tests
-        working-directory: ./test/Unit
+        working-directory: ./test/HmacManager.Tests
         run: dotnet test --verbosity normal
 
       - name: Run integration tests
-        working-directory: ./test/Integration
+        working-directory: ./test/HmacManager.IntegrationTests
+        run: dotnet test --verbosity normal
+
+      - name: Run service tests
+        working-directory: ./test/HmacManager.Kubernetes.Tests
+        run: dotnet test --verbosity normal
+
+      # The image ships the Redis nonce cache package, so its suite gates the image too.
+      - name: Wait for Redis
+        run: bash .github/scripts/wait-for-redis.sh
+
+      - name: Run Redis package tests
+        working-directory: ./test/HmacManager.StackExchangeRedis.Tests
         run: dotnet test --verbosity normal
 
   publish:

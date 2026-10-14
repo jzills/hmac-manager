@@ -30,11 +30,20 @@ is valid. The order matters: recording a nonce before authenticating the
 request would let an unauthenticated caller spend a genuine request's nonce
 ahead of it, or fill the cache with nonces of its own.
 
-The memory cache checks and records a nonce atomically, so two concurrent
-copies of the same request cannot both be accepted by that cache.
-The `Distributed` cache type is built on `IDistributedCache`, which
-has no conditional write, so it stays check-then-set: two copies of a request
-arriving at the same moment on different instances can both pass.
+Recording is one operation: the cache is asked to **claim** the nonce until
+`dateRequested + maxAgeInSeconds`, and answers whether it was unused. A request
+can expire while its signature is computed, so the verifier checks the date
+again immediately before asking: an expired request never reaches the cache,
+and a refusal from it is always a replay.
+
+A claim should be atomic, so two concurrent copies of the same request cannot
+both be accepted. The memory cache's is. The `Distributed` cache type is built
+on `IDistributedCache`, which has no conditional write, so it stays
+check-then-set: two copies of a request arriving at the same moment on
+different instances can both pass. In .NET, the
+[`HmacManager.StackExchangeRedis`](../../dotnet/redis-nonce-cache/) package
+takes its place with an atomic claim in Redis, and another store with an atomic
+primitive can do the same as a [custom nonce cache](../../dotnet/custom-nonce-cache/).
 
 ## Choosing the window
 
@@ -51,12 +60,12 @@ Minutes, not hours. The chart defaults to 60 seconds.
 
 ## Which cache
 
-| | `UseMemoryCache` | `UseDistributedCache` |
-| --- | --- | --- |
-| Backed by | in-process memory | any `IDistributedCache` |
-| Shared between instances | no | yes |
-| Atomic check and record | yes | no |
-| Deployment | a single instance | multiple instances, with the concurrency limitation above |
+| | `UseMemoryCache` | `UseDistributedCache` | `UseDistributedCache` with [`HmacManager.StackExchangeRedis`](../../dotnet/redis-nonce-cache/) |
+| --- | --- | --- | --- |
+| Backed by | in-process memory | any `IDistributedCache` | Redis |
+| Shared between instances | no | yes | yes |
+| Atomic check and record | yes | no | yes |
+| Deployment | a single instance | multiple instances, with the concurrency limitation above | multiple instances |
 
 {{% hm-note kind="warn" %}}
 The in-memory cache is per process. Behind a load balancer with two instances,
@@ -85,11 +94,10 @@ silently.
 
 The npm package verifies too, and applies the same two checks with the same
 rules, in the same order: date, signature, then the nonce. `maxAgeInSeconds`
-lives on the policy and the nonce store is the `NonceStore` interface — `has`
-and `set`, plus an optional `tryAdd` that checks and records in one atomic
-step. The in-process `MemoryNonceStore` is shipped as the default and
-implements `tryAdd`; a shared store should implement it with its own atomic
-primitive:
+lives on the policy and the nonce store is the `NonceStore` interface, whose
+`tryAdd` makes the same claim with the policy's window passed on every call.
+The in-process `MemoryNonceStore` is shipped as the default; a shared store
+should implement `tryAdd` with its own atomic primitive:
 
 ```ts
 new HmacManagerFactory(policies, false, myRedisNonceStore);
