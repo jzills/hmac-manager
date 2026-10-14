@@ -63,6 +63,11 @@ configuration string connects with `abortConnect=false` unless it sets
 `abortConnect` itself, so a Redis that is not up yet is retried in the
 background rather than failing every claim until the process restarts.
 
+Claims that arrive while a connect is in progress wait for that one connect.
+If it fails, they all fail with it, and the next claim starts a new one. That
+holds for `ConfigurationOptions` and `abortConnect=true` too, where a connect to
+an unreachable Redis fails rather than returning a connection that retries.
+
 To share a connection the application already has:
 
 ```csharp
