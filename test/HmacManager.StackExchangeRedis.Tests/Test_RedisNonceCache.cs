@@ -290,6 +290,9 @@ public class Test_RedisNonceCache
             await Admin.GetServers().Single().ClientKillAsync(id: client.Id);
         }
 
+        // StackExchange.Redis raises its connection events on the thread pool, so the restore can be
+        // recorded before the failure. Wait for both rather than assume their order.
+        Assert.IsTrue(await EventuallyAsync(() => logger.WithEventId(1401).Any()), "the connection is lost");
         Assert.IsTrue(await EventuallyAsync(() => logger.WithEventId(1402).Any()), "the connection is restored");
         Assert.That(logger.WithEventId(1401).First().Level, Is.EqualTo(LogLevel.Warning));
         Assert.That(logger.WithEventId(1402).First().Level, Is.EqualTo(LogLevel.Information));
