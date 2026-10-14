@@ -4918,6 +4918,10 @@ waits on it and a Redis that is slow to start does not hold up the host. A
 configuration string connects with &lt;code&gt;abortConnect=false&lt;/code&gt; unless it sets
 &lt;code&gt;abortConnect&lt;/code&gt; itself, so a Redis that is not up yet is retried in the
 background rather than failing every claim until the process restarts.&lt;/p&gt;
+&lt;p&gt;Claims that arrive while a connect is in progress wait for that one connect.
+If it fails, they all fail with it, and the next claim starts a new one. That
+holds for &lt;code&gt;ConfigurationOptions&lt;/code&gt; and &lt;code&gt;abortConnect=true&lt;/code&gt; too, where a connect to
+an unreachable Redis fails rather than returning a connection that retries.&lt;/p&gt;
 &lt;p&gt;To share a connection the application already has:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddSingleton&lt;/span&gt;&lt;span class="p"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;IConnectionMultiplexer&lt;/span&gt;&lt;span class="p"&gt;&amp;gt;(&lt;/span&gt;
