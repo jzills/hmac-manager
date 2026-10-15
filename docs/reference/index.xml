@@ -667,9 +667,9 @@ data-copied-label="Copied!"
 &lt;/table&gt;
 &lt;p&gt;Values are validated when the policy is built, so an invalid key or algorithm
 fails at startup rather than on the first request.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;Distributed&lt;/code&gt; requires an &lt;code&gt;IDistributedCache&lt;/code&gt; to be registered. If none is,
-that is reported at &lt;code&gt;Warning&lt;/code&gt; as event 1201 rather than failing quietly — see
-&lt;a href="../../concepts/nonce-and-replay/"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Distributed&lt;/code&gt; uses the registered &lt;code&gt;IDistributedCache&lt;/code&gt;. If none is registered,
+it falls back to an in-process one that no other instance shares, with no
+warning — see &lt;a href="../../concepts/nonce-and-replay/#which-cache"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hm-note hm-note--warn"&gt;
 &lt;p&gt;&lt;code&gt;PrivateKey&lt;/code&gt; is a shared secret and &lt;code&gt;appsettings.json&lt;/code&gt; is committed. Supply it
 from user secrets, an environment variable or a secret store and let

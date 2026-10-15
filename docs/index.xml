@@ -3111,9 +3111,9 @@ data-copied-label="Copied!"
 &lt;/table&gt;
 &lt;p&gt;Values are validated when the policy is built, so an invalid key or algorithm
 fails at startup rather than on the first request.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;Distributed&lt;/code&gt; requires an &lt;code&gt;IDistributedCache&lt;/code&gt; to be registered. If none is,
-that is reported at &lt;code&gt;Warning&lt;/code&gt; as event 1201 rather than failing quietly — see
-&lt;a href="../../concepts/nonce-and-replay/"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Distributed&lt;/code&gt; uses the registered &lt;code&gt;IDistributedCache&lt;/code&gt;. If none is registered,
+it falls back to an in-process one that no other instance shares, with no
+warning — see &lt;a href="../../concepts/nonce-and-replay/#which-cache"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hm-note hm-note--warn"&gt;
 &lt;p&gt;&lt;code&gt;PrivateKey&lt;/code&gt; is a shared secret and &lt;code&gt;appsettings.json&lt;/code&gt; is committed. Supply it
 from user secrets, an environment variable or a secret store and let
@@ -3444,9 +3444,15 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;If a policy asks for the distributed cache and no &lt;code&gt;IDistributedCache&lt;/code&gt; is
-registered, that is reported at &lt;code&gt;Warning&lt;/code&gt; (event 1201) rather than failing
-silently.&lt;/p&gt;
+&lt;div class="hm-note hm-note--warn"&gt;
+&lt;p&gt;If no &lt;code&gt;IDistributedCache&lt;/code&gt; is registered, &lt;code&gt;AddHmacManager&lt;/code&gt; registers
+&lt;code&gt;MemoryDistributedCache&lt;/code&gt;, which keeps entries in process memory. A policy on
+&lt;code&gt;UseDistributedCache&lt;/code&gt; then works and logs nothing, but no instance sees
+another&amp;rsquo;s nonces, so across instances it protects no more than
+&lt;code&gt;UseMemoryCache&lt;/code&gt;. Register a shared &lt;code&gt;IDistributedCache&lt;/code&gt;, or use the
+&lt;a href="../../dotnet/redis-nonce-cache/"&gt;Redis package&lt;/a&gt;, for any multi-instance
+deployment.&lt;/p&gt;
+&lt;/div&gt;
 &lt;h2&gt;In the TypeScript client&lt;span class="hx:absolute hx:-mt-20" id="in-the-typescript-client"&gt;&lt;/span&gt;
 &lt;a href="#in-the-typescript-client" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The npm package verifies too, and applies the same two checks with the same
 rules, in the same order: date, signature, then the nonce. &lt;code&gt;maxAgeInSeconds&lt;/code&gt;
