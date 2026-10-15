@@ -3,6 +3,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Caching;
 using HmacManager.Common;
 using HmacManager.Components;
@@ -36,9 +38,19 @@ internal static class IServiceCollectionExtensions
         services.AddScoped<IHmacHeaderBuilderFactory, HmacHeaderBuilderFactory>(_ => 
             new HmacHeaderBuilderFactory(options.IsConsolidatedHeadersEnabled));
 
+        var policyOptions = options.GetPolicyCollectionOptions();
+        if (!policyOptions.IsScopedPoliciesEnabled)
+        {
+            services.AddHostedService(provider => new DistributedNonceCacheFallbackCheck(
+                services,
+                provider,
+                policyOptions.Policies,
+                provider.GetService<ILogger<DistributedNonceCacheFallbackCheck>>() ?? NullLogger<DistributedNonceCacheFallbackCheck>.Instance));
+        }
+
         return services
             .AddHttpContextAccessor()
-            .AddPolicyCollection(options.GetPolicyCollectionOptions())
+            .AddPolicyCollection(policyOptions)
             .AddCacheCollection()
             .AddFactory()
             .AddScoped<IHmacAuthenticationContextProvider, HmacAuthenticationContextProvider>()
@@ -78,7 +90,7 @@ internal static class IServiceCollectionExtensions
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
         services.TryAddSingleton<IDistributedCache, MemoryDistributedCache>();
 
-        return services.AddScoped<IComponentCollection<INonceCache>, NonceCacheCollection>(GetCacheCollection);
+        return services.AddScoped<IComponentCollection<INonceCache>, NonceCacheCollection>(CacheCollectionFactory);
     }
 
     /// <summary>
@@ -89,6 +101,12 @@ internal static class IServiceCollectionExtensions
     internal static IServiceCollection AddFactory(
         this IServiceCollection services
     ) => services.AddScoped<IHmacManagerFactory, HmacManagerFactory>();
+
+    /// <summary>
+    /// The factory the built-in cache collection is registered with, kept as one instance so a
+    /// registration can be recognized as the built-in one by reference.
+    /// </summary>
+    internal static readonly Func<IServiceProvider, NonceCacheCollection> CacheCollectionFactory = GetCacheCollection;
 
     /// <summary>
     /// Creates a <see cref="NonceCacheCollection"/> with default cache services.
