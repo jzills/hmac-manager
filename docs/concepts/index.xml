@@ -321,7 +321,9 @@ the receiving end delivers.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;An empty body contributes no segment.&lt;/strong&gt; A &lt;code&gt;POST&lt;/code&gt; whose body is present but
 zero-length is treated exactly like one with no body at all — there is no
 content-hash segment on either side. Hashing the empty string instead would
-produce a segment no verifier reproduces.&lt;/p&gt;
+produce a segment no verifier reproduces. That holds when the length is not
+known up front, too: the .NET signer reads a streamed body before deciding,
+so an empty one is measured as empty rather than assumed to be content.&lt;/p&gt;
 &lt;p&gt;The string is hashed as &lt;strong&gt;UTF-8&lt;/strong&gt;. Every segment above is ASCII, where the
 encoding makes no difference — except the values a scheme contributes, which are
 whatever the caller put in those headers.&lt;/p&gt;
