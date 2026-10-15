@@ -66,7 +66,7 @@ internal class HttpRequestMessageFeature : IHttpRequestMessageFeature
         var message = new HttpRequestMessage(new HttpMethod(httpRequest.Method), uriString);
         message.Options.TryAdd(nameof(HttpContext), httpContext);
         
-        if (httpRequest.HasContent())
+        if (httpRequest.MayHaveContent())
         {
             message.Content = new StreamContent(httpRequest.Body);
         }
