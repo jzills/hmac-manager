@@ -55,6 +55,14 @@ public class HmacSignatureProvider : IHmacSignatureProvider
             .WithNonce(nonce)
             .WithHeaderValues(headerValues ?? []);
 
+        // A body of unknown length (a non-seekable stream) would count as content even when
+        // empty, while the verifier measures the zero bytes it receives and hashes nothing.
+        // Buffer it first so HasContent sees the real length; reading it below buffers anyway.
+        if (request.Content is not null && request.Content.Headers.ContentLength is null)
+        {
+            await request.Content.LoadIntoBufferAsync();
+        }
+
         if (request.HasContent())
         {
             var contentString = await request.Content!.ReadAsStringAsync();
