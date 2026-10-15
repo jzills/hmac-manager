@@ -1108,6 +1108,11 @@ event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;td&gt;Scheme not declared by the policy&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
+&lt;td&gt;1203&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Warning&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;Distributed&lt;/code&gt; nonce cache backed by the in-process &lt;code&gt;MemoryDistributedCache&lt;/code&gt;, logged once at startup&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
 &lt;td&gt;1210&lt;/td&gt;
 &lt;td&gt;&lt;code&gt;Information&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Watching configuration for policy changes&lt;/td&gt;
@@ -3112,8 +3117,9 @@ data-copied-label="Copied!"
 &lt;p&gt;Values are validated when the policy is built, so an invalid key or algorithm
 fails at startup rather than on the first request.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;Distributed&lt;/code&gt; uses the registered &lt;code&gt;IDistributedCache&lt;/code&gt;. If none is registered,
-it falls back to an in-process one that no other instance shares, with no
-warning — see &lt;a href="../../concepts/nonce-and-replay/#which-cache"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
+it falls back to an in-process one that no other instance shares, which is
+logged at startup as event 1203 — see
+&lt;a href="../../concepts/nonce-and-replay/#which-cache"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;
 &lt;div class="hm-note hm-note--warn"&gt;
 &lt;p&gt;&lt;code&gt;PrivateKey&lt;/code&gt; is a shared secret and &lt;code&gt;appsettings.json&lt;/code&gt; is committed. Supply it
 from user secrets, an environment variable or a secret store and let
@@ -3447,11 +3453,16 @@ data-copied-label="Copied!"
 &lt;div class="hm-note hm-note--warn"&gt;
 &lt;p&gt;If no &lt;code&gt;IDistributedCache&lt;/code&gt; is registered, &lt;code&gt;AddHmacManager&lt;/code&gt; registers
 &lt;code&gt;MemoryDistributedCache&lt;/code&gt;, which keeps entries in process memory. A policy on
-&lt;code&gt;UseDistributedCache&lt;/code&gt; then works and logs nothing, but no instance sees
-another&amp;rsquo;s nonces, so across instances it protects no more than
-&lt;code&gt;UseMemoryCache&lt;/code&gt;. Register a shared &lt;code&gt;IDistributedCache&lt;/code&gt;, or use the
+&lt;code&gt;UseDistributedCache&lt;/code&gt; then works, but no instance sees another&amp;rsquo;s nonces, so
+across instances it protects no more than &lt;code&gt;UseMemoryCache&lt;/code&gt;. Register a shared
+&lt;code&gt;IDistributedCache&lt;/code&gt;, or use the
 &lt;a href="../../dotnet/redis-nonce-cache/"&gt;Redis package&lt;/a&gt;, for any multi-instance
 deployment.&lt;/p&gt;
+&lt;p&gt;Nothing fails, so the host logs it once at startup, at &lt;code&gt;Warning&lt;/code&gt; as event
+1203, naming the policies. That includes an &lt;code&gt;AddDistributedMemoryCache&lt;/code&gt; you
+registered yourself, which is the same in-process store. It is not logged when
+&lt;code&gt;AddNonceCache&lt;/code&gt; replaced the &lt;code&gt;Distributed&lt;/code&gt; cache, or for scoped policies, which
+are not known until a request resolves them.&lt;/p&gt;
 &lt;/div&gt;
 &lt;h2&gt;In the TypeScript client&lt;span class="hx:absolute hx:-mt-20" id="in-the-typescript-client"&gt;&lt;/span&gt;
 &lt;a href="#in-the-typescript-client" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The npm package verifies too, and applies the same two checks with the same
