@@ -211,6 +211,22 @@ internal static partial class HmacLog
     public static partial void SchemeNotFound(ILogger logger, string policy, string scheme);
 
     /// <summary>
+    /// Records that policies on the <c>Distributed</c> nonce cache are backed by the in-process
+    /// <c>MemoryDistributedCache</c>, so no instance sees another's nonces.
+    /// </summary>
+    /// <remarks>
+    /// <c>AddHmacManager</c> registers <c>MemoryDistributedCache</c> when no <c>IDistributedCache</c> is
+    /// registered, so nothing fails: a policy configured for many instances protects each one only
+    /// from replays it received itself. Checked once, at startup, and only for policies the host
+    /// holds; scoped policies are resolved per request.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 1203,
+        Level = LogLevel.Warning,
+        Message = "Policies {Policies} use the Distributed nonce cache, but the IDistributedCache behind it is the in-process MemoryDistributedCache, so nonces are not shared between instances and a replay that reaches another instance is accepted. Register a shared IDistributedCache, or use HmacManager.StackExchangeRedis, if more than one instance serves these policies.")]
+    public static partial void DistributedNonceCacheNotShared(ILogger logger, string policies);
+
+    /// <summary>
     /// Records that the library is watching configuration for policy changes.
     /// </summary>
     [LoggerMessage(

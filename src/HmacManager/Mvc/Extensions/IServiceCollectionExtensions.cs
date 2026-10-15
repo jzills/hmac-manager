@@ -104,7 +104,8 @@ public static class IServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(implementationFactory);
 
-        return services.AddSingleton(provider =>
-            new NonceCacheRegistration(cacheType, implementationFactory(provider)));
+        return services
+            .AddSingleton(new NonceCacheReplacement(cacheType))
+            .AddSingleton(provider => new NonceCacheRegistration(cacheType, implementationFactory(provider)));
     }
 }
