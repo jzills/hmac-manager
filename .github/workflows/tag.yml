@@ -24,18 +24,25 @@ jobs:
           # triggers them normally.
           token: ${{ secrets.RELEASE_PAT }}
 
+      # Every value from the event reaches a script through env, never through ${{ }} inside
+      # run: — that is substituted into the script text before bash parses it, so a branch named
+      # release/v1.0.0$(…) would run as code. Git allows $, ( and ) in branch names.
       - name: Extract tag from branch name
         id: version
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          TAG=$(bash .github/scripts/extract-version.sh "${{ github.event.pull_request.head.ref }}")
+          TAG=$(bash .github/scripts/extract-version.sh "$HEAD_REF")
           echo "value=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
+        env:
+          TAG: ${{ steps.version.outputs.value }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "${{ steps.version.outputs.value }}"
-          git push origin "${{ steps.version.outputs.value }}"
+          git tag "$TAG"
+          git push origin "$TAG"
 
   merge-back:
     name: Merge Release Back to Develop
@@ -49,15 +56,17 @@ jobs:
           fetch-depth: 0
 
       - name: Check release branch has changes to merge back
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           # checkout on a pull_request event leaves a narrow fetch refspec, so
           # fetch into explicit remote-tracking refs — a bare `git fetch origin <branch>`
           # only writes FETCH_HEAD, leaving origin/develop et al. unresolvable below.
           git fetch origin \
             "develop:refs/remotes/origin/develop" \
-            "${{ github.event.pull_request.head.ref }}:refs/remotes/origin/${{ github.event.pull_request.head.ref }}"
-          if git diff --quiet "origin/develop...origin/${{ github.event.pull_request.head.ref }}"; then
-            echo "::error::Release branch '${{ github.event.pull_request.head.ref }}' has no changes vs develop." \
+            "$HEAD_REF:refs/remotes/origin/$HEAD_REF"
+          if git diff --quiet "origin/develop...origin/$HEAD_REF"; then
+            echo "::error::Release branch '$HEAD_REF' has no changes vs develop." \
               "Did you forget to bump the version (HmacManager.csproj, HmacManager.StackExchangeRedis.csproj, the service project, the operator project, Chart.yaml, or client/lib/package.json) before merging?" \
               "Nothing to merge back into develop — fix the version bump and push a follow-up commit or handle the merge manually."
             exit 1
@@ -69,13 +78,14 @@ jobs:
           # does not run checks without a manual approval, and this job waits
           # on those checks below.
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           PR_URL=$(gh pr create \
             --repo "$GITHUB_REPOSITORY" \
-            --title "chore: merge ${{ github.event.pull_request.head.ref }} back into develop" \
-            --body "Automated post-release merge. Brings release fixes and merge commits from \`${{ github.event.pull_request.head.ref }}\` back into \`develop\` to keep branches in sync per gitflow." \
+            --title "chore: merge $HEAD_REF back into develop" \
+            --body "Automated post-release merge. Brings release fixes and merge commits from \`$HEAD_REF\` back into \`develop\` to keep branches in sync per gitflow." \
             --base develop \
-            --head "${{ github.event.pull_request.head.ref }}")
+            --head "$HEAD_REF")
 
           # Retry the merge until the develop ruleset accepts it.
           DEADLINE=$((SECONDS + 1800))
