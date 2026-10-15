@@ -1,6 +1,8 @@
 using HmacManager.Mvc.Extensions.Internal;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using NUnit.Framework;
+using Unit.Tests.Common;
 
 namespace Unit.Tests.Mvc.Extensions.Internal;
 
@@ -8,122 +10,107 @@ namespace Unit.Tests.Mvc.Extensions.Internal;
 public class Test_HttpRequestExtensions
 {
     [Test]
-    public void HasContent_WithNullBody_ReturnsFalse()
+    public void MayHaveContent_WithNullBody_ReturnsFalse()
     {
         var context = new DefaultHttpContext();
         context.Request.Body = null!;
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsFalse(result);
+
+        Assert.That(context.Request.MayHaveContent(), Is.False);
     }
 
     [Test]
-    public void HasContent_WithEmptyMemoryStream_ReturnsFalse()
+    public void MayHaveContent_WithDefaultEmptyBody_ReturnsFalse()
+    {
+        var context = new DefaultHttpContext();
+
+        Assert.That(context.Request.Body, Is.SameAs(Stream.Null));
+        Assert.That(context.Request.MayHaveContent(), Is.False);
+    }
+
+    [Test]
+    public void MayHaveContent_WithContentLengthZero_ReturnsFalse()
     {
         var context = new DefaultHttpContext();
         context.Request.Body = new MemoryStream();
         context.Request.ContentLength = 0;
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsFalse(result);
+
+        Assert.That(context.Request.MayHaveContent(), Is.False);
     }
 
     [Test]
-    public void HasContent_WithContentLengthGreaterThanZero_ReturnsTrue()
+    public void MayHaveContent_WithContentLengthGreaterThanZero_ReturnsTrue()
     {
         var context = new DefaultHttpContext();
-        var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-        context.Request.Body = stream;
+        context.Request.Body = new MemoryStream(new byte[] { 1, 2, 3 });
         context.Request.ContentLength = 3;
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsTrue(result);
+
+        Assert.That(context.Request.MayHaveContent(), Is.True);
     }
 
-    [Test]
-    public void HasContent_WithSeekableStreamWithContent_ReturnsTrue()
+    // Unknown length: reported as possible content whatever the stream holds, because finding
+    // out would mean reading it. Computing the signing content measures it after buffering.
+    [TestCase(new byte[] { 1, 2, 3 })]
+    [TestCase(new byte[0])]
+    public void MayHaveContent_WithUnknownLength_ReturnsTrue_WithoutReadingTheBody(byte[] bytes)
     {
         var context = new DefaultHttpContext();
-        var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-        stream.Seek(0, SeekOrigin.Begin);
-        context.Request.Body = stream;
-        // Don't set ContentLength, so it tests the CanSeek path
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsTrue(result);
-    }
+        var body = new CountingStream(new NonSeekableStream(bytes));
+        context.Request.Body = body;
 
-    [Test]
-    public void HasContent_WithSeekableEmptyStream_ReturnsFalse()
-    {
-        var context = new DefaultHttpContext();
-        var stream = new MemoryStream();
-        context.Request.Body = stream;
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsFalse(result);
-    }
-
-    [Test]
-    public void HasContent_WithNonSeekableStreamWithContent_ReturnsTrue()
-    {
-        var context = new DefaultHttpContext();
-        var memStream = new MemoryStream(new byte[] { 1, 2, 3 });
-        var nonSeekableStream = new NonSeekableStreamWrapper(memStream);
-        context.Request.Body = nonSeekableStream;
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsTrue(result);
-    }
-
-    [Test]
-    public void HasContent_WithNonSeekableEmptyStream_ReturnsFalse()
-    {
-        var context = new DefaultHttpContext();
-        var memStream = new MemoryStream();
-        var nonSeekableStream = new NonSeekableStreamWrapper(memStream);
-        context.Request.Body = nonSeekableStream;
-        
-        var result = context.Request.HasContent();
-        
-        Assert.IsFalse(result);
-    }
-
-    /// <summary>
-    /// A wrapper stream that disables seeking to test the non-seekable code path.
-    /// </summary>
-    private class NonSeekableStreamWrapper : Stream
-    {
-        private readonly Stream _innerStream;
-
-        public NonSeekableStreamWrapper(Stream innerStream)
+        Assert.Multiple(() =>
         {
-            _innerStream = innerStream;
+            Assert.That(context.Request.MayHaveContent(), Is.True);
+            Assert.That(body.Reads, Is.Zero);
+        });
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void MayHaveContent_WithUnknownLength_FollowsBodyDetection(bool canHaveBody)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Body = new NonSeekableStream([]);
+        context.Features.Set<IHttpRequestBodyDetectionFeature>(new BodyDetection(canHaveBody));
+
+        Assert.That(context.Request.MayHaveContent(), Is.EqualTo(canHaveBody));
+    }
+
+    private sealed class BodyDetection(bool canHaveBody) : IHttpRequestBodyDetectionFeature
+    {
+        public bool CanHaveBody => canHaveBody;
+    }
+
+    private sealed class CountingStream(Stream inner) : Stream
+    {
+        public int Reads { get; private set; }
+
+        public override bool CanRead => inner.CanRead;
+        public override bool CanSeek => inner.CanSeek;
+        public override bool CanWrite => false;
+        public override long Length => inner.Length;
+        public override long Position { get => inner.Position; set => inner.Position = value; }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            Reads++;
+            return inner.Read(buffer, offset, count);
         }
 
-        public override bool CanRead => _innerStream.CanRead;
-        public override bool CanSeek => false;
-        public override bool CanWrite => _innerStream.CanWrite;
-        public override long Length => _innerStream.Length;
-        public override long Position
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            get => _innerStream.Position;
-            set => _innerStream.Position = value;
+            Reads++;
+            return inner.ReadAsync(buffer, offset, count, cancellationToken);
         }
 
-        public override void Flush() => _innerStream.Flush();
-        public override int Read(byte[] buffer, int offset, int count) =>
-            _innerStream.Read(buffer, offset, count);
-        public override long Seek(long offset, SeekOrigin origin) =>
-            throw new NotSupportedException();
-        public override void SetLength(long value) => _innerStream.SetLength(value);
-        public override void Write(byte[] buffer, int offset, int count) =>
-            _innerStream.Write(buffer, offset, count);
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            Reads++;
+            return inner.ReadAsync(buffer, cancellationToken);
+        }
+
+        public override void Flush() { }
+        public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 }
