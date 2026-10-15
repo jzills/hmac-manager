@@ -86,9 +86,15 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = "localhost:6379");
 ```
 
-If a policy asks for the distributed cache and no `IDistributedCache` is
-registered, that is reported at `Warning` (event 1201) rather than failing
-silently.
+{{% hm-note kind="warn" %}}
+If no `IDistributedCache` is registered, `AddHmacManager` registers
+`MemoryDistributedCache`, which keeps entries in process memory. A policy on
+`UseDistributedCache` then works and logs nothing, but no instance sees
+another's nonces, so across instances it protects no more than
+`UseMemoryCache`. Register a shared `IDistributedCache`, or use the
+[Redis package](../../dotnet/redis-nonce-cache/), for any multi-instance
+deployment.
+{{% /hm-note %}}
 
 ## In the TypeScript client
 
