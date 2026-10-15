@@ -87,7 +87,9 @@ the receiving end delivers.
 **An empty body contributes no segment.** A `POST` whose body is present but
 zero-length is treated exactly like one with no body at all — there is no
 content-hash segment on either side. Hashing the empty string instead would
-produce a segment no verifier reproduces.
+produce a segment no verifier reproduces. That holds when the length is not
+known up front, too: the .NET signer reads a streamed body before deciding,
+so an empty one is measured as empty rather than assumed to be content.
 
 The string is hashed as **UTF-8**. Every segment above is ASCII, where the
 encoding makes no difference — except the values a scheme contributes, which are
