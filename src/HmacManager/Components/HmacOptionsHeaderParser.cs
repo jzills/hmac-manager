@@ -35,10 +35,13 @@ public class HmacOptionsHeaderParser : HmacHeaderParser
     public override IHmacHeaderParser CreateParser(IDictionary<string, string> headers) => new HmacOptionsHeaderParser(headers);
 
     /// <inheritdoc/>
-    public override IHmacHeaderParser CreateParser(HttpRequestHeaders headers) => 
+    // Case-insensitive because Process looks up the options header before the base constructor
+    // wraps the result: HttpRequestHeaders enumerates names as received, lowercase under HTTP/2.
+    public override IHmacHeaderParser CreateParser(HttpRequestHeaders headers) =>
         new HmacOptionsHeaderParser(headers.ToDictionary(
-            header => header.Key, 
-            header => header.Value.FirstOrDefault() ?? string.Empty
+            header => header.Key,
+            header => header.Value.FirstOrDefault() ?? string.Empty,
+            StringComparer.OrdinalIgnoreCase
         ));
 
     private static IDictionary<string, string> Process(IDictionary<string, string> headers)
