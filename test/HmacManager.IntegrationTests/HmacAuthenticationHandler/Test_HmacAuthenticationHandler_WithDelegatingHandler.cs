@@ -63,6 +63,14 @@ public class Test_HmacAuthenticationHandler_WithDelegatingHandler
                     {
                         await context.Response.WriteAsync("Ok!");
                     }).RequireAuthorization("TestPolicy"); 
+
+                    // Echoes the body the endpoint received, and whether it arrived with a length.
+                    endpoints.MapPost("/echo", async (HttpContext context) =>
+                    {
+                        using var reader = new StreamReader(context.Request.Body);
+                        var length = context.Request.ContentLength?.ToString() ?? "none";
+                        await context.Response.WriteAsync($"{length}|{await reader.ReadToEndAsync()}");
+                    }).RequireAuthorization("TestPolicy");
                 });
             });
 
@@ -101,5 +109,71 @@ public class Test_HmacAuthenticationHandler_WithDelegatingHandler
 
         var response = await Client.SendAsync(request);
         Assert.That(response.IsSuccessStatusCode);
+    }
+
+    // A chunked upload has no Content-Length, so the server cannot know the body's length
+    // without reading it. The handler must buffer it before reading, or the signature is
+    // computed over an empty body and the endpoint receives nothing.
+    [TestCase("{\"id\":1}")]
+    [TestCase("")]
+    public async Task Test_Post_ChunkedBody(string body)
+    {
+        // Signing buffers the body, after which HttpClient would send a Content-Length. Re-stream
+        // it below the signer, as a proxy that re-chunks would, so the server sees no length.
+        var hmacManager = Server.Services
+            .GetRequiredService<IHmacManagerFactory>()
+            .Create("MyPolicy", "RequireAccountAndEmail")!;
+        var rechunk = new RechunkHandler { InnerHandler = Server.CreateHandler() };
+        using var client = new HttpClient(new HmacDelegatingHandler(hmacManager) { InnerHandler = rechunk })
+        {
+            BaseAddress = Server.BaseAddress
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/echo")
+        {
+            Content = new StreamContent(new NonSeekableStream(Encoding.UTF8.GetBytes(body)))
+        };
+        request.Headers.Add("X-Account", "myAccount");
+        request.Headers.Add("X-Email", "myEmail");
+
+        var response = await client.SendAsync(request);
+
+        Assert.Multiple(async () =>
+        {
+            Assert.That(response.IsSuccessStatusCode, Is.True);
+            Assert.That(await response.Content.ReadAsStringAsync(), Is.EqualTo($"none|{body}"));
+        });
+    }
+
+    private sealed class RechunkHandler : DelegatingHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var bytes = await request.Content!.ReadAsByteArrayAsync(cancellationToken);
+            request.Content = new StreamContent(new NonSeekableStream(bytes));
+            request.Headers.TransferEncodingChunked = true;
+            return await base.SendAsync(request, cancellationToken);
+        }
+    }
+
+    private sealed class NonSeekableStream(byte[] bytes) : Stream
+    {
+        private readonly MemoryStream _inner = new(bytes);
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, count);
+        public override void Flush() { }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 }

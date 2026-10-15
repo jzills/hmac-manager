@@ -54,9 +54,10 @@ policies.
 Values are validated when the policy is built, so an invalid key or algorithm
 fails at startup rather than on the first request.
 
-`Distributed` requires an `IDistributedCache` to be registered. If none is,
-that is reported at `Warning` as event 1201 rather than failing quietly — see
-[nonce and replay](../../concepts/nonce-and-replay/).
+`Distributed` uses the registered `IDistributedCache`. If none is registered,
+it falls back to an in-process one that no other instance shares, which is
+logged at startup as event 1203 — see
+[nonce and replay](../../concepts/nonce-and-replay/#which-cache).
 
 {{% hm-note kind="warn" %}}
 `PrivateKey` is a shared secret and `appsettings.json` is committed. Supply it

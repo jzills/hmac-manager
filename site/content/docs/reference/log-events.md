@@ -22,6 +22,7 @@ event**, so it is safe to alert on one.
 | 1200 | `Debug` | Policy not found |
 | 1201 | `Warning` | Nonce cache not registered |
 | 1202 | `Debug` | Scheme not declared by the policy |
+| 1203 | `Warning` | `Distributed` nonce cache backed by the in-process `MemoryDistributedCache`, logged once at startup |
 | 1210 | `Information` | Watching configuration for policy changes |
 | 1211 | `Information` | Policies reloaded |
 | 1212 | `Warning` | Policy reload failed, previous set retained |

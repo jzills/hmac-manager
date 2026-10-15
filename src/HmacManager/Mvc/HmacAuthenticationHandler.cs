@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using HmacManager.Components;
 using HmacManager.Diagnostics;
 using HmacManager.Exceptions;
@@ -88,7 +89,7 @@ internal class HmacAuthenticationHandler : AuthenticationHandler<HmacAuthenticat
             return AuthenticateResult.Fail(new HmacAuthenticationException());
         }
 
-        EnableBufferingIfContentExists();
+        await BufferBodyIfContentMayExistAsync();
 
         var result = await GetResultAsync(hmacAuthenticationContext);
 
@@ -165,22 +166,35 @@ internal class HmacAuthenticationHandler : AuthenticationHandler<HmacAuthenticat
         );
 
     /// <summary>
-    /// Enables buffering for the request body if content exists, allowing it to be read multiple times.
+    /// Buffers the request body if it may carry one, allowing it to be read multiple times.
     /// </summary>
-    private void EnableBufferingIfContentExists()
+    /// <remarks>
+    /// Must run before anything reads the body: Kestrel's request body is not seekable, so a read
+    /// before buffering consumes the only copy, and both the signature and the endpoint need it.
+    /// A body of unknown length is also drained into the buffer here. The buffering stream claims
+    /// to be seekable but reports only what it has buffered so far as its length, so until it is
+    /// drained a StreamContent over it computes a length of zero and the body is signed as absent.
+    /// </remarks>
+    private async Task BufferBodyIfContentMayExistAsync()
     {
-        if (Request.HasContent())
+        if (Request.MayHaveContent())
         {
             Request.EnableBuffering();
+
+            if (Request.ContentLength is null)
+            {
+                await Request.Body.DrainAsync(Context.RequestAborted);
+                Request.Body.Rewind();
+            }
         }
     }
 
     /// <summary>
-    /// Rewinds the request body stream if content exists, resetting the position to the beginning.
+    /// Rewinds the request body stream if it may carry one, resetting the position to the beginning.
     /// </summary>
     private void RewindIfContentExists()
     {
-        if (Request.HasContent())
+        if (Request.MayHaveContent())
         {
             Request.Body.Rewind();
         }
