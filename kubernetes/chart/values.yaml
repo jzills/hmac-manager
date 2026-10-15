@@ -3,7 +3,7 @@ fullnameOverride: ""
 
 image:
   repository: zills/hmac-manager
-  tag: 0.4.2
+  tag: 0.5.0
   pullPolicy: IfNotPresent
 
 # The controller that reconciles HmacPolicy resources into the ConfigMap/Secret the
