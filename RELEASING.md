@@ -6,6 +6,21 @@ Tagging is automated by `.github/workflows/tag.yml`: it fires whenever a PR whos
 
 The back-merge into `develop` is fully automatic: `tag.yml` opens the PR and retries the merge until the `develop` ruleset accepts it. It leaves the PR for you only on a failed required check, a conflict, or after 30 minutes.
 
+### Approving a release
+
+Merging a release PR does not publish anything by itself. Every release pipeline's `publish` job runs in the `release` environment (GitHub → Settings → Environments), which requires approval from `jzills`. So the run tests, then waits at **Review deployments** until the release is approved. Approve it from the run page, or with `gh`:
+
+```bash
+RUN=$(gh run list --workflow redis-release.yml --limit 1 --json databaseId -q '.[0].databaseId')
+ENV_ID=$(gh api repos/jzills/hmac-manager/environments/release -q .id)
+gh api -X POST "repos/jzills/hmac-manager/actions/runs/$RUN/pending_deployments" \
+  -F "environment_ids[]=$ENV_ID" -f state=approved -f comment="Release approved"
+```
+
+The environment only accepts runs for the six release tag patterns (`nuget/v*`, `redis/v*`, `npm/v*`, `service/v*`, `operator/v*`, `chart/v*`), so a branch run can't reach the publish jobs or their secrets.
+
+Rejecting stops that run before anything is published, but the tag and the back-merge into `develop` have already happened. To release that version later, re-run the workflow and approve it. To abandon the version, delete the tag.
+
 > **Do not use `gh pr merge --auto` on a freshly opened PR.** GitHub computes mergeability asynchronously, so for the first seconds of a PR's life the branch ruleset's required checks do not exist yet and the PR looks mergeable. Asking for an auto-merge in that window fails in one of two ways, both seen on 2026-08-14: GitHub enables auto-merge and drops it again seconds later because it has nothing to wait for, leaving the PR open with a green job; or `gh` decides the PR is mergeable now and merges immediately, which the ruleset rejects with `3 of 3 required status checks are expected`. Wait for the checks, then merge — which is what the examples below do.
 
 ## Artifacts and Tag Prefixes

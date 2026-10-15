@@ -10,9 +10,13 @@ env:
   CHART_PATH: kubernetes/chart
 
 jobs:
+  # The approval gate: the `release` environment requires a reviewer, so this job waits for
+  # approval of the run before it starts. Everything from here writes somewhere that does not
+  # take a correction — a registry refuses the same version twice.
   publish:
     name: Package and Push Helm Chart
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
       packages: write

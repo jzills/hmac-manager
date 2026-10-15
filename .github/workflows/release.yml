@@ -32,9 +32,13 @@ jobs:
         working-directory: ./test/HmacManager.IntegrationTests
         run: dotnet test --verbosity normal
 
+  # The approval gate: the `release` environment requires a reviewer, so this job waits for
+  # approval of the run before it starts. Everything from here writes somewhere that does not
+  # take a correction — a registry refuses the same version twice.
   publish:
     name: Pack and Publish
     runs-on: ubuntu-latest
+    environment: release
     needs: test
     permissions:
       contents: write
