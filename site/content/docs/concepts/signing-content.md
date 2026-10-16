@@ -88,8 +88,9 @@ the receiving end delivers.
 zero-length is treated exactly like one with no body at all — there is no
 content-hash segment on either side. Hashing the empty string instead would
 produce a segment no verifier reproduces. That holds when the length is not
-known up front, too: the .NET signer and verifier both read a streamed body
-(a chunked upload, for instance) before deciding, so an empty one is measured
+known up front, too: the .NET signer and verifier and the ext-authz service
+all read a streamed body (a chunked upload, for instance) before deciding, so an
+empty one is measured
 as empty rather than assumed to be content, and a non-empty one is hashed in
 full and still reaches the endpoint.
 
