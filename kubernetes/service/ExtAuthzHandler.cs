@@ -1,6 +1,7 @@
 using HmacManager.Exceptions;
 using HmacManager.Kubernetes.Diagnostics;
 using HmacManager.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace HmacManager.Kubernetes;
 
@@ -40,6 +41,15 @@ internal class ExtAuthzHandler(
             if (ctx.Request.ContentLength > 0 || ctx.Request.Headers.ContainsKey("Transfer-Encoding"))
             {
                 ctx.Request.EnableBuffering();
+
+                // The buffering stream's Length is what it has buffered so far, so over an unread
+                // body of unknown length a StreamContent reports 0 and the body is signed as absent.
+                if (ctx.Request.ContentLength is null)
+                {
+                    await ctx.Request.Body.DrainAsync(ctx.RequestAborted);
+                    ctx.Request.Body.Position = 0;
+                }
+
                 httpRequest.Content = new StreamContent(ctx.Request.Body);
             }
 
