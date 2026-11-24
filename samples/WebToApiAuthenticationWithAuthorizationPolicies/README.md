@@ -51,4 +51,4 @@ with `RequireAuthorization()`.
 The keys are literals committed to this repository so the sample runs with no
 setup. They are not an example of key handling.
 
-**📖 [Authorization](https://jzills.github.io/hmac-manager/docs/dotnet/authorization/)**
+**📖 [Authorization](https://j.zills.io/hmac-manager/docs/dotnet/authorization/)**

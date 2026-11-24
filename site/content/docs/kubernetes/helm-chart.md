@@ -18,7 +18,7 @@ One chart deploys the verifier, the policy operator and Redis.
 ## Install
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 ```
 

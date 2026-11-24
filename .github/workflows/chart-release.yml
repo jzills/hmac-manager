@@ -8,6 +8,15 @@ on:
 env:
   REGISTRY: ghcr.io
   CHART_PATH: kubernetes/chart
+  # Where GitHub Pages serves the gh-pages branch. Not derived from
+  # <owner>.github.io: the owner's user site has a custom domain, which Pages
+  # applies to every project site, so that host only answers with a 301 here.
+  # index.yaml pins each chart to a URL under this, so it must be the host that
+  # actually serves the files.
+  PAGES_URL: https://j.zills.io/hmac-manager
+  # The host every chart up to 0.5.1 was indexed under. Kept only so the step
+  # below can rewrite those entries; it still redirects, so nothing is broken.
+  LEGACY_PAGES_URL: https://jzills.github.io/hmac-manager
 
 jobs:
   # The approval gate: the `release` environment requires a reviewer, so this job waits for
@@ -77,7 +86,7 @@ jobs:
 
           Install: `helm install hmac-manager oci://ghcr.io/${{ github.repository_owner }}/charts/hmac-manager --version ${{ steps.version.outputs.value }}`
 
-          Also available from the HTTP repo: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          Also available from the HTTP repo: ${{ env.PAGES_URL }}
           BODY
 
   pages:
@@ -138,7 +147,6 @@ jobs:
       # replace the landing page with the old standalone chart index.
       - name: Publish chart and index to gh-pages
         run: |
-          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
           git fetch origin gh-pages
           git worktree add gh-pages origin/gh-pages
           cp .cr-release-packages/*.tgz gh-pages/
@@ -148,6 +156,15 @@ jobs:
             helm repo index . --url "$PAGES_URL" --merge index.yaml
           else
             helm repo index . --url "$PAGES_URL"
+          fi
+          # --merge keeps existing entries as they were, so charts indexed
+          # before the custom domain still point at the legacy host. Rewrite
+          # them. Only the URL changes: each entry's digest is of its .tgz,
+          # which is untouched. Idempotent — a no-op once migrated.
+          sed -i "s#${LEGACY_PAGES_URL}/#${PAGES_URL}/#g" index.yaml
+          if grep -qF "$LEGACY_PAGES_URL" index.yaml; then
+            echo "index.yaml still references $LEGACY_PAGES_URL" >&2
+            exit 1
           fi
           git add -A
           git commit -m "Publish chart ${{ steps.version.outputs.value }} to HTTP repo"

@@ -187,7 +187,7 @@ body {
   font-size: 0.88rem;
   color: var(--hm-body);
   /* Wrap rather than scroll. A card is a third of the grid and
-     "helm repo add zills https://jzills.github.io/hmac-manager" is wider than
+     "helm repo add zills https://j.zills.io/hmac-manager" is wider than
      that at any font size the card can afford; clipped mid-URL it reads as
      broken, and a horizontal scrollbar inside a card is worse than a second
      line. The hanging indent is what keeps a wrapped line from looking like a

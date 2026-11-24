@@ -7,7 +7,7 @@
 
 _Secure HMAC request authentication for ASP.NET Core — as a NuGet library, or as an Istio ext-authz service with a Kubernetes operator for declarative policies._
 
-**[Documentation →](https://jzills.github.io/hmac-manager/)**
+**[Documentation →](https://j.zills.io/hmac-manager/)**
 
 </div>
 
@@ -69,14 +69,14 @@ builder.Services
     .AddHmacHttpMessageHandler("MyPolicy");
 ```
 
-→ [.NET documentation](https://jzills.github.io/hmac-manager/docs/dotnet/) — schemes, dynamic policies, `HmacEvents`, `IConfiguration` binding, custom signing content, and logging.
+→ [.NET documentation](https://j.zills.io/hmac-manager/docs/dotnet/) — schemes, dynamic policies, `HmacEvents`, `IConfiguration` binding, custom signing content, and logging.
 
 ## Kubernetes (Istio ext-authz)
 
 HmacManager also ships a containerized verification service and a Helm chart for enforcing HMAC authentication in a Kubernetes mesh — at the ingress edge or between services — without changing application code. The service runs as an [Envoy ext-authz](https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/ext_authz/v3/ext_authz.proto) HTTP server: an Istio ingress gateway (north-south) or an ambient waypoint (east-west, service-to-service) calls it before forwarding a request, and anything without a valid HMAC signature is rejected with `403`. Redis is bundled for replay protection — no external dependencies to provision.
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 helm install hmac-manager zills/hmac-manager \
   --namespace hmac-system --create-namespace \
@@ -110,7 +110,7 @@ spec:
 kubectl apply -f my-policy.yaml
 ```
 
-→ [Kubernetes documentation](https://jzills.github.io/hmac-manager/docs/kubernetes/) — the ext-authz service, the CRD and operator, chart values, and enforcement.
+→ [Kubernetes documentation](https://j.zills.io/hmac-manager/docs/kubernetes/) — the ext-authz service, the CRD and operator, chart values, and enforcement.
 
 - **Helm chart** — [kubernetes/chart](kubernetes/chart/README.md) · [Artifact Hub](https://artifacthub.io/packages/helm/zills/hmac-manager)
 - **Container images** — [zills/hmac-manager](https://hub.docker.com/r/zills/hmac-manager) (ext-authz service) · [zills/hmac-manager-operator](https://hub.docker.com/r/zills/hmac-manager-operator) (policy operator) on Docker Hub
@@ -149,11 +149,11 @@ if (!result.isSuccess) { /* result.reason says which check rejected it */ }
 
 Verification needs the private key, so it belongs on a server.
 
-→ [Client documentation](https://jzills.github.io/hmac-manager/docs/client/) — verifying, schemes, the API surface, and where the private key can safely live.
+→ [Client documentation](https://j.zills.io/hmac-manager/docs/client/) — verifying, schemes, the API surface, and where the private key can safely live.
 
 ## Resources
 
-- [Documentation](https://jzills.github.io/hmac-manager/)
+- [Documentation](https://j.zills.io/hmac-manager/)
 - [Samples](samples/README.md)
 - [Releasing](RELEASING.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)

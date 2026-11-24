@@ -13,7 +13,7 @@ Redis.
 
 Targets `net8.0` and `net10.0`.
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/)**
 
 ## Install
 

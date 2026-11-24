@@ -33,7 +33,7 @@ toc: false
     </div>
     <div class="hm-install__card">
       <div class="hm-install__label">Kubernetes / Istio</div>
-      <div class="hm-install__command">helm repo add zills https://jzills.github.io/hmac-manager</div>
+      <div class="hm-install__command">helm repo add zills https://j.zills.io/hmac-manager</div>
       <div class="hm-install__command">helm install hmac-manager zills/hmac-manager</div>
     </div>
     <div class="hm-install__card">

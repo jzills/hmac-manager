@@ -8,7 +8,7 @@ name: Pages
 # to serve ("deploy from branch"). That branch is NOT ours alone — it is also
 # the Helm chart HTTP repository, holding index.yaml, the chart tarballs and
 # artifacthub-repo.yml, published by chart-release.yml. Those files are what
-# `helm repo add zills https://jzills.github.io/hmac-manager` resolves, and
+# `helm repo add zills https://j.zills.io/hmac-manager` resolves, and
 # index.yaml pins each chart to a root URL with a content digest, so they must
 # keep being served from / byte for byte. The rsync below excludes them.
 #

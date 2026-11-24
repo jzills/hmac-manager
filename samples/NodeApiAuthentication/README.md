@@ -6,7 +6,7 @@ the verifier written in TypeScript's runtime instead, which is the one thing it 
 
 The point of the sample is what the two clients have in common: nothing. Neither knows
 what is on the other end. Both ends build the same
-[signing content](https://jzills.github.io/hmac-manager/docs/concepts/signing-content/),
+[signing content](https://j.zills.io/hmac-manager/docs/concepts/signing-content/),
 so a `.NET → Node` call is configured exactly like a `.NET → .NET` one.
 
 | Project | Runtime | Role |
@@ -119,4 +119,4 @@ example of key handling — a real private key comes from configuration or a sec
 The API reads `PORT` and both clients read `API_URL` from the environment if you want to
 move things around.
 
-**📖 [Verifying requests](https://jzills.github.io/hmac-manager/docs/client/verifying-requests/)**
+**📖 [Verifying requests](https://j.zills.io/hmac-manager/docs/client/verifying-requests/)**
