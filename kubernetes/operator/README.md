@@ -10,12 +10,12 @@ schemes. This operator watches those resources in its namespace and keeps the
 mounted configuration in sync, so policy and key changes take effect without a
 pod restart.
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)**
 
 ## Deployment
 
 Deployed automatically by the
-[hmac-manager Helm chart](https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/);
+[hmac-manager Helm chart](https://j.zills.io/hmac-manager/docs/kubernetes/helm-chart/);
 it is not intended to be run standalone. The chart wires the namespaced RBAC
 and the `Operator__*` configuration the controller needs.
 
@@ -39,7 +39,7 @@ kubectl describe hmacpolicy my-policy -n hmac-system
 `.status.phase` is `Ready` or `Invalid`, and `.status.message` says why —
 a missing Secret, an unparseable key, an algorithm outside the permitted set.
 
-See [the HmacPolicy CRD](https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)
+See [the HmacPolicy CRD](https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)
 for the full spec, key rotation behaviour, and the Helm-versus-kubectl
 ownership rule.
 

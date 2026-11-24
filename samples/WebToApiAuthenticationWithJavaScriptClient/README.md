@@ -51,7 +51,7 @@ changes that. This sample runs under Node for that reason.
 
 A browser that needs to reach an HMAC-protected API should call your own
 backend, and the backend should hold the key and sign. See
-[where the private key lives](https://jzills.github.io/hmac-manager/docs/client/install/#where-the-private-key-lives).
+[where the private key lives](https://j.zills.io/hmac-manager/docs/client/install/#where-the-private-key-lives).
 
 ## Notes
 
@@ -65,4 +65,4 @@ lockfile is not committed.
 For a Node service on the **verifying** side, see
 [the Node API sample](../NodeApiAuthentication/).
 
-**📖 [TypeScript client](https://jzills.github.io/hmac-manager/docs/client/)**
+**📖 [TypeScript client](https://j.zills.io/hmac-manager/docs/client/)**

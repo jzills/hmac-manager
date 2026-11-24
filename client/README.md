@@ -16,7 +16,7 @@ so they verify against an
 npm install hmac-manager
 ```
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/client/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/client/)**
 
 ## Building
 

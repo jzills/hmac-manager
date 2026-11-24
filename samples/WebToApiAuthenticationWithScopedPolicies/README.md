@@ -49,4 +49,4 @@ what you want.
 The keys here are literals in `PolicyStore`, which rather defeats the purpose;
 a real store would fetch them. They are not an example of key handling.
 
-**📖 [Dynamic policies](https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/)**
+**📖 [Dynamic policies](https://j.zills.io/hmac-manager/docs/dotnet/dynamic-policies/)**

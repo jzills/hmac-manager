@@ -41,10 +41,10 @@ The keys are literals committed to this repository so the samples run with no
 setup. Every sample deliberately uses the **same** key pair, so the only
 difference between any two of them is the feature. They are not an example of
 key handling — see
-[configuration binding](https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/)
+[configuration binding](https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/)
 for where a real key belongs.
 
 Each sample is built, and the two Node ones are run end to end, by the
 `Sample Builds` job in [`pr.yml`](../.github/workflows/pr.yml).
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/samples/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/samples/)**

@@ -7,7 +7,7 @@ JavaScript and TypeScript client for
 verify against an HmacManager-protected ASP.NET Core API or Istio ext-authz
 service, and verifies incoming requests so a Node service can be one itself.
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/client/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/client/)**
 
 ## Install
 
@@ -79,7 +79,7 @@ side.
 Replayed nonces are rejected using an in-process store by default. **That is
 per-process**: any deployment with more than one replica needs a shared one, via
 the `NonceStore` interface. See
-[verifying requests](https://jzills.github.io/hmac-manager/docs/client/verifying-requests/).
+[verifying requests](https://j.zills.io/hmac-manager/docs/client/verifying-requests/).
 
 > [!WARNING]
 > Verification needs the private key, so it belongs on a server.
@@ -92,14 +92,14 @@ context (`https://` or `localhost`) and Node needs 19 or later.
 > [!WARNING]
 > The private key is a shared secret. Shipping it in browser JavaScript
 > publishes it to everyone who loads the page. See
-> [where the private key lives](https://jzills.github.io/hmac-manager/docs/client/install/#where-the-private-key-lives).
+> [where the private key lives](https://j.zills.io/hmac-manager/docs/client/install/#where-the-private-key-lives).
 
 ## Documentation
 
-- [Signing requests](https://jzills.github.io/hmac-manager/docs/client/signing-requests/)
-- [Verifying requests](https://jzills.github.io/hmac-manager/docs/client/verifying-requests/)
-- [Schemes](https://jzills.github.io/hmac-manager/docs/client/schemes/)
-- [API](https://jzills.github.io/hmac-manager/docs/client/api/)
+- [Signing requests](https://j.zills.io/hmac-manager/docs/client/signing-requests/)
+- [Verifying requests](https://j.zills.io/hmac-manager/docs/client/verifying-requests/)
+- [Schemes](https://j.zills.io/hmac-manager/docs/client/schemes/)
+- [API](https://j.zills.io/hmac-manager/docs/client/api/)
 
 ## Source
 

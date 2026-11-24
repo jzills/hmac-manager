@@ -17,16 +17,16 @@ Client → Istio waypoint / ingress gateway
          403    → reject
 ```
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/kubernetes/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/kubernetes/)**
 
 ## Deploy with Helm
 
 The recommended way to run this image is via the
-[hmac-manager Helm chart](https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/),
+[hmac-manager Helm chart](https://j.zills.io/hmac-manager/docs/kubernetes/helm-chart/),
 which bundles Redis for replay protection and abstracts all configuration:
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 
 helm install hmac-manager zills/hmac-manager \
@@ -41,7 +41,7 @@ helm install hmac-manager zills/hmac-manager \
 A fresh install deploys the verifier and a bundled Redis but does not enforce
 any traffic until you enable an Istio enforcement point
 (`istio.ingressGateway.*` or `istio.waypoint.*`). See
-[enforcement](https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/).
+[enforcement](https://j.zills.io/hmac-manager/docs/kubernetes/enforcement/).
 
 ## Tags
 
@@ -99,9 +99,9 @@ config file.
 Under Helm, that file and those variables are maintained by the
 [policy operator](https://hub.docker.com/r/zills/hmac-manager-operator) from
 `HmacPolicy` custom resources — see
-[the HmacPolicy CRD](https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)
+[the HmacPolicy CRD](https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/)
 and the full
-[chart values](https://jzills.github.io/hmac-manager/docs/reference/chart-values/).
+[chart values](https://j.zills.io/hmac-manager/docs/reference/chart-values/).
 
 ## Replay protection
 
@@ -109,7 +109,7 @@ Every signature carries a nonce and a timestamp, both covered by the signature.
 The verifier rejects a request outside the policy's window and rejects a nonce
 it has already seen. Redis is bundled by the chart so this works across
 replicas. See
-[nonce and replay](https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/).
+[nonce and replay](https://j.zills.io/hmac-manager/docs/concepts/nonce-and-replay/).
 
 ## Signing requests
 
@@ -118,7 +118,7 @@ Any of these produce signatures this service accepts:
 - [HmacManager on NuGet](https://www.nuget.org/packages/HmacManager) — .NET clients
 - [hmac-manager on npm](https://www.npmjs.com/package/hmac-manager) — browser and Node
 - The `/sign` helper, in `Development` only — see
-  [the ext-authz service](https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/#development-signing-endpoint)
+  [the ext-authz service](https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/#development-signing-endpoint)
 
 ## Source
 

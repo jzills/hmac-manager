@@ -171,7 +171,7 @@ makes the set worth having.
 ### Documentation
 
 User-facing documentation lives in **one** place: `site/content/docs/`, published to
-<https://jzills.github.io/hmac-manager/>. The READMEs are deliberately thin — each is a summary,
+<https://j.zills.io/hmac-manager/>. The READMEs are deliberately thin — each is a summary,
 an install snippet and links into the site — because each one is rendered by a host that shows
 nothing else (`src/HmacManager/README.md` and `src/HmacManager.StackExchangeRedis/README.md` on nuget.org via `PackageReadmeFile`, `client/lib/README.md` on
 npmjs.com, `kubernetes/chart/README.md` on Artifact Hub, the two `kubernetes/*/README.md` on Docker
@@ -376,7 +376,9 @@ The project's own `<Version>` is `0.0.0` until the first release branch bumps it
 
 **Purpose**: build the Hugo site under `site/` and publish it to the `gh-pages` branch.
 
-**The constraint that shapes this pipeline**: `gh-pages` is *also* the Helm chart HTTP repository. It holds `index.yaml`, the chart `.tgz` files and `artifacthub-repo.yml`, published by `chart-release.yml`. `index.yaml` pins every chart to a **root-level URL with a content digest**, and the tarballs exist nowhere else in the repository (`**/*.tgz` is gitignored on source branches). Those files must keep being served from `/` byte for byte or `helm repo add zills https://jzills.github.io/hmac-manager` breaks for everyone already using it.
+**The constraint that shapes this pipeline**: `gh-pages` is *also* the Helm chart HTTP repository. It holds `index.yaml`, the chart `.tgz` files and `artifacthub-repo.yml`, published by `chart-release.yml`. `index.yaml` pins every chart to a **root-level URL with a content digest**, and the tarballs exist nowhere else in the repository (`**/*.tgz` is gitignored on source branches). Those files must keep being served from `/` byte for byte or `helm repo add zills https://j.zills.io/hmac-manager` breaks for everyone already using it.
+
+The site is served at `j.zills.io`, the custom domain on the owner's user site, which Pages applies to this project site too; `jzills.github.io/hmac-manager/*` answers with a 301 to it. Helm follows the redirect, so repositories added under the old host keep working, but nothing new should be published under it. The host is set in two places that must agree: `baseURL` in `site/hugo.toml` and `PAGES_URL` in `chart-release.yml`, which also rewrites any `index.yaml` entry still on the old host (`LEGACY_PAGES_URL`) on each chart release.
 
 **Jobs**:
 

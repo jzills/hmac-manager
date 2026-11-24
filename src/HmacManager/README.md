@@ -8,7 +8,7 @@ in.
 
 Targets `net8.0` and `net10.0`.
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/dotnet/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/dotnet/)**
 
 ## Install
 
@@ -53,34 +53,34 @@ builder.Services
 ## Documentation
 
 The full documentation lives at
-**[jzills.github.io/hmac-manager](https://jzills.github.io/hmac-manager/docs/dotnet/)**:
+**[j.zills.io/hmac-manager](https://j.zills.io/hmac-manager/docs/dotnet/)**:
 
 | | |
 | --- | --- |
-| [Registration](https://jzills.github.io/hmac-manager/docs/dotnet/registration/) | `AddHmacManager` versus `AddHmac`, and schemes |
-| [Authorization](https://jzills.github.io/hmac-manager/docs/dotnet/authorization/) | Requiring a specific policy or scheme per endpoint |
-| [Configuration binding](https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/) | Policies from an `IConfigurationSection` |
-| [HttpClient](https://jzills.github.io/hmac-manager/docs/dotnet/http-client/) | Automatic signing, and why to prefer it |
-| [Events](https://jzills.github.io/hmac-manager/docs/dotnet/events/) | `OnValidateKeys`, `OnAuthSuccess`, `OnAuthFailure` |
-| [Dynamic policies](https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/) | Policies from a database, or changed at runtime |
-| [Custom signing content](https://jzills.github.io/hmac-manager/docs/dotnet/custom-signing-content/) | Replacing the default signing string |
-| [Redis nonce cache](https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/) | Atomic replay protection across instances, from `HmacManager.StackExchangeRedis` |
-| [Logging](https://jzills.github.io/hmac-manager/docs/dotnet/logging/) | Categories, levels, and diagnosing a mismatch |
+| [Registration](https://j.zills.io/hmac-manager/docs/dotnet/registration/) | `AddHmacManager` versus `AddHmac`, and schemes |
+| [Authorization](https://j.zills.io/hmac-manager/docs/dotnet/authorization/) | Requiring a specific policy or scheme per endpoint |
+| [Configuration binding](https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/) | Policies from an `IConfigurationSection` |
+| [HttpClient](https://j.zills.io/hmac-manager/docs/dotnet/http-client/) | Automatic signing, and why to prefer it |
+| [Events](https://j.zills.io/hmac-manager/docs/dotnet/events/) | `OnValidateKeys`, `OnAuthSuccess`, `OnAuthFailure` |
+| [Dynamic policies](https://j.zills.io/hmac-manager/docs/dotnet/dynamic-policies/) | Policies from a database, or changed at runtime |
+| [Custom signing content](https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/) | Replacing the default signing string |
+| [Redis nonce cache](https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/) | Atomic replay protection across instances, from `HmacManager.StackExchangeRedis` |
+| [Logging](https://j.zills.io/hmac-manager/docs/dotnet/logging/) | Categories, levels, and diagnosing a mismatch |
 
 Concepts shared with the Kubernetes verifier and the TypeScript client —
-[policies](https://jzills.github.io/hmac-manager/docs/concepts/policies/),
-[schemes](https://jzills.github.io/hmac-manager/docs/concepts/schemes/),
-[signing content](https://jzills.github.io/hmac-manager/docs/concepts/signing-content/),
-[nonce and replay](https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/) —
+[policies](https://j.zills.io/hmac-manager/docs/concepts/policies/),
+[schemes](https://j.zills.io/hmac-manager/docs/concepts/schemes/),
+[signing content](https://j.zills.io/hmac-manager/docs/concepts/signing-content/),
+[nonce and replay](https://j.zills.io/hmac-manager/docs/concepts/nonce-and-replay/) —
 are documented once, under
-[Concepts](https://jzills.github.io/hmac-manager/docs/concepts/).
+[Concepts](https://j.zills.io/hmac-manager/docs/concepts/).
 
 ## Logging at a glance
 
 Every component writes to `ILogger` with no configuration required, and falls
 back to `NullLogger` when logging is not set up. Event ids are stable across
 releases and are listed in the
-[event reference](https://jzills.github.io/hmac-manager/docs/reference/log-events/).
+[event reference](https://j.zills.io/hmac-manager/docs/reference/log-events/).
 
 ```json
 {
