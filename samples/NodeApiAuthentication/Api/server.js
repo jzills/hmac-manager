@@ -10,7 +10,7 @@ const PORT = Number(process.env.PORT ?? 5200);
 //
 // The default store is in-process. This sample is one process, so that is correct here;
 // anything running more than one replica needs a shared store behind the same interface.
-// See https://jzills.github.io/hmac-manager/docs/client/verifying-requests/
+// See https://j.zills.io/hmac-manager/docs/client/verifying-requests/
 const verifier = new HmacManagerFactory([policy]);
 
 /** Buffers the request body. Node does not do this for you. */

@@ -21,7 +21,7 @@ a cluster before you are ready to reject anything.
 ## 1. Install
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 
 helm install hmac-manager zills/hmac-manager \

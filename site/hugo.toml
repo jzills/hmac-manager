@@ -7,9 +7,14 @@
 # This site is published into the gh-pages branch alongside the Helm chart
 # repository that already lives there (index.yaml and the chart tarballs). See
 # .github/workflows/pages.yml: the sync deletes stale site output but excludes
-# those files, so `helm repo add zills https://jzills.github.io/hmac-manager`
-# keeps resolving. Changing baseURL means changing the chart URLs too.
-baseURL = "https://jzills.github.io/hmac-manager/"
+# those files, so `helm repo add zills https://j.zills.io/hmac-manager`
+# keeps resolving. Changing baseURL means changing the chart URLs too: PAGES_URL
+# in .github/workflows/chart-release.yml.
+#
+# j.zills.io is the custom domain on the owner's user site, which GitHub Pages
+# applies to this project site as well; jzills.github.io/hmac-manager/ now only
+# answers with a 301 to it, so it must not be the canonical URL.
+baseURL = "https://j.zills.io/hmac-manager/"
 
 # The name, not a tagline. kx's site titles itself "kubectl, indexed." because
 # "kx" alone means nothing to a reader — the opposite is true here: almost

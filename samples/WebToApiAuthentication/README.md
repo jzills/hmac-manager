@@ -56,7 +56,7 @@ encrypt one, so a real deployment still belongs behind TLS.
 
 The keys are literals committed to this repository so the sample runs with no
 setup. They are not an example of key handling — see
-[configuration binding](https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/)
+[configuration binding](https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/)
 for where a real key belongs.
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/)**

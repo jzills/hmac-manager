@@ -15,7 +15,7 @@ Client → Istio waypoint / ingress gateway
          200 OK → forward   |   403 → reject
 ```
 
-**📖 [Documentation](https://jzills.github.io/hmac-manager/docs/kubernetes/)**
+**📖 [Documentation](https://j.zills.io/hmac-manager/docs/kubernetes/)**
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ Client → Istio waypoint / ingress gateway
 ## Install
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 ```
 
@@ -48,7 +48,7 @@ mesh is a deliberate second step.
 
 Full walkthrough, including registering the ext-authz provider in Istio's
 MeshConfig and turning enforcement on:
-**[Kubernetes quickstart](https://jzills.github.io/hmac-manager/docs/getting-started/kubernetes-quickstart/)**.
+**[Kubernetes quickstart](https://j.zills.io/hmac-manager/docs/getting-started/kubernetes-quickstart/)**.
 
 ## Policies
 
@@ -86,7 +86,7 @@ subdomain (lowercase alphanumerics, `-` and `.`).
 > with `kubectl`, `helm upgrade` will revert it — keep a given policy name in
 > one place, not both.
 
-See [the HmacPolicy CRD](https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/).
+See [the HmacPolicy CRD](https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/).
 
 ## Values
 
@@ -125,11 +125,11 @@ appear configured and do nothing.
 
 | | |
 |---|---|
-| [Enforcement](https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/) | Registering the provider; ingress gateway vs ambient waypoint |
-| [The HmacPolicy CRD](https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/) | Managing policies with `kubectl`, status, key rotation |
-| [The ext-authz service](https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/) | Ports, image tags, the development signing endpoint |
-| [Redis](https://jzills.github.io/hmac-manager/docs/kubernetes/redis/) | Replay protection and the replica constraint |
-| [Chart values](https://jzills.github.io/hmac-manager/docs/reference/chart-values/) | The same table, kept with the rest of the docs |
+| [Enforcement](https://j.zills.io/hmac-manager/docs/kubernetes/enforcement/) | Registering the provider; ingress gateway vs ambient waypoint |
+| [The HmacPolicy CRD](https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/) | Managing policies with `kubectl`, status, key rotation |
+| [The ext-authz service](https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/) | Ports, image tags, the development signing endpoint |
+| [Redis](https://j.zills.io/hmac-manager/docs/kubernetes/redis/) | Replay protection and the replica constraint |
+| [Chart values](https://j.zills.io/hmac-manager/docs/reference/chart-values/) | The same table, kept with the rest of the docs |
 
 Sign requests from any .NET client with the
 [HmacManager NuGet package](https://www.nuget.org/packages/HmacManager), or

@@ -2,7 +2,7 @@
 
 A [Hugo](https://gohugo.io/) site on the [Hextra](https://github.com/imfing/hextra)
 theme. Landing page at `/`, documentation under `/docs/`, published to
-<https://jzills.github.io/hmac-manager/> by `.github/workflows/pages.yml`.
+<https://j.zills.io/hmac-manager/> by `.github/workflows/pages.yml`.
 
 ## Running it
 

@@ -34,7 +34,7 @@ See [Redis nonce cache](../../dotnet/redis-nonce-cache/).
 ## Kubernetes
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 ```
 

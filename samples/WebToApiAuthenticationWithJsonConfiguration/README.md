@@ -49,5 +49,5 @@ when the policy is built at startup, not on the first request.
 sample runs with no setup. In a real application let configuration composition
 supply it from user secrets, an environment variable or a secret store.
 
-**📖 [Configuration binding](https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/)**
-· [Full schema](https://jzills.github.io/hmac-manager/docs/reference/configuration-schema/)
+**📖 [Configuration binding](https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/)**
+· [Full schema](https://j.zills.io/hmac-manager/docs/reference/configuration-schema/)

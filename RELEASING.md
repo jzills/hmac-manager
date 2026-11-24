@@ -230,7 +230,7 @@ The chart is published two ways from the same `chart/vX.Y.Z` tag:
 Install via the HTTP repo:
 
 ```bash
-helm repo add zills https://jzills.github.io/hmac-manager
+helm repo add zills https://j.zills.io/hmac-manager
 helm repo update
 helm install hmac-manager zills/hmac-manager --version 1.5.0
 ```
@@ -245,9 +245,14 @@ helm install hmac-manager oci://ghcr.io/jzills/charts/hmac-manager --version 1.5
 > GitHub Pages for it (Settings → Pages → Branch: `gh-pages`, folder `/`). The
 > `pages` job in `chart-release.yml` then publishes `index.yaml`, the packaged
 > chart, and `artifacthub-repo.yml` to the Pages root on each chart release.
-> Point Artifact Hub at `https://jzills.github.io/hmac-manager`; because the repo
+> Point Artifact Hub at `https://j.zills.io/hmac-manager`; because the repo
 > metadata file is served at the root, the Verified Publisher badge works with no
 > extra OCI metadata push.
+>
+> The host is `PAGES_URL` in `chart-release.yml`, and must match `baseURL` in
+> `site/hugo.toml`. If the Pages domain changes again, change both, add the old
+> host as `LEGACY_PAGES_URL` so the next chart release rewrites `index.yaml`, and
+> update the repository URL in Artifact Hub's control panel by hand.
 
 ---
 
