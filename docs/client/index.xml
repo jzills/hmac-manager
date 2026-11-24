@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – JavaScript client</title><link>https://jzills.github.io/hmac-manager/docs/client/</link><description>Recent content in JavaScript client on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/client/index.xml" rel="self" type="application/rss+xml"/><item><title>Install and requirements</title><link>https://jzills.github.io/hmac-manager/docs/client/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/install/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – JavaScript client</title><link>https://j.zills.io/hmac-manager/docs/client/</link><description>Recent content in JavaScript client on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/client/index.xml" rel="self" type="application/rss+xml"/><item><title>Install and requirements</title><link>https://j.zills.io/hmac-manager/docs/client/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/install/</guid><description>
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;npm install hmac-manager&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
@@ -92,7 +92,7 @@ while handing the key to everyone who loads the page.&lt;/p&gt;
 &lt;h2&gt;Version&lt;span class="hx:absolute hx:-mt-20" id="version"&gt;&lt;/span&gt;
 &lt;a href="#version" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The npm package and the NuGet package are released separately and their version
 numbers differ. Neither constrains the other — they interoperate because they
-build the same signing content, not because their versions match.&lt;/p&gt;</description></item><item><title>Signing requests</title><link>https://jzills.github.io/hmac-manager/docs/client/signing-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/signing-requests/</guid><description>
+build the same signing content, not because their versions match.&lt;/p&gt;</description></item><item><title>Signing requests</title><link>https://j.zills.io/hmac-manager/docs/client/signing-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/signing-requests/</guid><description>
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;HashAlgorithm&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kr"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;hmac-manager&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
@@ -261,7 +261,7 @@ a configuration error. See
 &lt;a href="../../concepts/signing-content/"&gt;signing content&lt;/a&gt; for the exact string both
 ends build.&lt;/p&gt;
 &lt;p&gt;The verifying side can be this same package: see
-&lt;a href="../verifying-requests/"&gt;verifying requests&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Verifying requests</title><link>https://jzills.github.io/hmac-manager/docs/client/verifying-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/verifying-requests/</guid><description>
+&lt;a href="../verifying-requests/"&gt;verifying requests&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Verifying requests</title><link>https://j.zills.io/hmac-manager/docs/client/verifying-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/verifying-requests/</guid><description>
 &lt;p&gt;&lt;code&gt;verify&lt;/code&gt; is the other half of &lt;a href="../signing-requests/"&gt;&lt;code&gt;sign&lt;/code&gt;&lt;/a&gt;: it takes an
 incoming request, recomputes the signature from the policy&amp;rsquo;s keys, and reports
 whether the two match. A Node service can therefore both call an
@@ -565,7 +565,7 @@ were never late.&lt;/p&gt;
 &lt;h2&gt;A runnable example&lt;span class="hx:absolute hx:-mt-20" id="a-runnable-example"&gt;&lt;/span&gt;
 &lt;a href="#a-runnable-example" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;a href="https://github.com/jzills/hmac-manager/tree/main/samples/NodeApiAuthentication"target="_blank" rel="noopener"&gt;&lt;code&gt;samples/NodeApiAuthentication&lt;/code&gt;&lt;/a&gt;
 is a Node API doing all of the above, called by a Node client and a .NET client —
-including the replay and tampering cases, so you can watch them be refused.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://jzills.github.io/hmac-manager/docs/client/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/schemes/</guid><description>
+including the replay and tampering cases, so you can watch them be refused.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://j.zills.io/hmac-manager/docs/client/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/schemes/</guid><description>
 &lt;p&gt;A &lt;a href="../../concepts/schemes/"&gt;scheme&lt;/a&gt; names headers whose values become part of
 the signature. On the client it is a name and a flat list of header names:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -725,7 +725,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>API</title><link>https://jzills.github.io/hmac-manager/docs/client/api/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/api/</guid><description>
+&lt;/div&gt;</description></item><item><title>API</title><link>https://j.zills.io/hmac-manager/docs/client/api/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/api/</guid><description>
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;

@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Reference</title><link>https://jzills.github.io/hmac-manager/docs/reference/</link><description>Recent content in Reference on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/reference/index.xml" rel="self" type="application/rss+xml"/><item><title>Headers</title><link>https://jzills.github.io/hmac-manager/docs/reference/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/headers/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Reference</title><link>https://j.zills.io/hmac-manager/docs/reference/</link><description>Recent content in Reference on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/reference/index.xml" rel="self" type="application/rss+xml"/><item><title>Headers</title><link>https://j.zills.io/hmac-manager/docs/reference/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/headers/</guid><description>
 &lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
@@ -133,7 +133,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>Log events</title><link>https://jzills.github.io/hmac-manager/docs/reference/log-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/log-events/</guid><description>
+&lt;/div&gt;</description></item><item><title>Log events</title><link>https://j.zills.io/hmac-manager/docs/reference/log-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/log-events/</guid><description>
 &lt;p&gt;Event ids are stable across releases. &lt;strong&gt;An id is never reused for a different
 event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;table&gt;
@@ -366,7 +366,7 @@ can send.&lt;/p&gt;
 full sign/verify path with every level enabled.&lt;/p&gt;
 &lt;p&gt;Signing content (1002, 1105) is not secret — it travels with the request — but
 it does contain the public key, the nonce and any scheme header values, which
-may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Chart values</title><link>https://jzills.github.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/chart-values/</guid><description>
+may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Chart values</title><link>https://j.zills.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/chart-values/</guid><description>
 &lt;h2&gt;Policies&lt;span class="hx:absolute hx:-mt-20" id="policies"&gt;&lt;/span&gt;
 &lt;a href="#policies" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;At least one is required.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -577,7 +577,7 @@ already exists.&lt;/p&gt;
 &lt;p&gt;The chart ships a &lt;code&gt;values.schema.json&lt;/code&gt;, so &lt;code&gt;helm install&lt;/code&gt; rejects a malformed
 values file before anything reaches the cluster.&lt;/p&gt;
 &lt;p&gt;See &lt;a href="../../kubernetes/helm-chart/"&gt;the Helm chart&lt;/a&gt; for how to use these and
-&lt;a href="../../kubernetes/enforcement/"&gt;enforcement&lt;/a&gt; for the Istio side.&lt;/p&gt;</description></item><item><title>Configuration schema</title><link>https://jzills.github.io/hmac-manager/docs/reference/configuration-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/configuration-schema/</guid><description>
+&lt;a href="../../kubernetes/enforcement/"&gt;enforcement&lt;/a&gt; for the Istio side.&lt;/p&gt;</description></item><item><title>Configuration schema</title><link>https://j.zills.io/hmac-manager/docs/reference/configuration-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/configuration-schema/</guid><description>
 &lt;p&gt;The section passed to &lt;code&gt;AddHmac&lt;/code&gt; or &lt;code&gt;AddHmacManager&lt;/code&gt; binds to an &lt;strong&gt;array&lt;/strong&gt; of
 policies.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;

@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Concepts</title><link>https://jzills.github.io/hmac-manager/docs/concepts/</link><description>Recent content in Concepts on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/concepts/index.xml" rel="self" type="application/rss+xml"/><item><title>Policies</title><link>https://jzills.github.io/hmac-manager/docs/concepts/policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/policies/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Concepts</title><link>https://j.zills.io/hmac-manager/docs/concepts/</link><description>Recent content in Concepts on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/concepts/index.xml" rel="self" type="application/rss+xml"/><item><title>Policies</title><link>https://j.zills.io/hmac-manager/docs/concepts/policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/policies/</guid><description>
 &lt;p&gt;A policy is the top-level unit of configuration. It carries everything needed
 to sign or verify a request:&lt;/p&gt;
 &lt;table&gt;
@@ -93,7 +93,7 @@ request. See &lt;a href="../../dotnet/dynamic-policies/"&gt;dynamic policies&lt;
 &lt;li&gt;&lt;strong&gt;Kubernetes resources&lt;/strong&gt; — an &lt;code&gt;HmacPolicy&lt;/code&gt; custom resource that an operator
 reconciles into the config the verifier mounts. See
 &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;the CRD&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Schemes</title><link>https://jzills.github.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/schemes/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Schemes</title><link>https://j.zills.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/schemes/</guid><description>
 &lt;p&gt;A scheme is a named list of headers whose &lt;strong&gt;values become part of the
 signature&lt;/strong&gt;. It answers a question a bare HMAC cannot: this request is
 authentic, but authentic &lt;em&gt;as whom&lt;/em&gt;?&lt;/p&gt;
@@ -192,7 +192,7 @@ mapping. It signs and verifies with them; on a successful verification the
 covered values come back as &lt;code&gt;result.headerValues&lt;/code&gt;, keyed by header name, and
 turning those into whatever your framework calls a principal is left to you.&lt;/p&gt;
 &lt;p&gt;In &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;Kubernetes&lt;/a&gt;, schemes are declared on the
-&lt;code&gt;HmacPolicy&lt;/code&gt; resource and do carry &lt;code&gt;claimType&lt;/code&gt;, since the verifier maps them.&lt;/p&gt;</description></item><item><title>Signing content</title><link>https://jzills.github.io/hmac-manager/docs/concepts/signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/signing-content/</guid><description>
+&lt;code&gt;HmacPolicy&lt;/code&gt; resource and do carry &lt;code&gt;claimType&lt;/code&gt;, since the verifier maps them.&lt;/p&gt;</description></item><item><title>Signing content</title><link>https://j.zills.io/hmac-manager/docs/concepts/signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/signing-content/</guid><description>
 &lt;p&gt;The signature is an HMAC over a single string built from the request. Both
 sides build that string independently and compare the results, so &lt;strong&gt;every
 segment has to match exactly&lt;/strong&gt;. Almost every signature mismatch is really a
@@ -419,7 +419,7 @@ category on both ends and compare event 1002 (signer) with event 1105
 &lt;h2&gt;Replacing it&lt;span class="hx:absolute hx:-mt-20" id="replacing-it"&gt;&lt;/span&gt;
 &lt;a href="#replacing-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A policy can build its own signing content instead. That is a deliberate
 escape hatch with sharp edges — see
-&lt;a href="../../dotnet/custom-signing-content/"&gt;custom signing content&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Nonce and replay</title><link>https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/</guid><description>
+&lt;a href="../../dotnet/custom-signing-content/"&gt;custom signing content&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Nonce and replay</title><link>https://j.zills.io/hmac-manager/docs/concepts/nonce-and-replay/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/nonce-and-replay/</guid><description>
 &lt;p&gt;A valid signature stays valid. Without something else in play, anyone who
 captures a signed request can send it again and it will verify — the signature
 is still correct, because nothing about it has changed.&lt;/p&gt;
@@ -585,7 +585,7 @@ reason. See
 multi-replica is the default and correct configuration. Setting
 &lt;code&gt;redis.enabled=false&lt;/code&gt; falls back to the in-process cache, and the chart then
 refuses &lt;code&gt;replicaCount &amp;gt; 1&lt;/code&gt; rather than letting you deploy something that does
-not protect anything. See &lt;a href="../../kubernetes/redis/"&gt;Redis&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Algorithms</title><link>https://jzills.github.io/hmac-manager/docs/concepts/algorithms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/algorithms/</guid><description>
+not protect anything. See &lt;a href="../../kubernetes/redis/"&gt;Redis&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Algorithms</title><link>https://j.zills.io/hmac-manager/docs/concepts/algorithms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/algorithms/</guid><description>
 &lt;p&gt;Two separate hashes, chosen independently.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;The content hash&lt;/strong&gt; hashes the request body. Its output becomes one segment of
 the &lt;a href="../signing-content/"&gt;signing content&lt;/a&gt;, which is how the body is covered by
@@ -658,7 +658,7 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;p&gt;In Kubernetes they are &lt;code&gt;algorithms.contentHash&lt;/code&gt; and &lt;code&gt;algorithms.signingHash&lt;/code&gt; on
 the &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;&lt;code&gt;HmacPolicy&lt;/code&gt; resource&lt;/a&gt;, spelled the same
-way as in .NET.&lt;/p&gt;</description></item><item><title>Headers</title><link>https://jzills.github.io/hmac-manager/docs/concepts/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/headers/</guid><description>
+way as in .NET.&lt;/p&gt;</description></item><item><title>Headers</title><link>https://j.zills.io/hmac-manager/docs/concepts/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/headers/</guid><description>
 &lt;p&gt;Signing adds these to the request. Everything except &lt;code&gt;Authorization&lt;/code&gt; is
 metadata the verifier needs in order to rebuild the
 &lt;a href="../signing-content/"&gt;signing content&lt;/a&gt;.&lt;/p&gt;

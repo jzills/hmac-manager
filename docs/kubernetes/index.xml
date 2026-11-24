@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Kubernetes</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/</link><description>Recent content in Kubernetes on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/kubernetes/index.xml" rel="self" type="application/rss+xml"/><item><title>The ext-authz service</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Kubernetes</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/</link><description>Recent content in Kubernetes on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/kubernetes/index.xml" rel="self" type="application/rss+xml"/><item><title>The ext-authz service</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/</guid><description>
 &lt;p&gt;&lt;code&gt;zills/hmac-manager&lt;/code&gt; is an Envoy ext-authz HTTP server. The Istio waypoint
 proxy or ingress gateway calls it before forwarding any inbound request; a
 valid HMAC signature passes, anything else is rejected with &lt;code&gt;403 Forbidden&lt;/code&gt;.&lt;/p&gt;
@@ -153,7 +153,7 @@ can reach it. Never set &lt;code&gt;environment: Development&lt;/code&gt; in a p
 &lt;h2&gt;Signing from a client&lt;span class="hx:absolute hx:-mt-20" id="signing-from-a-client"&gt;&lt;/span&gt;
 &lt;a href="#signing-from-a-client" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Any of the three surfaces produce signatures this service accepts — the
 &lt;a href="../../dotnet/"&gt;.NET library&lt;/a&gt;, the
-&lt;a href="../../client/"&gt;TypeScript client&lt;/a&gt;, or the helper above.&lt;/p&gt;</description></item><item><title>The Helm chart</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/</guid><description>
+&lt;a href="../../client/"&gt;TypeScript client&lt;/a&gt;, or the helper above.&lt;/p&gt;</description></item><item><title>The Helm chart</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/helm-chart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/helm-chart/</guid><description>
 &lt;p&gt;One chart deploys the verifier, the policy operator and Redis.&lt;/p&gt;
 &lt;h2&gt;Prerequisites&lt;span class="hx:absolute hx:-mt-20" id="prerequisites"&gt;&lt;/span&gt;
 &lt;a href="#prerequisites" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
@@ -166,7 +166,7 @@ outside the chart — for example with
 &lt;/ul&gt;
 &lt;h2&gt;Install&lt;span class="hx:absolute hx:-mt-20" id="install"&gt;&lt;/span&gt;
 &lt;a href="#install" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://jzills.github.io/hmac-manager
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://j.zills.io/hmac-manager
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo update&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -322,7 +322,7 @@ data-copied-label="Copied!"
 &lt;li&gt;&lt;a href="../hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies with &lt;code&gt;kubectl&lt;/code&gt; instead&lt;/li&gt;
 &lt;li&gt;&lt;a href="../enforcement/"&gt;Enforcement&lt;/a&gt; — ingress gateway versus ambient waypoint&lt;/li&gt;
 &lt;li&gt;&lt;a href="../redis/"&gt;Redis&lt;/a&gt; — replay protection and the replica constraint&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>The HmacPolicy CRD</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</guid><description>
+&lt;/ul&gt;</description></item><item><title>The HmacPolicy CRD</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</guid><description>
 &lt;p&gt;Every policy is an &lt;code&gt;HmacPolicy&lt;/code&gt; custom resource
 (&lt;code&gt;hmac-manager.io/v1alpha1&lt;/code&gt;). The chart renders one per entry in
 &lt;code&gt;values.policies&lt;/code&gt;, and you can also create them directly — the resource is the
@@ -522,7 +522,7 @@ is not meant to run standalone.&lt;/p&gt;
 &lt;td&gt;&lt;code&gt;Memory&lt;/code&gt; or &lt;code&gt;Distributed&lt;/code&gt;, applied to every rendered policy&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
-&lt;/table&gt;</description></item><item><title>Enforcement</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/</guid><description>
+&lt;/table&gt;</description></item><item><title>Enforcement</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/enforcement/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/enforcement/</guid><description>
 &lt;p&gt;Installing the chart does not enforce anything. &lt;code&gt;istio.ingressGateway.enabled&lt;/code&gt;
 and &lt;code&gt;istio.waypoint.enabled&lt;/code&gt; are both &lt;code&gt;false&lt;/code&gt; by default, so a fresh install
 runs the verifier without any traffic routed to it — you can deploy it, check
@@ -641,7 +641,7 @@ everything returns &lt;code&gt;403&lt;/code&gt;, including correctly signed requ
 are the provider not being registered, &lt;code&gt;includeRequestHeadersInCheck&lt;/code&gt; missing a
 header, or a policy in &lt;code&gt;Invalid&lt;/code&gt; status — check
 &lt;code&gt;kubectl get hmacpolicies -n hmac-system&lt;/code&gt; first, then the verifier&amp;rsquo;s logs at
-&lt;code&gt;Debug&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Redis and replay protection</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/redis/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/redis/</guid><description>
+&lt;code&gt;Debug&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Redis and replay protection</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/redis/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/redis/</guid><description>
 &lt;p&gt;Redis is deployed as part of the release when &lt;code&gt;redis.enabled=true&lt;/code&gt;, which is
 the default. Every policy then uses the distributed
 &lt;a href="../../concepts/nonce-and-replay/"&gt;nonce cache&lt;/a&gt; — no connection strings, no

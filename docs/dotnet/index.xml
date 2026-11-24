@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – .NET library</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/</link><description>Recent content in .NET library on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/dotnet/index.xml" rel="self" type="application/rss+xml"/><item><title>Registration</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/registration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/registration/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – .NET library</title><link>https://j.zills.io/hmac-manager/docs/dotnet/</link><description>Recent content in .NET library on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/dotnet/index.xml" rel="self" type="application/rss+xml"/><item><title>Registration</title><link>https://j.zills.io/hmac-manager/docs/dotnet/registration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/registration/</guid><description>
 &lt;p&gt;There are two entry points. They differ in one thing: whether verification is
 wired into the ASP.NET Core authentication pipeline for you.&lt;/p&gt;
 &lt;table&gt;
@@ -204,7 +204,7 @@ called. See &lt;a href="../../concepts/schemes/"&gt;schemes&lt;/a&gt;.&lt;/p&gt;
 &lt;li&gt;Bind policies from configuration instead of code — &lt;a href="../configuration-binding/"&gt;configuration binding&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Sign every request from an &lt;code&gt;HttpClient&lt;/code&gt; — &lt;a href="../http-client/"&gt;HttpClient&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Load policies from a database — &lt;a href="../dynamic-policies/"&gt;dynamic policies&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Authorization</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/authorization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/authorization/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Authorization</title><link>https://j.zills.io/hmac-manager/docs/dotnet/authorization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/authorization/</guid><description>
 &lt;p&gt;By default &lt;code&gt;AddHmac&lt;/code&gt; authenticates any request that verifies against any
 registered policy. That is often not enough: if you hold one policy for a
 partner and another for an internal service, &amp;ldquo;verified&amp;rdquo; does not mean
@@ -320,7 +320,7 @@ or the header&amp;rsquo;s own name if it declared none — so
 &lt;code&gt;User.FindFirst(ClaimTypes.NameIdentifier)&lt;/code&gt; return the signed value.&lt;/p&gt;
 &lt;p&gt;Those values are covered by the signature, which is what makes them safe to
 authorize on. An unsigned header is just a header. See
-&lt;a href="../../concepts/schemes/"&gt;schemes&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Configuration binding</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/</guid><description>
+&lt;a href="../../concepts/schemes/"&gt;schemes&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Configuration binding</title><link>https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/</guid><description>
 &lt;p&gt;Both &lt;code&gt;AddHmacManager&lt;/code&gt; and &lt;code&gt;AddHmac&lt;/code&gt; take an &lt;code&gt;IConfigurationSection&lt;/code&gt; instead of
 a builder delegate:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -449,7 +449,7 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;See &lt;a href="../events/"&gt;events&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Signing with HttpClient</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/http-client/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/http-client/</guid><description>
+&lt;p&gt;See &lt;a href="../events/"&gt;events&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Signing with HttpClient</title><link>https://j.zills.io/hmac-manager/docs/dotnet/http-client/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/http-client/</guid><description>
 &lt;p&gt;&lt;code&gt;AddHmacHttpMessageHandler&lt;/code&gt; attaches an &lt;code&gt;HmacDelegatingHandler&lt;/code&gt; to a named
 &lt;code&gt;HttpClient&lt;/code&gt;. Every request that client sends is signed on the way out.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -530,7 +530,7 @@ data-copied-label="Copied!"
 &lt;p&gt;Scheme headers must be present before &lt;code&gt;Send&lt;/code&gt; or &lt;code&gt;SendAsync&lt;/code&gt;. The handler signs
 what it is given; a header added later is not covered by the signature and the
 verifier will reject the request.&lt;/p&gt;
-&lt;/div&gt;</description></item><item><title>Events</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/events/</guid><description>
+&lt;/div&gt;</description></item><item><title>Events</title><link>https://j.zills.io/hmac-manager/docs/dotnet/events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/events/</guid><description>
 &lt;p&gt;&lt;code&gt;HmacEvents&lt;/code&gt; exposes three points in the &lt;code&gt;HmacAuthenticationHandler&lt;/code&gt; flow.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;
@@ -682,7 +682,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>Dynamic policies</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/</guid><description>
+&lt;/div&gt;</description></item><item><title>Dynamic policies</title><link>https://j.zills.io/hmac-manager/docs/dotnet/dynamic-policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/dynamic-policies/</guid><description>
 &lt;p&gt;Policies do not have to be fixed at startup. There are two mechanisms, and they
 are not interchangeable.&lt;/p&gt;
 &lt;h2&gt;Mutating the singleton collection&lt;span class="hx:absolute hx:-mt-20" id="mutating-the-singleton-collection"&gt;&lt;/span&gt;
@@ -787,7 +787,7 @@ leaving the application with none.&lt;/p&gt;
 &lt;td&gt;&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;the &lt;code&gt;HmacPolicy&lt;/code&gt; CRD&lt;/a&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
-&lt;/table&gt;</description></item><item><title>Custom signing content</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/custom-signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/custom-signing-content/</guid><description>
+&lt;/table&gt;</description></item><item><title>Custom signing content</title><link>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</guid><description>
 &lt;p&gt;A policy can build its own signing content instead of using the
 &lt;a href="../../concepts/signing-content/"&gt;default format&lt;/a&gt;:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -874,7 +874,7 @@ an explicit, unambiguous formatting such as
 &lt;h2&gt;Checking it&lt;span class="hx:absolute hx:-mt-20" id="checking-it"&gt;&lt;/span&gt;
 &lt;a href="#checking-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Turn &lt;code&gt;Trace&lt;/code&gt; on for &lt;code&gt;HmacManager.Components.HmacManager&lt;/code&gt; on both ends and
 compare the content strings — event 1002 on the signer, event 1105 on the
-verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;logging&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Custom nonce cache</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/custom-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/custom-nonce-cache/</guid><description>
+verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;logging&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Custom nonce cache</title><link>https://j.zills.io/hmac-manager/docs/dotnet/custom-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/custom-nonce-cache/</guid><description>
 &lt;p&gt;The built-in caches cover one instance (&lt;code&gt;UseMemoryCache&lt;/code&gt;) and any
 &lt;code&gt;IDistributedCache&lt;/code&gt; (&lt;code&gt;UseDistributedCache&lt;/code&gt;). A custom cache is for a shared
 store that can claim a nonce &lt;strong&gt;atomically&lt;/strong&gt;, which &lt;code&gt;IDistributedCache&lt;/code&gt; cannot —
@@ -1019,7 +1019,7 @@ so it is not atomic, and the two-argument &lt;code&gt;SetAsync&lt;/code&gt; neve
 max age — your cache&amp;rsquo;s own TTL applies, and if it is shorter than the policy&amp;rsquo;s
 window a replay can get through after the entry expires.&lt;/p&gt;
 &lt;p&gt;To migrate, derive from &lt;code&gt;NonceCache&lt;/code&gt; and move the logic into &lt;code&gt;TryAddCoreAsync&lt;/code&gt;, or
-implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Redis nonce cache</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/</guid><description>
+implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Redis nonce cache</title><link>https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/</guid><description>
 &lt;p&gt;The built-in &lt;code&gt;Distributed&lt;/code&gt; cache works through &lt;code&gt;IDistributedCache&lt;/code&gt;, which has
 no conditional write. It checks for a nonce and then records it, so two copies
 of a request reaching two instances at the same moment can both be accepted —
@@ -1203,7 +1203,7 @@ data-copied-label="Copied!"
 &lt;p&gt;Pass it to the &lt;code&gt;HmacManager&lt;/code&gt; constructor, or put it in a &lt;code&gt;NonceCacheCollection&lt;/code&gt;
 for &lt;code&gt;HmacManagerFactory&lt;/code&gt;. Dispose it to close the connection it opened.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;RedisNonceCache&lt;/code&gt; implements &lt;code&gt;TryAddAsync&lt;/code&gt;, which is all the library calls.
-The obsolete &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt; throw &lt;code&gt;NotSupportedException&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</guid><description>
+The obsolete &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt; throw &lt;code&gt;NotSupportedException&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://j.zills.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/logging/</guid><description>
 &lt;p&gt;HmacManager writes to &lt;code&gt;ILogger&lt;/code&gt; and needs no configuration to do so — register
 the library the usual way and every component picks up the host&amp;rsquo;s logger.
 Nothing is written when logging is not configured: each type falls back to

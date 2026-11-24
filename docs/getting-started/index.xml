@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Getting started</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/</link><description>Recent content in Getting started on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/getting-started/index.xml" rel="self" type="application/rss+xml"/><item><title>Install</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/install/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Getting started</title><link>https://j.zills.io/hmac-manager/docs/getting-started/</link><description>Recent content in Getting started on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/getting-started/index.xml" rel="self" type="application/rss+xml"/><item><title>Install</title><link>https://j.zills.io/hmac-manager/docs/getting-started/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/install/</guid><description>
 &lt;p&gt;HmacManager ships as three independently versioned artifacts. They are not
 alternatives to one another so much as three places the same check can happen.&lt;/p&gt;
 &lt;table&gt;
@@ -61,7 +61,7 @@ data-copied-label="Copied!"
 &lt;p&gt;See &lt;a href="../../dotnet/redis-nonce-cache/"&gt;Redis nonce cache&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Kubernetes&lt;span class="hx:absolute hx:-mt-20" id="kubernetes"&gt;&lt;/span&gt;
 &lt;a href="#kubernetes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://jzills.github.io/hmac-manager
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://j.zills.io/hmac-manager
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo update&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -112,7 +112,7 @@ declarations. Continue with the &lt;a href="../client-quickstart/"&gt;client qui
 &lt;p&gt;The .NET package and the npm package share a version line but not a version
 number — they are released separately, so the numbers drift. Neither is a
 lower bound on the other; both speak the same wire format.&lt;/p&gt;
-&lt;/div&gt;</description></item><item><title>.NET quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/dotnet-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/dotnet-quickstart/</guid><description>
+&lt;/div&gt;</description></item><item><title>.NET quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/dotnet-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/dotnet-quickstart/</guid><description>
 &lt;p&gt;Two processes: an API that verifies, and a client that signs. Both need the
 same policy name and the same key pair.&lt;/p&gt;
 &lt;h2&gt;Verify incoming requests&lt;span class="hx:absolute hx:-mt-20" id="verify-incoming-requests"&gt;&lt;/span&gt;
@@ -229,7 +229,7 @@ replayed request could land on the one that has not seen it. Use
 &lt;li&gt;&lt;a href="../../dotnet/registration/"&gt;Registration&lt;/a&gt; — the other ways to register, and when to use them&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../concepts/schemes/"&gt;Schemes&lt;/a&gt; — folding header values into the signature&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../concepts/policies/"&gt;Policies&lt;/a&gt; — what a policy actually contains&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Kubernetes quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Kubernetes quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</guid><description>
 &lt;p&gt;Three steps, deliberately separate: install the verifier, tell Istio it exists,
 then point traffic at it. A fresh install enforces nothing, so you can put it in
 a cluster before you are ready to reject anything.&lt;/p&gt;
@@ -245,7 +245,7 @@ never chart values.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2&gt;1. Install&lt;span class="hx:absolute hx:-mt-20" id="1-install"&gt;&lt;/span&gt;
 &lt;a href="#1-install" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://jzills.github.io/hmac-manager
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://j.zills.io/hmac-manager
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo update
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm install hmac-manager zills/hmac-manager &lt;span class="se"&gt;\
@@ -357,7 +357,7 @@ you can produce a valid signature without writing a client. See the
 &lt;li&gt;&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies as resources instead of chart values&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../reference/chart-values/"&gt;Chart values&lt;/a&gt; — the full reference&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../kubernetes/enforcement/"&gt;Enforcement&lt;/a&gt; — ingress versus waypoint&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Client quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/client-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/client-quickstart/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Client quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/client-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/client-quickstart/</guid><description>
 &lt;p&gt;The &lt;code&gt;hmac-manager&lt;/code&gt; npm package signs requests and verifies them, so it can be
 either end of the exchange — the others being the
 &lt;a href="../dotnet-quickstart/"&gt;.NET library&lt;/a&gt; and the

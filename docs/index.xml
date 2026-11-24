@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Documentation</title><link>https://jzills.github.io/hmac-manager/docs/</link><description>Recent content in Documentation on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://jzills.github.io/hmac-manager/docs/index.xml" rel="self" type="application/rss+xml"/><item><title>Headers</title><link>https://jzills.github.io/hmac-manager/docs/reference/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/headers/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>HmacManager – Documentation</title><link>https://j.zills.io/hmac-manager/docs/</link><description>Recent content in Documentation on HmacManager</description><generator>Hugo -- gohugo.io</generator><language>en</language><atom:link href="https://j.zills.io/hmac-manager/docs/index.xml" rel="self" type="application/rss+xml"/><item><title>Headers</title><link>https://j.zills.io/hmac-manager/docs/reference/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/headers/</guid><description>
 &lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
@@ -133,7 +133,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>Install and requirements</title><link>https://jzills.github.io/hmac-manager/docs/client/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/install/</guid><description>
+&lt;/div&gt;</description></item><item><title>Install and requirements</title><link>https://j.zills.io/hmac-manager/docs/client/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/install/</guid><description>
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;npm install hmac-manager&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
@@ -227,7 +227,7 @@ while handing the key to everyone who loads the page.&lt;/p&gt;
 &lt;h2&gt;Version&lt;span class="hx:absolute hx:-mt-20" id="version"&gt;&lt;/span&gt;
 &lt;a href="#version" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The npm package and the NuGet package are released separately and their version
 numbers differ. Neither constrains the other — they interoperate because they
-build the same signing content, not because their versions match.&lt;/p&gt;</description></item><item><title>Install</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/install/</guid><description>
+build the same signing content, not because their versions match.&lt;/p&gt;</description></item><item><title>Install</title><link>https://j.zills.io/hmac-manager/docs/getting-started/install/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/install/</guid><description>
 &lt;p&gt;HmacManager ships as three independently versioned artifacts. They are not
 alternatives to one another so much as three places the same check can happen.&lt;/p&gt;
 &lt;table&gt;
@@ -290,7 +290,7 @@ data-copied-label="Copied!"
 &lt;p&gt;See &lt;a href="../../dotnet/redis-nonce-cache/"&gt;Redis nonce cache&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Kubernetes&lt;span class="hx:absolute hx:-mt-20" id="kubernetes"&gt;&lt;/span&gt;
 &lt;a href="#kubernetes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://jzills.github.io/hmac-manager
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://j.zills.io/hmac-manager
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo update&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -341,7 +341,7 @@ declarations. Continue with the &lt;a href="../client-quickstart/"&gt;client qui
 &lt;p&gt;The .NET package and the npm package share a version line but not a version
 number — they are released separately, so the numbers drift. Neither is a
 lower bound on the other; both speak the same wire format.&lt;/p&gt;
-&lt;/div&gt;</description></item><item><title>Policies</title><link>https://jzills.github.io/hmac-manager/docs/concepts/policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/policies/</guid><description>
+&lt;/div&gt;</description></item><item><title>Policies</title><link>https://j.zills.io/hmac-manager/docs/concepts/policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/policies/</guid><description>
 &lt;p&gt;A policy is the top-level unit of configuration. It carries everything needed
 to sign or verify a request:&lt;/p&gt;
 &lt;table&gt;
@@ -436,7 +436,7 @@ request. See &lt;a href="../../dotnet/dynamic-policies/"&gt;dynamic policies&lt;
 &lt;li&gt;&lt;strong&gt;Kubernetes resources&lt;/strong&gt; — an &lt;code&gt;HmacPolicy&lt;/code&gt; custom resource that an operator
 reconciles into the config the verifier mounts. See
 &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;the CRD&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Registration</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/registration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/registration/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Registration</title><link>https://j.zills.io/hmac-manager/docs/dotnet/registration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/registration/</guid><description>
 &lt;p&gt;There are two entry points. They differ in one thing: whether verification is
 wired into the ASP.NET Core authentication pipeline for you.&lt;/p&gt;
 &lt;table&gt;
@@ -642,7 +642,7 @@ called. See &lt;a href="../../concepts/schemes/"&gt;schemes&lt;/a&gt;.&lt;/p&gt;
 &lt;li&gt;Bind policies from configuration instead of code — &lt;a href="../configuration-binding/"&gt;configuration binding&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Sign every request from an &lt;code&gt;HttpClient&lt;/code&gt; — &lt;a href="../http-client/"&gt;HttpClient&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Load policies from a database — &lt;a href="../dynamic-policies/"&gt;dynamic policies&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>The ext-authz service</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/ext-authz-service/</guid><description>
+&lt;/ul&gt;</description></item><item><title>The ext-authz service</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/</guid><description>
 &lt;p&gt;&lt;code&gt;zills/hmac-manager&lt;/code&gt; is an Envoy ext-authz HTTP server. The Istio waypoint
 proxy or ingress gateway calls it before forwarding any inbound request; a
 valid HMAC signature passes, anything else is rejected with &lt;code&gt;403 Forbidden&lt;/code&gt;.&lt;/p&gt;
@@ -797,7 +797,7 @@ can reach it. Never set &lt;code&gt;environment: Development&lt;/code&gt; in a p
 &lt;h2&gt;Signing from a client&lt;span class="hx:absolute hx:-mt-20" id="signing-from-a-client"&gt;&lt;/span&gt;
 &lt;a href="#signing-from-a-client" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Any of the three surfaces produce signatures this service accepts — the
 &lt;a href="../../dotnet/"&gt;.NET library&lt;/a&gt;, the
-&lt;a href="../../client/"&gt;TypeScript client&lt;/a&gt;, or the helper above.&lt;/p&gt;</description></item><item><title>.NET quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/dotnet-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/dotnet-quickstart/</guid><description>
+&lt;a href="../../client/"&gt;TypeScript client&lt;/a&gt;, or the helper above.&lt;/p&gt;</description></item><item><title>.NET quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/dotnet-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/dotnet-quickstart/</guid><description>
 &lt;p&gt;Two processes: an API that verifies, and a client that signs. Both need the
 same policy name and the same key pair.&lt;/p&gt;
 &lt;h2&gt;Verify incoming requests&lt;span class="hx:absolute hx:-mt-20" id="verify-incoming-requests"&gt;&lt;/span&gt;
@@ -914,7 +914,7 @@ replayed request could land on the one that has not seen it. Use
 &lt;li&gt;&lt;a href="../../dotnet/registration/"&gt;Registration&lt;/a&gt; — the other ways to register, and when to use them&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../concepts/schemes/"&gt;Schemes&lt;/a&gt; — folding header values into the signature&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../concepts/policies/"&gt;Policies&lt;/a&gt; — what a policy actually contains&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Authorization</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/authorization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/authorization/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Authorization</title><link>https://j.zills.io/hmac-manager/docs/dotnet/authorization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/authorization/</guid><description>
 &lt;p&gt;By default &lt;code&gt;AddHmac&lt;/code&gt; authenticates any request that verifies against any
 registered policy. That is often not enough: if you hold one policy for a
 partner and another for an internal service, &amp;ldquo;verified&amp;rdquo; does not mean
@@ -1030,7 +1030,7 @@ or the header&amp;rsquo;s own name if it declared none — so
 &lt;code&gt;User.FindFirst(ClaimTypes.NameIdentifier)&lt;/code&gt; return the signed value.&lt;/p&gt;
 &lt;p&gt;Those values are covered by the signature, which is what makes them safe to
 authorize on. An unsigned header is just a header. See
-&lt;a href="../../concepts/schemes/"&gt;schemes&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Log events</title><link>https://jzills.github.io/hmac-manager/docs/reference/log-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/log-events/</guid><description>
+&lt;a href="../../concepts/schemes/"&gt;schemes&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Log events</title><link>https://j.zills.io/hmac-manager/docs/reference/log-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/log-events/</guid><description>
 &lt;p&gt;Event ids are stable across releases. &lt;strong&gt;An id is never reused for a different
 event&lt;/strong&gt;, so it is safe to alert on one.&lt;/p&gt;
 &lt;table&gt;
@@ -1263,7 +1263,7 @@ can send.&lt;/p&gt;
 full sign/verify path with every level enabled.&lt;/p&gt;
 &lt;p&gt;Signing content (1002, 1105) is not secret — it travels with the request — but
 it does contain the public key, the nonce and any scheme header values, which
-may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://jzills.github.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/schemes/</guid><description>
+may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://j.zills.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/schemes/</guid><description>
 &lt;p&gt;A scheme is a named list of headers whose &lt;strong&gt;values become part of the
 signature&lt;/strong&gt;. It answers a question a bare HMAC cannot: this request is
 authentic, but authentic &lt;em&gt;as whom&lt;/em&gt;?&lt;/p&gt;
@@ -1362,7 +1362,7 @@ mapping. It signs and verifies with them; on a successful verification the
 covered values come back as &lt;code&gt;result.headerValues&lt;/code&gt;, keyed by header name, and
 turning those into whatever your framework calls a principal is left to you.&lt;/p&gt;
 &lt;p&gt;In &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;Kubernetes&lt;/a&gt;, schemes are declared on the
-&lt;code&gt;HmacPolicy&lt;/code&gt; resource and do carry &lt;code&gt;claimType&lt;/code&gt;, since the verifier maps them.&lt;/p&gt;</description></item><item><title>Signing requests</title><link>https://jzills.github.io/hmac-manager/docs/client/signing-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/signing-requests/</guid><description>
+&lt;code&gt;HmacPolicy&lt;/code&gt; resource and do carry &lt;code&gt;claimType&lt;/code&gt;, since the verifier maps them.&lt;/p&gt;</description></item><item><title>Signing requests</title><link>https://j.zills.io/hmac-manager/docs/client/signing-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/signing-requests/</guid><description>
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;HashAlgorithm&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kr"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;#34;hmac-manager&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
@@ -1531,7 +1531,7 @@ a configuration error. See
 &lt;a href="../../concepts/signing-content/"&gt;signing content&lt;/a&gt; for the exact string both
 ends build.&lt;/p&gt;
 &lt;p&gt;The verifying side can be this same package: see
-&lt;a href="../verifying-requests/"&gt;verifying requests&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>The Helm chart</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/helm-chart/</guid><description>
+&lt;a href="../verifying-requests/"&gt;verifying requests&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>The Helm chart</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/helm-chart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/helm-chart/</guid><description>
 &lt;p&gt;One chart deploys the verifier, the policy operator and Redis.&lt;/p&gt;
 &lt;h2&gt;Prerequisites&lt;span class="hx:absolute hx:-mt-20" id="prerequisites"&gt;&lt;/span&gt;
 &lt;a href="#prerequisites" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
@@ -1544,7 +1544,7 @@ outside the chart — for example with
 &lt;/ul&gt;
 &lt;h2&gt;Install&lt;span class="hx:absolute hx:-mt-20" id="install"&gt;&lt;/span&gt;
 &lt;a href="#install" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://jzills.github.io/hmac-manager
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://j.zills.io/hmac-manager
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo update&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
@@ -1700,7 +1700,7 @@ data-copied-label="Copied!"
 &lt;li&gt;&lt;a href="../hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies with &lt;code&gt;kubectl&lt;/code&gt; instead&lt;/li&gt;
 &lt;li&gt;&lt;a href="../enforcement/"&gt;Enforcement&lt;/a&gt; — ingress gateway versus ambient waypoint&lt;/li&gt;
 &lt;li&gt;&lt;a href="../redis/"&gt;Redis&lt;/a&gt; — replay protection and the replica constraint&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Chart values</title><link>https://jzills.github.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/chart-values/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Chart values</title><link>https://j.zills.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/chart-values/</guid><description>
 &lt;h2&gt;Policies&lt;span class="hx:absolute hx:-mt-20" id="policies"&gt;&lt;/span&gt;
 &lt;a href="#policies" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;At least one is required.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -1911,7 +1911,7 @@ already exists.&lt;/p&gt;
 &lt;p&gt;The chart ships a &lt;code&gt;values.schema.json&lt;/code&gt;, so &lt;code&gt;helm install&lt;/code&gt; rejects a malformed
 values file before anything reaches the cluster.&lt;/p&gt;
 &lt;p&gt;See &lt;a href="../../kubernetes/helm-chart/"&gt;the Helm chart&lt;/a&gt; for how to use these and
-&lt;a href="../../kubernetes/enforcement/"&gt;enforcement&lt;/a&gt; for the Istio side.&lt;/p&gt;</description></item><item><title>Configuration binding</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/configuration-binding/</guid><description>
+&lt;a href="../../kubernetes/enforcement/"&gt;enforcement&lt;/a&gt; for the Istio side.&lt;/p&gt;</description></item><item><title>Configuration binding</title><link>https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/configuration-binding/</guid><description>
 &lt;p&gt;Both &lt;code&gt;AddHmacManager&lt;/code&gt; and &lt;code&gt;AddHmac&lt;/code&gt; take an &lt;code&gt;IConfigurationSection&lt;/code&gt; instead of
 a builder delegate:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -2040,7 +2040,7 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;See &lt;a href="../events/"&gt;events&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Kubernetes quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</guid><description>
+&lt;p&gt;See &lt;a href="../events/"&gt;events&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Kubernetes quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/kubernetes-quickstart/</guid><description>
 &lt;p&gt;Three steps, deliberately separate: install the verifier, tell Istio it exists,
 then point traffic at it. A fresh install enforces nothing, so you can put it in
 a cluster before you are ready to reject anything.&lt;/p&gt;
@@ -2056,7 +2056,7 @@ never chart values.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2&gt;1. Install&lt;span class="hx:absolute hx:-mt-20" id="1-install"&gt;&lt;/span&gt;
 &lt;a href="#1-install" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://jzills.github.io/hmac-manager
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo add zills https://j.zills.io/hmac-manager
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm repo update
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;helm install hmac-manager zills/hmac-manager &lt;span class="se"&gt;\
@@ -2168,7 +2168,7 @@ you can produce a valid signature without writing a client. See the
 &lt;li&gt;&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies as resources instead of chart values&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../reference/chart-values/"&gt;Chart values&lt;/a&gt; — the full reference&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../kubernetes/enforcement/"&gt;Enforcement&lt;/a&gt; — ingress versus waypoint&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Signing content</title><link>https://jzills.github.io/hmac-manager/docs/concepts/signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/signing-content/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Signing content</title><link>https://j.zills.io/hmac-manager/docs/concepts/signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/signing-content/</guid><description>
 &lt;p&gt;The signature is an HMAC over a single string built from the request. Both
 sides build that string independently and compare the results, so &lt;strong&gt;every
 segment has to match exactly&lt;/strong&gt;. Almost every signature mismatch is really a
@@ -2395,7 +2395,7 @@ category on both ends and compare event 1002 (signer) with event 1105
 &lt;h2&gt;Replacing it&lt;span class="hx:absolute hx:-mt-20" id="replacing-it"&gt;&lt;/span&gt;
 &lt;a href="#replacing-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A policy can build its own signing content instead. That is a deliberate
 escape hatch with sharp edges — see
-&lt;a href="../../dotnet/custom-signing-content/"&gt;custom signing content&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>The HmacPolicy CRD</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</guid><description>
+&lt;a href="../../dotnet/custom-signing-content/"&gt;custom signing content&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>The HmacPolicy CRD</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/</guid><description>
 &lt;p&gt;Every policy is an &lt;code&gt;HmacPolicy&lt;/code&gt; custom resource
 (&lt;code&gt;hmac-manager.io/v1alpha1&lt;/code&gt;). The chart renders one per entry in
 &lt;code&gt;values.policies&lt;/code&gt;, and you can also create them directly — the resource is the
@@ -2595,7 +2595,7 @@ is not meant to run standalone.&lt;/p&gt;
 &lt;td&gt;&lt;code&gt;Memory&lt;/code&gt; or &lt;code&gt;Distributed&lt;/code&gt;, applied to every rendered policy&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
-&lt;/table&gt;</description></item><item><title>Verifying requests</title><link>https://jzills.github.io/hmac-manager/docs/client/verifying-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/verifying-requests/</guid><description>
+&lt;/table&gt;</description></item><item><title>Verifying requests</title><link>https://j.zills.io/hmac-manager/docs/client/verifying-requests/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/verifying-requests/</guid><description>
 &lt;p&gt;&lt;code&gt;verify&lt;/code&gt; is the other half of &lt;a href="../signing-requests/"&gt;&lt;code&gt;sign&lt;/code&gt;&lt;/a&gt;: it takes an
 incoming request, recomputes the signature from the policy&amp;rsquo;s keys, and reports
 whether the two match. A Node service can therefore both call an
@@ -2899,7 +2899,7 @@ were never late.&lt;/p&gt;
 &lt;h2&gt;A runnable example&lt;span class="hx:absolute hx:-mt-20" id="a-runnable-example"&gt;&lt;/span&gt;
 &lt;a href="#a-runnable-example" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;a href="https://github.com/jzills/hmac-manager/tree/main/samples/NodeApiAuthentication"target="_blank" rel="noopener"&gt;&lt;code&gt;samples/NodeApiAuthentication&lt;/code&gt;&lt;/a&gt;
 is a Node API doing all of the above, called by a Node client and a .NET client —
-including the replay and tampering cases, so you can watch them be refused.&lt;/p&gt;</description></item><item><title>Client quickstart</title><link>https://jzills.github.io/hmac-manager/docs/getting-started/client-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/getting-started/client-quickstart/</guid><description>
+including the replay and tampering cases, so you can watch them be refused.&lt;/p&gt;</description></item><item><title>Client quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/client-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/client-quickstart/</guid><description>
 &lt;p&gt;The &lt;code&gt;hmac-manager&lt;/code&gt; npm package signs requests and verifies them, so it can be
 either end of the exchange — the others being the
 &lt;a href="../dotnet-quickstart/"&gt;.NET library&lt;/a&gt; and the
@@ -3026,7 +3026,7 @@ something the server cannot reproduce.&lt;/p&gt;
 &lt;li&gt;&lt;a href="../../client/verifying-requests/"&gt;Verifying requests&lt;/a&gt; — replay protection, Node and Express, failure reasons&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../client/schemes/"&gt;Schemes&lt;/a&gt; — adding header values to the signature&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../client/api/"&gt;API&lt;/a&gt; — the full surface&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Configuration schema</title><link>https://jzills.github.io/hmac-manager/docs/reference/configuration-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/reference/configuration-schema/</guid><description>
+&lt;/ul&gt;</description></item><item><title>Configuration schema</title><link>https://j.zills.io/hmac-manager/docs/reference/configuration-schema/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/configuration-schema/</guid><description>
 &lt;p&gt;The section passed to &lt;code&gt;AddHmac&lt;/code&gt; or &lt;code&gt;AddHmacManager&lt;/code&gt; binds to an &lt;strong&gt;array&lt;/strong&gt; of
 policies.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -3131,7 +3131,7 @@ from user secrets, an environment variable or a secret store and let
 configuration composition merge it in.&lt;/p&gt;
 &lt;/div&gt;
 &lt;p&gt;See &lt;a href="../../dotnet/configuration-binding/"&gt;configuration binding&lt;/a&gt; for how to
-wire it up, including reload behaviour.&lt;/p&gt;</description></item><item><title>Enforcement</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/enforcement/</guid><description>
+wire it up, including reload behaviour.&lt;/p&gt;</description></item><item><title>Enforcement</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/enforcement/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/enforcement/</guid><description>
 &lt;p&gt;Installing the chart does not enforce anything. &lt;code&gt;istio.ingressGateway.enabled&lt;/code&gt;
 and &lt;code&gt;istio.waypoint.enabled&lt;/code&gt; are both &lt;code&gt;false&lt;/code&gt; by default, so a fresh install
 runs the verifier without any traffic routed to it — you can deploy it, check
@@ -3250,7 +3250,7 @@ everything returns &lt;code&gt;403&lt;/code&gt;, including correctly signed requ
 are the provider not being registered, &lt;code&gt;includeRequestHeadersInCheck&lt;/code&gt; missing a
 header, or a policy in &lt;code&gt;Invalid&lt;/code&gt; status — check
 &lt;code&gt;kubectl get hmacpolicies -n hmac-system&lt;/code&gt; first, then the verifier&amp;rsquo;s logs at
-&lt;code&gt;Debug&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Signing with HttpClient</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/http-client/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/http-client/</guid><description>
+&lt;code&gt;Debug&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Signing with HttpClient</title><link>https://j.zills.io/hmac-manager/docs/dotnet/http-client/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/http-client/</guid><description>
 &lt;p&gt;&lt;code&gt;AddHmacHttpMessageHandler&lt;/code&gt; attaches an &lt;code&gt;HmacDelegatingHandler&lt;/code&gt; to a named
 &lt;code&gt;HttpClient&lt;/code&gt;. Every request that client sends is signed on the way out.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -3331,7 +3331,7 @@ data-copied-label="Copied!"
 &lt;p&gt;Scheme headers must be present before &lt;code&gt;Send&lt;/code&gt; or &lt;code&gt;SendAsync&lt;/code&gt;. The handler signs
 what it is given; a header added later is not covered by the signature and the
 verifier will reject the request.&lt;/p&gt;
-&lt;/div&gt;</description></item><item><title>Nonce and replay</title><link>https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/nonce-and-replay/</guid><description>
+&lt;/div&gt;</description></item><item><title>Nonce and replay</title><link>https://j.zills.io/hmac-manager/docs/concepts/nonce-and-replay/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/nonce-and-replay/</guid><description>
 &lt;p&gt;A valid signature stays valid. Without something else in play, anyone who
 captures a signed request can send it again and it will verify — the signature
 is still correct, because nothing about it has changed.&lt;/p&gt;
@@ -3497,7 +3497,7 @@ reason. See
 multi-replica is the default and correct configuration. Setting
 &lt;code&gt;redis.enabled=false&lt;/code&gt; falls back to the in-process cache, and the chart then
 refuses &lt;code&gt;replicaCount &amp;gt; 1&lt;/code&gt; rather than letting you deploy something that does
-not protect anything. See &lt;a href="../../kubernetes/redis/"&gt;Redis&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://jzills.github.io/hmac-manager/docs/client/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/schemes/</guid><description>
+not protect anything. See &lt;a href="../../kubernetes/redis/"&gt;Redis&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://j.zills.io/hmac-manager/docs/client/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/schemes/</guid><description>
 &lt;p&gt;A &lt;a href="../../concepts/schemes/"&gt;scheme&lt;/a&gt; names headers whose values become part of
 the signature. On the client it is a name and a flat list of header names:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -3657,7 +3657,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>Algorithms</title><link>https://jzills.github.io/hmac-manager/docs/concepts/algorithms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/algorithms/</guid><description>
+&lt;/div&gt;</description></item><item><title>Algorithms</title><link>https://j.zills.io/hmac-manager/docs/concepts/algorithms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/algorithms/</guid><description>
 &lt;p&gt;Two separate hashes, chosen independently.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;The content hash&lt;/strong&gt; hashes the request body. Its output becomes one segment of
 the &lt;a href="../signing-content/"&gt;signing content&lt;/a&gt;, which is how the body is covered by
@@ -3730,7 +3730,7 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;p&gt;In Kubernetes they are &lt;code&gt;algorithms.contentHash&lt;/code&gt; and &lt;code&gt;algorithms.signingHash&lt;/code&gt; on
 the &lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;&lt;code&gt;HmacPolicy&lt;/code&gt; resource&lt;/a&gt;, spelled the same
-way as in .NET.&lt;/p&gt;</description></item><item><title>API</title><link>https://jzills.github.io/hmac-manager/docs/client/api/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/client/api/</guid><description>
+way as in .NET.&lt;/p&gt;</description></item><item><title>API</title><link>https://j.zills.io/hmac-manager/docs/client/api/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/client/api/</guid><description>
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-ts" data-lang="ts"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="nx"&gt;HmacManagerFactory&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
@@ -4150,7 +4150,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>Events</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/events/</guid><description>
+&lt;/div&gt;</description></item><item><title>Events</title><link>https://j.zills.io/hmac-manager/docs/dotnet/events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/events/</guid><description>
 &lt;p&gt;&lt;code&gt;HmacEvents&lt;/code&gt; exposes three points in the &lt;code&gt;HmacAuthenticationHandler&lt;/code&gt; flow.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;
@@ -4302,7 +4302,7 @@ data-copied-label="Copied!"
 &lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
 &lt;/button&gt;
 &lt;/div&gt;
-&lt;/div&gt;</description></item><item><title>Redis and replay protection</title><link>https://jzills.github.io/hmac-manager/docs/kubernetes/redis/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/kubernetes/redis/</guid><description>
+&lt;/div&gt;</description></item><item><title>Redis and replay protection</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/redis/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/redis/</guid><description>
 &lt;p&gt;Redis is deployed as part of the release when &lt;code&gt;redis.enabled=true&lt;/code&gt;, which is
 the default. Every policy then uses the distributed
 &lt;a href="../../concepts/nonce-and-replay/"&gt;nonce cache&lt;/a&gt; — no connection strings, no
@@ -4379,7 +4379,7 @@ the window, so it should not be world-writable.&lt;/p&gt;
 long each nonce is held. The chart defaults to 60 seconds. Longer windows
 tolerate more clock skew and hold more entries; shorter ones reject legitimate
 requests when clocks drift. See
-&lt;a href="../../concepts/nonce-and-replay/"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Dynamic policies</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/dynamic-policies/</guid><description>
+&lt;a href="../../concepts/nonce-and-replay/"&gt;nonce and replay&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Dynamic policies</title><link>https://j.zills.io/hmac-manager/docs/dotnet/dynamic-policies/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/dynamic-policies/</guid><description>
 &lt;p&gt;Policies do not have to be fixed at startup. There are two mechanisms, and they
 are not interchangeable.&lt;/p&gt;
 &lt;h2&gt;Mutating the singleton collection&lt;span class="hx:absolute hx:-mt-20" id="mutating-the-singleton-collection"&gt;&lt;/span&gt;
@@ -4484,7 +4484,7 @@ leaving the application with none.&lt;/p&gt;
 &lt;td&gt;&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;the &lt;code&gt;HmacPolicy&lt;/code&gt; CRD&lt;/a&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
-&lt;/table&gt;</description></item><item><title>Headers</title><link>https://jzills.github.io/hmac-manager/docs/concepts/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/concepts/headers/</guid><description>
+&lt;/table&gt;</description></item><item><title>Headers</title><link>https://j.zills.io/hmac-manager/docs/concepts/headers/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/headers/</guid><description>
 &lt;p&gt;Signing adds these to the request. Everything except &lt;code&gt;Authorization&lt;/code&gt; is
 metadata the verifier needs in order to rebuild the
 &lt;a href="../signing-content/"&gt;signing content&lt;/a&gt;.&lt;/p&gt;
@@ -4620,7 +4620,7 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;See the &lt;a href="../../reference/headers/"&gt;header reference&lt;/a&gt; for the exact values.&lt;/p&gt;</description></item><item><title>Custom signing content</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/custom-signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/custom-signing-content/</guid><description>
+&lt;p&gt;See the &lt;a href="../../reference/headers/"&gt;header reference&lt;/a&gt; for the exact values.&lt;/p&gt;</description></item><item><title>Custom signing content</title><link>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</guid><description>
 &lt;p&gt;A policy can build its own signing content instead of using the
 &lt;a href="../../concepts/signing-content/"&gt;default format&lt;/a&gt;:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -4707,7 +4707,7 @@ an explicit, unambiguous formatting such as
 &lt;h2&gt;Checking it&lt;span class="hx:absolute hx:-mt-20" id="checking-it"&gt;&lt;/span&gt;
 &lt;a href="#checking-it" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Turn &lt;code&gt;Trace&lt;/code&gt; on for &lt;code&gt;HmacManager.Components.HmacManager&lt;/code&gt; on both ends and
 compare the content strings — event 1002 on the signer, event 1105 on the
-verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;logging&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Custom nonce cache</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/custom-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/custom-nonce-cache/</guid><description>
+verifier. See &lt;a href="../logging/#diagnosing-a-signature-mismatch"&gt;logging&lt;/a&gt;.&lt;/p&gt;</description></item><item><title>Custom nonce cache</title><link>https://j.zills.io/hmac-manager/docs/dotnet/custom-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/custom-nonce-cache/</guid><description>
 &lt;p&gt;The built-in caches cover one instance (&lt;code&gt;UseMemoryCache&lt;/code&gt;) and any
 &lt;code&gt;IDistributedCache&lt;/code&gt; (&lt;code&gt;UseDistributedCache&lt;/code&gt;). A custom cache is for a shared
 store that can claim a nonce &lt;strong&gt;atomically&lt;/strong&gt;, which &lt;code&gt;IDistributedCache&lt;/code&gt; cannot —
@@ -4852,7 +4852,7 @@ so it is not atomic, and the two-argument &lt;code&gt;SetAsync&lt;/code&gt; neve
 max age — your cache&amp;rsquo;s own TTL applies, and if it is shorter than the policy&amp;rsquo;s
 window a replay can get through after the entry expires.&lt;/p&gt;
 &lt;p&gt;To migrate, derive from &lt;code&gt;NonceCache&lt;/code&gt; and move the logic into &lt;code&gt;TryAddCoreAsync&lt;/code&gt;, or
-implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Redis nonce cache</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/redis-nonce-cache/</guid><description>
+implement &lt;code&gt;TryAddAsync&lt;/code&gt; directly against the contract above.&lt;/p&gt;</description></item><item><title>Redis nonce cache</title><link>https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/</guid><description>
 &lt;p&gt;The built-in &lt;code&gt;Distributed&lt;/code&gt; cache works through &lt;code&gt;IDistributedCache&lt;/code&gt;, which has
 no conditional write. It checks for a nonce and then records it, so two copies
 of a request reaching two instances at the same moment can both be accepted —
@@ -5036,7 +5036,7 @@ data-copied-label="Copied!"
 &lt;p&gt;Pass it to the &lt;code&gt;HmacManager&lt;/code&gt; constructor, or put it in a &lt;code&gt;NonceCacheCollection&lt;/code&gt;
 for &lt;code&gt;HmacManagerFactory&lt;/code&gt;. Dispose it to close the connection it opened.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;RedisNonceCache&lt;/code&gt; implements &lt;code&gt;TryAddAsync&lt;/code&gt;, which is all the library calls.
-The obsolete &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt; throw &lt;code&gt;NotSupportedException&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://jzills.github.io/hmac-manager/docs/dotnet/logging/</guid><description>
+The obsolete &lt;code&gt;SetAsync&lt;/code&gt; and &lt;code&gt;ContainsAsync&lt;/code&gt; throw &lt;code&gt;NotSupportedException&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Logging</title><link>https://j.zills.io/hmac-manager/docs/dotnet/logging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/logging/</guid><description>
 &lt;p&gt;HmacManager writes to &lt;code&gt;ILogger&lt;/code&gt; and needs no configuration to do so — register
 the library the usual way and every component picks up the host&amp;rsquo;s logger.
 Nothing is written when logging is not configured: each type falls back to
