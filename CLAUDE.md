@@ -226,7 +226,7 @@ The per-artifact release pipelines (`release.yml` for the NuGet package, `redis-
 2. Installs .NET `8.0.x` and `10.0.x`.
 3. Restores, builds and runs `test/HmacManager.Kubernetes.Tests`: the ext-authz service's own startup through `WebApplicationFactory<Program>`, asserting which nonce cache it wires up with and without `ConnectionStrings:Redis`. Resolving the cache does not connect, so no Redis is needed. It runs as `Production`, because `appsettings.Development.json` carries a placeholder policy whose empty public key fails validation.
 
-This is also the only PR job that compiles `kubernetes/service` outside `kubernetes-pr.yml`'s e2e run, which only triggers on `kubernetes/**` changes. `service-release.yml` runs it, and the Redis package suite the image ships, before publishing.
+This is also the only PR job that compiles `kubernetes/service` outside `kubernetes-pr.yml`'s e2e run, which is skipped unless `kubernetes/**`, `src/**` or the workflow itself changed. `service-release.yml` runs it, and the Redis package suite the image ships, before publishing.
 
 #### `client-tests`
 1. Checks out the repository.
@@ -278,7 +278,9 @@ command — `bash .github/scripts/verify-samples.sh`.
 6. Builds `test/HmacManager.IntegrationTests`.
 7. Runs the integration test suite via `dotnet test`.
 
-**Branch protection**: The `Unit Tests`, `Operator Tests`, `Service Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, `Redis Package Tests`, and `Integration Tests` checks should be required to pass in GitHub → Settings → Branches for `main` and `develop` before a PR can be merged.
+**Branch protection**: The `Unit Tests`, `Operator Tests`, `Service Tests`, `Client Tests`, `CI Script Tests`, `Sample Builds`, `Redis Package Tests`, and `Integration Tests` checks, plus `kubernetes-pr.yml`'s `Helm Unit Tests` and `E2E Tests`, are required on `main` and `develop` by the repository rulesets (GitHub → Settings → Rules).
+
+`kubernetes-pr.yml` deliberately has no `paths:` filter. A workflow a path filter never starts reports no check, and a required check that never reports leaves every other PR waiting forever. Its `changes` job diffs the PR against its base instead, and the Kubernetes jobs are *skipped* when nothing under `kubernetes/`, `src/` (both images are built from it) or the workflow changed. A skipped job satisfies a required check. Do not reintroduce a `paths:` filter on any workflow whose checks are required.
 
 ---
 
