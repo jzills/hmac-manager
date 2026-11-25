@@ -3,8 +3,10 @@
 #
 # Creates a GitHub Release for an already-pushed tag. Install-info markdown is
 # read from stdin; a changelog scoped to the previous same-prefix tag is
-# appended automatically. Idempotent: if the release already exists it is left
-# untouched.
+# appended automatically. When release-notes/<TAG>.md exists (the tag is the
+# path: nuget/v2.13.0 reads release-notes/nuget/v2.13.0.md), it opens the
+# release under a Highlights heading; it is the same file the site's Releases
+# page shows. Idempotent: if the release already exists it is left untouched.
 #
 # Requires: gh authenticated via GH_TOKEN; env GITHUB_REPOSITORY; job permission
 # `contents: write`; checkout `fetch-depth: 0` (so previous-tag.sh sees tags).
@@ -29,7 +31,12 @@ if [ -n "$prev_tag" ]; then
 fi
 changelog="$(gh api "${gen_args[@]}" | jq -r '.body')"
 
-notes="$(printf '%s\n\n%s\n' "$install_body" "$changelog")"
+highlights_file="$script_dir/../../release-notes/${TAG}.md"
+if [ -f "$highlights_file" ]; then
+  notes="$(printf '## Highlights\n\n%s\n\n%s\n\n%s\n' "$(cat "$highlights_file")" "$install_body" "$changelog")"
+else
+  notes="$(printf '%s\n\n%s\n' "$install_body" "$changelog")"
+fi
 
 printf '%s' "$notes" | gh release create "$TAG" \
   --title "$TITLE" \

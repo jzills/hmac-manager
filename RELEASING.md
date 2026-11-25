@@ -46,6 +46,8 @@ The published version always comes from the tag, not from any source file. Even 
 - local/manual builds report the right version, and
 - the release branch has a real commit to bring back into `develop`. If a release branch has no changes vs `develop` at merge time, `tag.yml`'s `merge-back` job fails loudly with an error telling you to bump the version — it does not silently skip.
 
+Each release branch also adds the release's notes, `release-notes/<tag>.md` (for `nuget/v2.13.0`, `release-notes/nuget/v2.13.0.md`), in the same commit as the bump or the one after it. `create-release.sh` puts the file under a **Highlights** heading at the top of the GitHub release, and the site's [Releases page](https://j.zills.io/hmac-manager/releases/) shows it once the back-merge reaches `develop`. A release without the file still publishes, with only the install commands and the PR list. The `hm-release-notes` skill (`.claude/skills/`) holds the shape and the voice.
+
 ---
 
 ## NuGet Package
