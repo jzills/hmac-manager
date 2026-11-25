@@ -24,6 +24,17 @@ Until a listener subscribes, nothing is recorded and no dependency is
 needed. `dotnet-counters monitor --counters HmacManager` shows them live
 without changing the application at all.
 
+On `net8.0`, also give the duration histogram its buckets. From .NET 9 the
+library supplies them itself; without them OpenTelemetry's defaults, sized for
+milliseconds, put every verification in the first bucket:
+
+```csharp
+.AddView("hmac_manager.verification.duration", new ExplicitBucketHistogramConfiguration
+{
+    Boundaries = [0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]
+})
+```
+
 ## What you get
 
 - **`hmac_manager.verifications`**: one count per request, tagged with the
@@ -46,6 +57,11 @@ A request is counted once, wherever it ends:
   counts what is refused before a manager is reached: headers that do not
   parse, a policy this host does not have, a scheme the policy does not
   declare, and keys `OnValidateKeys` rejected.
+
+A request with no HMAC `Authorization` header at all is not counted: the
+handler leaves it to your other authentication schemes, and it may be bound
+for an anonymous endpoint. (The Kubernetes ext-authz service refuses such a
+request, and counts it as `unsigned`.)
 
 A name from a request is only ever a tag once it has resolved to a configured
 policy or scheme, so a caller cannot create series by inventing names. A

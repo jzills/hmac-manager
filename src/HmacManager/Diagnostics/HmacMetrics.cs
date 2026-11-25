@@ -64,7 +64,14 @@ internal static class HmacMetrics
         public const string Verified = "verified";
 
         /// <summary>
-        /// The HMAC headers are absent or did not parse. Tagged with the policy only when counted
+        /// No HMAC <c>Authorization</c> header at all. Recorded only by the ext-authz service, which
+        /// refuses such a request; the ASP.NET Core handler leaves it to other authentication
+        /// schemes (it may reach an anonymous endpoint) and does not count it. No tags.
+        /// </summary>
+        public const string Unsigned = "unsigned";
+
+        /// <summary>
+        /// An HMAC <c>Authorization</c> header, with the other HMAC headers absent or unparseable. Tagged with the policy only when counted
         /// by that policy's own manager; refused before one was resolved, it has no policy tag.
         /// </summary>
         public const string InvalidHeaders = "invalid_headers";
@@ -106,10 +113,30 @@ internal static class HmacMetrics
         unit: "{request}",
         description: "Requests HmacManager verified or refused, by outcome.");
 
+    /// <summary>
+    /// Bucket boundaries for <see cref="VerificationDuration"/>, in seconds. A verification is
+    /// sub-millisecond against the in-memory cache and a round trip against Redis; the tail is a
+    /// slow or unreachable store. Without them an exporter's defaults (0, 5, 10, 25… — sized for
+    /// milliseconds) put every verification in the first bucket.
+    /// </summary>
+    internal static readonly IReadOnlyList<double> DurationBuckets =
+        [0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5];
+
+#if NET9_0_OR_GREATER
+    private static readonly Histogram<double> VerificationDuration = Meter.CreateHistogram<double>(
+        "hmac_manager.verification.duration",
+        unit: "s",
+        description: "Time HmacManager took to verify a request, nonce claim included.",
+        tags: null,
+        advice: new InstrumentAdvice<double> { HistogramBucketBoundaries = DurationBuckets });
+#else
+    // InstrumentAdvice is .NET 9+. On net8.0 an application sets the buckets with a view; see
+    // site/content/docs/dotnet/metrics.md.
     private static readonly Histogram<double> VerificationDuration = Meter.CreateHistogram<double>(
         "hmac_manager.verification.duration",
         unit: "s",
         description: "Time HmacManager took to verify a request, nonce claim included.");
+#endif
 
     private static readonly Counter<long> Signings = Meter.CreateCounter<long>(
         "hmac_manager.signings",

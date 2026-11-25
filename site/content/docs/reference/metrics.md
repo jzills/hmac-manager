@@ -23,7 +23,11 @@ Prometheus exporter renders them.
 
 The duration covers the whole of `VerifyAsync`, the nonce claim included, so
 it is where a slow nonce store shows. It is recorded only for verifications
-that reached a policy's `HmacManager`, not for requests refused before one.
+that reached a policy's `HmacManager`, not for requests refused before one. Its
+buckets run from 0.1 ms to 5 s (0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005,
+0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5). The library advises them on
+.NET 9 and later; on `net8.0`, set them with a view, as
+[Metrics](../../dotnet/metrics/) shows.
 
 ## Verification outcomes
 
@@ -33,7 +37,8 @@ one outcome.
 | `hmac_manager.outcome` | Policy tag | Meaning |
 | --- | --- | --- |
 | `verified` | yes | Accepted. The nonce is claimed. |
-| `invalid_headers` | only from `VerifyAsync` | The HMAC headers are absent or did not parse. |
+| `unsigned` | **never** | No HMAC `Authorization` header at all. Counted only by the ext-authz service, which refuses it; in an application the ASP.NET Core handler leaves such a request to other schemes, so it is not counted there. |
+| `invalid_headers` | only from `VerifyAsync` | An HMAC `Authorization` header, with the other HMAC headers absent or unparseable. |
 | `unknown_policy` | **never** | The request named a policy this process does not have. |
 | `unknown_scheme` | yes, no scheme | The policy exists but does not declare the scheme the request named. |
 | `keys_rejected` | yes | `HmacEvents.OnValidateKeys` refused the policy's keys (ASP.NET Core handler only). |

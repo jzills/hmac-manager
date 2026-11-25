@@ -1,3 +1,4 @@
+using HmacManager.Diagnostics;
 using HmacManager.Exceptions;
 using HmacManager.Kubernetes.Diagnostics;
 using HmacManager.Mvc;
@@ -25,9 +26,18 @@ internal class ExtAuthzHandler(
 
         try
         {
-            if (!contextProvider.TryGetAuthenticationContext(headers, out var authContext) ||
-                authContext.HmacManager is null)
+            if (!contextProvider.TryGetAuthenticationContext(headers, out var authContext))
             {
+                // No HMAC Authorization header. The provider leaves this uncounted, since in an
+                // application it may be an anonymous request for another scheme; here it is refused.
+                HmacMetrics.VerificationRefused(HmacMetrics.VerificationOutcome.Unsigned);
+                ServiceLog.RequestUnauthenticated(logger, method, path);
+                return Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            if (authContext.HmacManager is null)
+            {
+                // An undeclared scheme, already counted as unknown_scheme by the provider.
                 ServiceLog.RequestUnauthenticated(logger, method, path);
                 return Results.StatusCode(StatusCodes.Status403Forbidden);
             }

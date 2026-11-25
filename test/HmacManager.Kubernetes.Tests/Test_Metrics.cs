@@ -17,10 +17,11 @@ public class Test_Metrics
 {
     private const int MetricsPort = 9464;
 
-    private static WebApplicationFactory<Program> CreateFactory(bool? metricsEnabled = null) =>
+    private static WebApplicationFactory<Program> CreateFactory(
+        bool? metricsEnabled = null, string environment = "Production") =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
-            builder.UseEnvironment("Production");
+            builder.UseEnvironment(environment);
 
             builder.UseSetting("HmacManager:0:Name", "MyPolicy");
             builder.UseSetting("HmacManager:0:Keys:PublicKey", "eb8e9dae-08bd-4883-80fe-1d9a103b30b5");
@@ -88,6 +89,67 @@ public class Test_Metrics
 
         Assert.That(response.Response.StatusCode, Is.EqualTo(404));
     }
+
+    [Test]
+    public async Task Test_AnUnsignedRequest_IsCountedAsUnsigned()
+    {
+        using var factory = CreateFactory();
+
+        var response = await GetAsync(factory, localPort: 8080, "/api/orders");
+        Assert.That(response.Response.StatusCode, Is.EqualTo(403));
+
+        var body = await ReadBodyAsync(await GetAsync(factory, MetricsPort, "/metrics"));
+
+        Assert.That(body, Does.Match("hmac_manager_verifications_total\\{[^}]*hmac_manager_outcome=\"unsigned\""));
+    }
+
+#if NET9_0_OR_GREATER
+    [Test]
+    public async Task Test_VerificationDuration_HasSecondsSizedBuckets()
+    {
+        using var factory = CreateFactory();
+        var hmacManager = factory.Services.GetRequiredService<IHmacManagerFactory>().Create("MyPolicy")!;
+        using var client = factory.CreateDefaultClient(new HmacDelegatingHandler(hmacManager));
+        await client.GetAsync("/api/orders");
+
+        // HttpClient returns before the request's duration is recorded; SendAsync waits for it.
+        await GetAsync(factory, localPort: 8080, "/api/orders");
+
+        var body = await ReadBodyAsync(await GetAsync(factory, MetricsPort, "/metrics"));
+
+        // The exporter's defaults start at 5, ASP.NET Core's at 0.005: in seconds, every
+        // verification and nearly every check in the first bucket. (`.*`, as the route label
+        // carries a brace.)
+        Assert.That(body, Does.Match("hmac_manager_verification_duration_seconds_bucket\\{[^}]*le=\"0.001\""));
+        Assert.That(body, Does.Match("http_server_request_duration_seconds_bucket\\{.*le=\"0.001\"\\}"));
+    }
+
+    [Test]
+    public async Task Test_RequestMetrics_CountOnlyTheChecks()
+    {
+        // Development, for the signing helper: the settings above replace its placeholder policy.
+        using var factory = CreateFactory(environment: "Development");
+
+        var sign = await factory.Server.SendAsync(context =>
+        {
+            context.Connection.LocalPort = 8081;
+            context.Request.Method = HttpMethods.Post;
+            context.Request.Path = "/sign";
+            context.Request.ContentType = "application/json";
+            context.Request.Body = new MemoryStream(
+                """{"Policy":"MyPolicy","Method":"GET","Uri":"http://localhost/"}"""u8.ToArray());
+        });
+        Assert.That(sign.Response.StatusCode, Is.EqualTo(200));
+
+        await GetAsync(factory, localPort: 8080, "/api/orders");
+        var body = await ReadBodyAsync(await GetAsync(factory, MetricsPort, "/metrics"));
+
+        // The one check, a 403, and not the signing call: the ext-authz panels read a 200 here as
+        // a request the mesh allowed.
+        Assert.That(body, Does.Contain("http_server_request_duration_seconds_count"));
+        Assert.That(body, Does.Not.Match("http_server_request_duration_seconds_count\\{[^}]*http_request_method=\"POST\""));
+    }
+#endif
 
     [Test]
     public async Task Test_WithMetricsDisabled_TheMetricsPortServesNothing()

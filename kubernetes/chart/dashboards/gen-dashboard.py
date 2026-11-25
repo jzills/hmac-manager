@@ -99,7 +99,7 @@ panels = [
                        f"(rate({VERIFICATIONS}{{{SEL}{REFUSED}{POLICY}}}[$__rate_interval]))",
                        "{{hmac_manager_policy}} · {{hmac_manager_outcome}}")],
                12, 4,
-               description="Refusals before a policy resolved (invalid_headers, unknown_policy) carry no "
+               description="Refusals before a policy resolved (unsigned, invalid_headers, unknown_policy) carry no "
                            "policy label, deliberately: that name is the caller's."),
     timeseries("Verified by policy",
                [target(f"sum by (hmac_manager_policy) (rate({VERIFICATIONS}"

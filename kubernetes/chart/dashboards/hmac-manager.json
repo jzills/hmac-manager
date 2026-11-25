@@ -421,7 +421,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "Refusals by policy",
-      "description": "Refusals before a policy resolved (invalid_headers, unknown_policy) carry no policy label, deliberately: that name is the caller's.",
+      "description": "Refusals before a policy resolved (unsigned, invalid_headers, unknown_policy) carry no policy label, deliberately: that name is the caller's.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"

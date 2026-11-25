@@ -1,6 +1,7 @@
 using HmacManager.Diagnostics;
 using HmacManager.Kubernetes;
 using HmacManager.Mvc.Extensions;
+using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Metrics;
 
 Banner.Print();
@@ -54,6 +55,12 @@ if (metricsEnabled)
 {
     builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics
         .AddMeter(HmacManagerDiagnostics.MeterName, "Microsoft.AspNetCore.Hosting")
+        // ASP.NET Core's buckets start at 5 ms, and a check takes about one: the same buckets as
+        // the verification itself, so the two latency panels can be read against each other.
+        .AddView("http.server.request.duration", new ExplicitBucketHistogramConfiguration
+        {
+            Boundaries = [.. HmacMetrics.DurationBuckets]
+        })
         .AddPrometheusExporter());
 }
 
@@ -85,6 +92,25 @@ if (string.IsNullOrWhiteSpace(redisConnectionString))
         "cache is in-process and is NOT shared across replicas — run a single replica " +
         "or configure Redis for multi-replica replay protection.");
 }
+
+#if NET9_0_OR_GREATER
+if (metricsEnabled)
+{
+    // ASP.NET Core's request metrics are the ext-authz checks' own: leave out the scrapes and the
+    // development signing helper, or every /sign call would count as a check that allowed.
+    // MetricsDisabled is .NET 9+; the image ships net10.0, so the net8.0 build goes without.
+    app.Use((ctx, next) =>
+    {
+        var port = ctx.Connection.LocalPort;
+        if ((port == metricsPort || port == signPort) && ctx.Features.Get<IHttpMetricsTagsFeature>() is { } tags)
+        {
+            tags.MetricsDisabled = true;
+        }
+
+        return next(ctx);
+    });
+}
+#endif
 
 if (app.Environment.IsDevelopment())
 {
