@@ -42,3 +42,8 @@ site/_vendor/
 # Python bytecode from the site generators under site/tools/.
 __pycache__/
 *.py[cod]
+
+# Claude Code: only the shared parts of .claude/ are committed, the repo-local
+# skills. settings.local.json, worktrees and lock files stay ignored.
+/.claude/*
+!/.claude/skills/

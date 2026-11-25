@@ -57,6 +57,13 @@ disableKinds = ["taxonomy", "term"]
   [[module.mounts]]
     source = "static"
     target = "assets"
+  # Read, not published: the Releases page renders each artifact's notes from
+  # release-notes/<artifact>/, the same files create-release.sh puts at the
+  # top of each GitHub release. Mounted rather than copied into site/, since a
+  # copy goes stale with every release.
+  [[module.mounts]]
+    source = "../release-notes"
+    target = "assets/release-notes"
 
 [markup]
   [markup.highlight]
@@ -170,7 +177,7 @@ Which you run (the NuGet package, the npm client, the ext-authz image or the Hel
     heading = "Project"
     links = [
       { label = "GitHub", url = "https://github.com/jzills/hmac-manager" },
-      { label = "Releases", url = "https://github.com/jzills/hmac-manager/releases" },
+      { label = "Release notes", path = "releases/" },
       { label = "Report a bug", kind = "bug" },
       { label = "MIT license", url = "https://github.com/jzills/hmac-manager/blob/HEAD/LICENSE" },
     ]
@@ -192,7 +199,7 @@ Which you run (the NuGet package, the npm client, the ext-authz image or the Hel
     weight = 2
   [[menu.main]]
     name = "Releases"
-    url = "https://github.com/jzills/hmac-manager/releases"
+    pageRef = "/releases"
     weight = 3
   [[menu.main]]
     name = "Search"

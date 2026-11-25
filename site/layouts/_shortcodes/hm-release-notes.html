@@ -1,0 +1,54 @@
+{{- /*
+  Every release's notes from release-notes/, one section per artifact,
+  newest first in each.
+
+      {{% hm-release-notes %}}
+
+  Percent delimiters, so the headings this writes are markdown and reach the
+  page's table of contents: one entry per artifact, one beneath it per
+  version.
+
+  The artifacts release separately, each under its own tag prefix, and a
+  notes file's path is its tag: release-notes/nuget/v2.13.0.md is the
+  nuget/v2.13.0 release. The NuGet package was tagged without a prefix up to
+  v2.5.0, so those versions link to their bare tag.
+
+  Versions are compared as numbers, major, minor and patch packed into one
+  integer. Sorted as strings, v2.9.0 would land above v2.10.0.
+
+  safeHTML on the body because what this emits is markdown, not HTML:
+  without it html/template escapes the notes before goldmark sees them. The
+  bodies are this repository's own release-notes/ files.
+*/ -}}
+{{- $repo := "https://github.com/jzills/hmac-manager" -}}
+{{- $artifacts := slice
+  (dict "dir" "nuget" "name" "NuGet package" "id" "nuget")
+  (dict "dir" "npm" "name" "npm client" "id" "npm")
+  (dict "dir" "chart" "name" "Helm chart" "id" "helm-chart")
+  (dict "dir" "service" "name" "ext-authz service" "id" "ext-authz-service")
+  (dict "dir" "operator" "name" "Operator" "id" "operator")
+  (dict "dir" "redis" "name" "Redis package" "id" "redis-package")
+-}}
+{{- range $artifacts }}
+  {{- $dir := .dir }}
+  {{- $notes := slice }}
+  {{- range resources.Match (printf "release-notes/%s/v*.md" $dir) }}
+    {{- $version := strings.TrimPrefix "v" (path.BaseName .Name) }}
+    {{- $p := split $version "." }}
+    {{- $rank := add (add (mul (int (index $p 0)) 1000000) (mul (int (index $p 1)) 1000)) (int (index $p 2)) }}
+    {{- $tag := printf "%s/v%s" $dir $version }}
+    {{- if and (eq $dir "nuget") (lt $rank 2006000) }}{{ $tag = printf "v%s" $version }}{{ end }}
+    {{- $notes = $notes | append (dict "version" $version "rank" $rank "tag" $tag "body" .Content) }}
+  {{- end }}
+  {{- if $notes }}
+## {{ .name }} {#{{ .id }}}
+    {{- range sort $notes "rank" "desc" }}
+
+### v{{ .version }} {#{{ $dir }}-v{{ replace .version "." "-" }}}
+
+{{ .body | safeHTML }}
+
+[{{ .tag }} on GitHub]({{ $repo }}/releases/tag/{{ .tag }})
+    {{- end }}
+  {{- end }}
+{{ end -}}

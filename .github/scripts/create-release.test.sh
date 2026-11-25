@@ -13,6 +13,9 @@ assert_contains() { # desc haystack needle
     fail=1
   fi
 }
+assert_lacks() { # desc haystack needle
+  if printf '%s' "$2" | grep -qF -- "$3"; then echo "FAIL - $1 (found: $3)"; fail=1; else echo "ok   - $1"; fi
+}
 assert_absent() { # desc path
   if [ ! -e "$2" ]; then echo "ok   - $1"; else echo "FAIL - $1 (exists: $2)"; fail=1; fi
 }
@@ -69,6 +72,7 @@ assert_contains "marks as latest"            "$args"  "--latest"
 assert_contains "verifies the tag"           "$args"  "--verify-tag"
 assert_contains "notes carry install body"   "$notes" "dotnet add package HmacManager --version 2.7.0"
 assert_contains "notes carry the changelog"  "$notes" "Full Changelog"
+assert_lacks    "no notes file, no Highlights" "$notes" "## Highlights"
 
 # --- Case 2: release already exists -> skips, no create call ---
 rm -f "$GH_TEST_LOG_DIR/create_args" "$GH_TEST_LOG_DIR/create_notes"
@@ -78,5 +82,22 @@ whatever
 BODY
 )
 assert_absent "existing release untouched (no create call)" "$GH_TEST_LOG_DIR/create_args"
+
+# --- Case 3: a release-notes file for the tag -> it opens the notes ---
+mkdir -p "$REPO/release-notes/nuget"
+printf 'A lead sentence.\n\n- **A label:** A bullet.\n' > "$REPO/release-notes/nuget/v2.7.0.md"
+rm -f "$GH_TEST_LOG_DIR/create_args" "$GH_TEST_LOG_DIR/create_notes"
+( cd "$REPO" && GH_TEST_RELEASE_EXISTS=0 \
+    bash .github/scripts/create-release.sh "nuget/v2.7.0" "HmacManager (NuGet) v2.7.0" <<'BODY'
+Install: `dotnet add package HmacManager --version 2.7.0`
+BODY
+)
+notes="$(cat "$GH_TEST_LOG_DIR/create_notes" 2>/dev/null || true)"
+assert_contains "Highlights heading"          "$notes" "## Highlights"
+assert_contains "notes file content"          "$notes" "- **A label:** A bullet."
+assert_contains "install body still there"    "$notes" "dotnet add package HmacManager --version 2.7.0"
+assert_contains "changelog still there"       "$notes" "Full Changelog"
+first_line="$(printf '%s\n' "$notes" | head -1)"
+assert_contains "Highlights come first"       "$first_line" "## Highlights"
 
 exit $fail

@@ -193,6 +193,8 @@ and `client/`, with lookup tables under `reference/`. Prose is hand-authored —
 generator from the READMEs, so a claim in the docs is only as accurate as the person who wrote it;
 verify API names against the source before writing them down.
 
+Release notes are one file per release, `release-notes/<tag>.md`, read by the site's Releases page and by `.github/scripts/create-release.sh`, which puts them at the top of the GitHub release. Load the repo-local skills in `.claude/skills/` before writing: `hm-voice` for any text a reader sees, and `hm-release-notes` for a release's notes.
+
 `site/` is a self-contained Hugo site; `hugo server` from that directory previews it. See the
 `pages.yml` section below for how it is built and published, and why the `gh-pages` branch needs
 care.
