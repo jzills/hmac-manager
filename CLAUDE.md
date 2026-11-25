@@ -436,13 +436,13 @@ The site is served at `j.zills.io`, the custom domain on the owner's user site, 
 
 | Ecosystem | Directory | Schedule |
 |---|---|---|
-| NuGet packages | `/` | Weekly |
+| NuGet packages | `/test/*`, `/kubernetes/operator`, `/kubernetes/service`, `/samples/*/*` | Weekly, grouped (`test`, `kubeops`, `microsoft`) |
 | GitHub Actions | `/` | Weekly |
+| Docker | `/kubernetes/operator`, `/kubernetes/service` | Weekly |
 | npm | `/client/lib` | Weekly |
-| npm | `/client/sample` | Weekly |
 
 The samples under `/samples` deliberately have no npm entry: their only dependency is a
 `file:` link to `client/lib`, so there is nothing external to pin and no lockfile is
 committed. `sample-builds` keeps them honest instead.
 
-NuGet updates cover packages declared in `src/HmacManager/HmacManager.csproj` (e.g., `System.Runtime.Caching`). GitHub Actions updates cover the action versions pinned across all workflow files (e.g., `actions/checkout`, `actions/setup-dotnet`, `supercharge/redis-github-action`).
+NuGet's `directory` is not recursive and there is no root solution, so the old single `/` entry matched no project and NuGet updates never ran; each project directory is listed instead. `src/` is excluded on purpose: a library's `PackageReference` is the floor its consumers are forced up to, so it is raised when the library needs it, not on a schedule. Security updates are not governed by `dependabot.yml` and still reach `src/`. GitHub Actions updates cover the action versions pinned across all workflow files (e.g., `actions/checkout`, `actions/setup-dotnet`, `supercharge/redis-github-action`).
