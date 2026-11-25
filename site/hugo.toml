@@ -141,7 +141,8 @@ disableKinds = ["taxonomy", "term"]
   name = "HmacManager"
   mark = "hm-mark.svg"
   showname = false
-  tagline = "HMAC request authentication, in your app or in your mesh. Sign and verify requests against named policies, with replay protection built in."
+  tagline = "HMAC request authentication for ASP.NET Core, in your app or across your mesh."
+  command = "dotnet add package HmacManager"
   repo = "https://github.com/jzills/hmac-manager"
   bug = """**What happened**
 
@@ -157,12 +158,15 @@ disableKinds = ["taxonomy", "term"]
 Which you run (the NuGet package, the npm client, the ext-authz image or the Helm chart) and its version.
 """
 
+  # Four links per column, labels of 19 characters or fewer, and a tagline
+  # of two lines on every project docs site, so the footers are the same
+  # height wherever a reader is.
   [[params.oss.columns]]
     heading = "Get started"
     links = [
       { label = "Install", path = "docs/getting-started/install/" },
       { label = ".NET quickstart", path = "docs/getting-started/dotnet-quickstart/" },
-      { label = "Kubernetes quickstart", path = "docs/getting-started/kubernetes-quickstart/" },
+      { label = "Mesh quickstart", path = "docs/getting-started/kubernetes-quickstart/" },
       { label = "Client quickstart", path = "docs/getting-started/client-quickstart/" },
     ]
   [[params.oss.columns]]
