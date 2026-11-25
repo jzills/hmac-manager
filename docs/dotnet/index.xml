@@ -1351,4 +1351,87 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;p&gt;Framework and dependency logging (ASP.NET Core, KubeOps) is suppressed below
 &lt;code&gt;Error&lt;/code&gt; regardless, so routine chatter stays out while genuine framework errors
-still surface. See &lt;a href="../../reference/chart-values/"&gt;chart values&lt;/a&gt;.&lt;/p&gt;</description></item></channel></rss>
+still surface. See &lt;a href="../../reference/chart-values/"&gt;chart values&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Alongside metrics&lt;span class="hx:absolute hx:-mt-20" id="alongside-metrics"&gt;&lt;/span&gt;
+&lt;a href="#alongside-metrics" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Logs say which request was refused and why; &lt;a href="../metrics/"&gt;metrics&lt;/a&gt; say how
+often. Each rejection&amp;rsquo;s event id maps onto a verification outcome, so a rise
+on a dashboard leads straight to the events to look for.&lt;/p&gt;</description></item><item><title>Metrics</title><link>https://j.zills.io/hmac-manager/docs/dotnet/metrics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/metrics/</guid><description>
+&lt;p&gt;HmacManager counts every verification by its outcome, times it, and counts
+every signing. It records on a &lt;code&gt;System.Diagnostics.Metrics&lt;/code&gt; meter named
+&lt;code&gt;HmacManager&lt;/code&gt;, so there is nothing to register in the library: add the meter
+to whatever collects your application&amp;rsquo;s metrics.&lt;/p&gt;
+&lt;p&gt;With OpenTelemetry:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="nn"&gt;HmacManager.Diagnostics&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddOpenTelemetry&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;WithMetrics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;metrics&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;metrics&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddMeter&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;HmacManagerDiagnostics&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;MeterName&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddPrometheusExporter&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt; &lt;span class="c1"&gt;// or .AddOtlpExporter()&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Until a listener subscribes, nothing is recorded and no dependency is
+needed. &lt;code&gt;dotnet-counters monitor --counters HmacManager&lt;/code&gt; shows them live
+without changing the application at all.&lt;/p&gt;
+&lt;p&gt;On &lt;code&gt;net8.0&lt;/code&gt;, also give the duration histogram its buckets. From .NET 9 the
+library supplies them itself; without them OpenTelemetry&amp;rsquo;s defaults, sized for
+milliseconds, put every verification in the first bucket:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddView&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;hmac_manager.verification.duration&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;ExplicitBucketHistogramConfiguration&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;Boundaries&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="m"&gt;0.0001&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.00025&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.0005&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.001&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.0025&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.005&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.01&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.025&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.05&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.25&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;2.5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;5&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;})&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h2&gt;What you get&lt;span class="hx:absolute hx:-mt-20" id="what-you-get"&gt;&lt;/span&gt;
+&lt;a href="#what-you-get" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;hmac_manager.verifications&lt;/code&gt;&lt;/strong&gt;: one count per request, tagged with the
+outcome (&lt;code&gt;verified&lt;/code&gt;, &lt;code&gt;expired&lt;/code&gt;, &lt;code&gt;replayed&lt;/code&gt;, &lt;code&gt;signature_mismatch&lt;/code&gt; and the
+rest) and the policy and scheme it was checked against.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;hmac_manager.verification.duration&lt;/code&gt;&lt;/strong&gt;: how long verification took, nonce
+claim included.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;hmac_manager.signings&lt;/code&gt;&lt;/strong&gt;: outgoing requests signed, and failures to sign.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href="../../reference/metrics/"&gt;The metrics reference&lt;/a&gt; lists every instrument, tag
+and outcome.&lt;/p&gt;
+&lt;h2&gt;Where requests are counted&lt;span class="hx:absolute hx:-mt-20" id="where-requests-are-counted"&gt;&lt;/span&gt;
+&lt;a href="#where-requests-are-counted" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A request is counted once, wherever it ends:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;HmacManager.VerifyAsync&lt;/code&gt; counts everything from a parsed request onward,
+under the manager&amp;rsquo;s own policy and scheme.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;HmacAuthenticationHandler&lt;/code&gt;, through &lt;code&gt;HmacAuthenticationContextProvider&lt;/code&gt;,
+counts what is refused before a manager is reached: headers that do not
+parse, a policy this host does not have, a scheme the policy does not
+declare, and keys &lt;code&gt;OnValidateKeys&lt;/code&gt; rejected.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;A request with no HMAC &lt;code&gt;Authorization&lt;/code&gt; header at all is not counted: the
+handler leaves it to your other authentication schemes, and it may be bound
+for an anonymous endpoint. (The Kubernetes ext-authz service refuses such a
+request, and counts it as &lt;code&gt;unsigned&lt;/code&gt;.)&lt;/p&gt;
+&lt;p&gt;A name from a request is only ever a tag once it has resolved to a configured
+policy or scheme, so a caller cannot create series by inventing names. A
+request naming an unknown policy is counted as &lt;code&gt;unknown_policy&lt;/code&gt; with no policy
+tag at all.&lt;/p&gt;
+&lt;h2&gt;Alongside logging&lt;span class="hx:absolute hx:-mt-20" id="alongside-logging"&gt;&lt;/span&gt;
+&lt;a href="#alongside-logging" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Metrics say how often; &lt;a href="../logging/"&gt;logging&lt;/a&gt; says which request and why. The
+outcomes map onto the verification log events: &lt;code&gt;expired&lt;/code&gt; is event 1102,
+&lt;code&gt;replayed&lt;/code&gt; 1103, &lt;code&gt;signature_mismatch&lt;/code&gt; 1104. A rise in one outcome on a
+dashboard is the cue to look for its event in the logs.&lt;/p&gt;</description></item></channel></rss>

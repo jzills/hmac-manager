@@ -357,6 +357,7 @@ you can produce a valid signature without writing a client. See the
 &lt;li&gt;&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies as resources instead of chart values&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../reference/chart-values/"&gt;Chart values&lt;/a&gt; — the full reference&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../kubernetes/enforcement/"&gt;Enforcement&lt;/a&gt; — ingress versus waypoint&lt;/li&gt;
+&lt;li&gt;&lt;a href="../../kubernetes/metrics/"&gt;Metrics&lt;/a&gt; — Prometheus and the Grafana dashboard built into the chart&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>Client quickstart</title><link>https://j.zills.io/hmac-manager/docs/getting-started/client-quickstart/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/getting-started/client-quickstart/</guid><description>
 &lt;p&gt;The &lt;code&gt;hmac-manager&lt;/code&gt; npm package signs requests and verifies them, so it can be
 either end of the exchange — the others being the

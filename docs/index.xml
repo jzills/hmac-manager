@@ -666,6 +666,10 @@ through in the ext-authz call — the verifier rebuilds the same
 &lt;td&gt;&lt;code&gt;8081&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Signing helper. Only active when &lt;code&gt;environment: Development&lt;/code&gt;, never exposed by the Service.&lt;/td&gt;
 &lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;9464&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Prometheus &lt;code&gt;/metrics&lt;/code&gt;. Exposed by the Service only with &lt;code&gt;metrics.enabled&lt;/code&gt;; see &lt;a href="../metrics/"&gt;metrics&lt;/a&gt;. Never served on the verify port.&lt;/td&gt;
+&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h2&gt;Image&lt;span class="hx:absolute hx:-mt-20" id="image"&gt;&lt;/span&gt;
@@ -721,6 +725,16 @@ and &lt;code&gt;environment&lt;/code&gt;. The rest of this section is for runnin
 &lt;td&gt;&lt;code&gt;SignPort&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;no&lt;/td&gt;
 &lt;td&gt;Port for the dev-only signing helper. Defaults to &lt;code&gt;8081&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Metrics__Enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;Serve Prometheus metrics on the metrics port. Defaults to &lt;code&gt;true&lt;/code&gt; when running the image directly; the chart sets it from &lt;code&gt;metrics.enabled&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;Metrics__Port&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;no&lt;/td&gt;
+&lt;td&gt;Port for &lt;code&gt;/metrics&lt;/code&gt;. Defaults to &lt;code&gt;9464&lt;/code&gt;.&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
@@ -1263,7 +1277,138 @@ can send.&lt;/p&gt;
 full sign/verify path with every level enabled.&lt;/p&gt;
 &lt;p&gt;Signing content (1002, 1105) is not secret — it travels with the request — but
 it does contain the public key, the nonce and any scheme header values, which
-may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Schemes</title><link>https://j.zills.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/schemes/</guid><description>
+may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Metrics</title><link>https://j.zills.io/hmac-manager/docs/reference/metrics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/metrics/</guid><description>
+&lt;p&gt;HmacManager records metrics on a &lt;code&gt;System.Diagnostics.Metrics&lt;/code&gt; meter named
+&lt;strong&gt;&lt;code&gt;HmacManager&lt;/code&gt;&lt;/strong&gt; (&lt;code&gt;HmacManagerDiagnostics.MeterName&lt;/code&gt;). Nothing is recorded
+until something listens, so the library takes no dependency for it and an
+application that collects nothing pays one enabled check per measurement.&lt;/p&gt;
+&lt;p&gt;Instrument and tag names are stable across releases, as &lt;a href="../log-events/"&gt;log event
+ids&lt;/a&gt; are. Names below are as the meter records them, then as a
+Prometheus exporter renders them.&lt;/p&gt;
+&lt;h2&gt;Instruments&lt;span class="hx:absolute hx:-mt-20" id="instruments"&gt;&lt;/span&gt;
+&lt;a href="#instruments" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Instrument&lt;/th&gt;
+&lt;th&gt;Prometheus&lt;/th&gt;
+&lt;th&gt;Type&lt;/th&gt;
+&lt;th&gt;Tags&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.verifications&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager_verifications_total&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Counter&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;, &lt;code&gt;hmac_manager.policy&lt;/code&gt;, &lt;code&gt;hmac_manager.scheme&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.verification.duration&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager_verification_duration_seconds&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Histogram, seconds&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;, &lt;code&gt;hmac_manager.policy&lt;/code&gt;, &lt;code&gt;hmac_manager.scheme&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.signings&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager_signings_total&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Counter&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;, &lt;code&gt;hmac_manager.policy&lt;/code&gt;, &lt;code&gt;hmac_manager.scheme&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The duration covers the whole of &lt;code&gt;VerifyAsync&lt;/code&gt;, the nonce claim included, so
+it is where a slow nonce store shows. It is recorded only for verifications
+that reached a policy&amp;rsquo;s &lt;code&gt;HmacManager&lt;/code&gt;, not for requests refused before one. Its
+buckets run from 0.1 ms to 5 s (0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005,
+0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5). The library advises them on
+.NET 9 and later; on &lt;code&gt;net8.0&lt;/code&gt;, set them with a view, as
+&lt;a href="../../dotnet/metrics/"&gt;Metrics&lt;/a&gt; shows.&lt;/p&gt;
+&lt;h2&gt;Verification outcomes&lt;span class="hx:absolute hx:-mt-20" id="verification-outcomes"&gt;&lt;/span&gt;
+&lt;a href="#verification-outcomes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Every request the library is asked to verify is counted once, under exactly
+one outcome.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;Policy tag&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;verified&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Accepted. The nonce is claimed.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;unsigned&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;never&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;No HMAC &lt;code&gt;Authorization&lt;/code&gt; header at all. Counted only by the ext-authz service, which refuses it; in an application the ASP.NET Core handler leaves such a request to other schemes, so it is not counted there.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;invalid_headers&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;only from &lt;code&gt;VerifyAsync&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;An HMAC &lt;code&gt;Authorization&lt;/code&gt; header, with the other HMAC headers absent or unparseable.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;unknown_policy&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;never&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;The request named a policy this process does not have.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;unknown_scheme&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes, no scheme&lt;/td&gt;
+&lt;td&gt;The policy exists but does not declare the scheme the request named.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;keys_rejected&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;HmacEvents.OnValidateKeys&lt;/code&gt; refused the policy&amp;rsquo;s keys (ASP.NET Core handler only).&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;headers_missing&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;A header the request&amp;rsquo;s scheme signs is absent.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;expired&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Outside the policy&amp;rsquo;s &lt;code&gt;MaxAgeInSeconds&lt;/code&gt; window. Usually clock skew.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;signature_mismatch&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;The recomputed signature differs: a wrong key, a client bug, or a forgery. &lt;a href="../log-events/#reading-a-rejection"&gt;Reading a rejection&lt;/a&gt; covers telling them apart.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;replayed&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;The nonce was already claimed.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;error&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Verification threw, almost always because the nonce cache could not be reached. The request is refused (the cache fails closed), so a store outage shows here rather than as a gap in traffic.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Signing outcomes are &lt;code&gt;signed&lt;/code&gt; and &lt;code&gt;failed&lt;/code&gt;.&lt;/p&gt;
+&lt;h2&gt;Tags never carry what a caller chose&lt;span class="hx:absolute hx:-mt-20" id="tags-never-carry-what-a-caller-chose"&gt;&lt;/span&gt;
+&lt;a href="#tags-never-carry-what-a-caller-chose" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;hmac_manager.policy&lt;/code&gt; and &lt;code&gt;hmac_manager.scheme&lt;/code&gt; are set only once the name has
+resolved to a policy or scheme this process has configured, so the number of
+series is bounded by your configuration. A name that did not resolve came off
+a request header: tagging it would let anyone who can reach the endpoint
+create series without limit. That is why &lt;code&gt;unknown_policy&lt;/code&gt; has no policy tag
+and &lt;code&gt;unknown_scheme&lt;/code&gt; has no scheme tag. No tag carries a nonce, a signature or
+a key.&lt;/p&gt;
+&lt;h2&gt;Collecting them&lt;span class="hx:absolute hx:-mt-20" id="collecting-them"&gt;&lt;/span&gt;
+&lt;a href="#collecting-them" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;ASP.NET Core with OpenTelemetry:&lt;/strong&gt; add the meter by name. See
+&lt;a href="../../dotnet/metrics/"&gt;Metrics&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Kubernetes:&lt;/strong&gt; the ext-authz service serves these on a Prometheus port of
+its own, and the chart can add a &lt;code&gt;ServiceMonitor&lt;/code&gt; and a Grafana dashboard.
+See &lt;a href="../../kubernetes/metrics/"&gt;Metrics&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>Schemes</title><link>https://j.zills.io/hmac-manager/docs/concepts/schemes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/schemes/</guid><description>
 &lt;p&gt;A scheme is a named list of headers whose &lt;strong&gt;values become part of the
 signature&lt;/strong&gt;. It answers a question a bare HMAC cannot: this request is
 authentic, but authentic &lt;em&gt;as whom&lt;/em&gt;?&lt;/p&gt;
@@ -1693,6 +1838,29 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
+&lt;h2&gt;Metrics and a dashboard&lt;span class="hx:absolute hx:-mt-20" id="metrics-and-a-dashboard"&gt;&lt;/span&gt;
+&lt;a href="#metrics-and-a-dashboard" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The chart ships a Grafana dashboard, and can have Prometheus scrape the
+verifier, with three values:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;metrics&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;serviceMonitor&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;dashboard&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;With kube-prometheus-stack, two of its defaults also need matching; see
+&lt;a href="../metrics/#with-kube-prometheus-stack"&gt;metrics&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Values&lt;span class="hx:absolute hx:-mt-20" id="values"&gt;&lt;/span&gt;
 &lt;a href="#values" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The full table is in the &lt;a href="../../reference/chart-values/"&gt;chart values reference&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Next&lt;span class="hx:absolute hx:-mt-20" id="next"&gt;&lt;/span&gt;
@@ -1700,6 +1868,7 @@ data-copied-label="Copied!"
 &lt;li&gt;&lt;a href="../hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies with &lt;code&gt;kubectl&lt;/code&gt; instead&lt;/li&gt;
 &lt;li&gt;&lt;a href="../enforcement/"&gt;Enforcement&lt;/a&gt; — ingress gateway versus ambient waypoint&lt;/li&gt;
 &lt;li&gt;&lt;a href="../redis/"&gt;Redis&lt;/a&gt; — replay protection and the replica constraint&lt;/li&gt;
+&lt;li&gt;&lt;a href="../metrics/"&gt;Metrics&lt;/a&gt; — Prometheus, the ServiceMonitor and the Grafana dashboard&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>Chart values</title><link>https://j.zills.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/chart-values/</guid><description>
 &lt;h2&gt;Policies&lt;span class="hx:absolute hx:-mt-20" id="policies"&gt;&lt;/span&gt;
 &lt;a href="#policies" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;At least one is required.&lt;/p&gt;
@@ -1870,6 +2039,46 @@ already exists.&lt;/p&gt;
 &lt;td&gt;&lt;code&gt;logging.level&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;&lt;code&gt;Information&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Verbosity of HmacManager&amp;rsquo;s own messages on both the verifier and the operator. &lt;code&gt;Trace&lt;/code&gt; and &lt;code&gt;Debug&lt;/code&gt; are per-request; &lt;code&gt;Information&lt;/code&gt; covers policy and config changes only. Framework logging (ASP.NET Core, KubeOps) is suppressed below &lt;code&gt;Error&lt;/code&gt; regardless.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Serve Prometheus metrics on &lt;code&gt;metrics.port&lt;/code&gt; and add it to the Service. See &lt;a href="../../kubernetes/metrics/"&gt;metrics&lt;/a&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.port&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;9464&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Metrics port. Must differ from &lt;code&gt;service.port&lt;/code&gt; and from 8081.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Render a Prometheus Operator &lt;code&gt;ServiceMonitor&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.interval&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;30s&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Scrape interval.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.labels&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;{}&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Extra labels for your Prometheus&amp;rsquo;s selector.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Render the Grafana dashboard as a sidecar-labelled ConfigMap.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.namespace&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;release namespace&lt;/td&gt;
+&lt;td&gt;Namespace for that ConfigMap.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.labels&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;grafana_dashboard: &amp;quot;1&amp;quot;&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Labels the Grafana sidecar selects by.&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;&lt;code&gt;istio.enabled&lt;/code&gt;&lt;/td&gt;
@@ -2168,6 +2377,7 @@ you can produce a valid signature without writing a client. See the
 &lt;li&gt;&lt;a href="../../kubernetes/hmacpolicy-crd/"&gt;The HmacPolicy CRD&lt;/a&gt; — managing policies as resources instead of chart values&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../reference/chart-values/"&gt;Chart values&lt;/a&gt; — the full reference&lt;/li&gt;
 &lt;li&gt;&lt;a href="../../kubernetes/enforcement/"&gt;Enforcement&lt;/a&gt; — ingress versus waypoint&lt;/li&gt;
+&lt;li&gt;&lt;a href="../../kubernetes/metrics/"&gt;Metrics&lt;/a&gt; — Prometheus and the Grafana dashboard built into the chart&lt;/li&gt;
 &lt;/ul&gt;</description></item><item><title>Signing content</title><link>https://j.zills.io/hmac-manager/docs/concepts/signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/concepts/signing-content/</guid><description>
 &lt;p&gt;The signature is an HMAC over a single string built from the request. Both
 sides build that string independently and compare the results, so &lt;strong&gt;every
@@ -4331,7 +4541,9 @@ spread across them, exactly one is accepted. Policies on &lt;code&gt;Memory&lt;/
 unaffected.&lt;/p&gt;
 &lt;p&gt;A Redis fault fails the check rather than letting the request through, and is
 logged as event 1400; losing and regaining the connection are events 1401 and
-1402. See the &lt;a href="../../reference/log-events/"&gt;event reference&lt;/a&gt;.&lt;/p&gt;
+1402. See the &lt;a href="../../reference/log-events/"&gt;event reference&lt;/a&gt;. With &lt;a href="../metrics/"&gt;metrics&lt;/a&gt; on, those requests are counted
+under the &lt;code&gt;error&lt;/code&gt; outcome, and the dashboard&amp;rsquo;s &lt;strong&gt;Errors&lt;/strong&gt; panel turns red for
+as long as Redis is unreachable.&lt;/p&gt;
 &lt;h3&gt;Upgrading from 0.4.2 or earlier&lt;span class="hx:absolute hx:-mt-20" id="upgrading-from-042-or-earlier"&gt;&lt;/span&gt;
 &lt;a href="#upgrading-from-042-or-earlier" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Until every replica runs the new version, the guarantee is only as strong as
 the oldest pod. Earlier versions check for a nonce and then record it, through
@@ -4367,6 +4579,17 @@ protection would appear configured and do nothing. Rather than let that deploy,
 the chart fails.&lt;/p&gt;
 &lt;p&gt;So &lt;code&gt;redis.enabled=false&lt;/code&gt; is for single-replica deployments only — a
 development cluster, or something genuinely running one pod.&lt;/p&gt;
+&lt;h3&gt;Turning it back on&lt;span class="hx:absolute hx:-mt-20" id="turning-it-back-on"&gt;&lt;/span&gt;
+&lt;a href="#turning-it-back-on" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Setting &lt;code&gt;redis.enabled=true&lt;/code&gt; on an existing release starts Redis and restarts
+the verifier, but the policies it reads still say &lt;code&gt;Memory&lt;/code&gt; until the operator
+has rendered them again and the kubelet has delivered the new ConfigMap,
+typically within a minute or two. The verifier then reloads them (event 1211)
+and claims nonces in Redis from there on.&lt;/p&gt;
+&lt;p&gt;Until that reload each pod uses its own in-process cache. Requests are still
+verified, and a replay to the same pod is still refused, but a replay landing
+on a different replica is not. Since the release was on one replica, that only
+matters if the same upgrade raises &lt;code&gt;replicaCount&lt;/code&gt;: turn Redis on first, and
+scale out once event 1211 has been logged.&lt;/p&gt;
 &lt;h2&gt;What is stored&lt;span class="hx:absolute hx:-mt-20" id="what-is-stored"&gt;&lt;/span&gt;
 &lt;a href="#what-is-stored" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Only used nonces, each for the length of its policy&amp;rsquo;s &lt;code&gt;maxAgeInSeconds&lt;/code&gt;. No
 keys, no request content, no signatures. A nonce is a &lt;code&gt;Guid&lt;/code&gt; that is already
@@ -4620,7 +4843,208 @@ data-copied-label="Copied!"
 &lt;/button&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;See the &lt;a href="../../reference/headers/"&gt;header reference&lt;/a&gt; for the exact values.&lt;/p&gt;</description></item><item><title>Custom signing content</title><link>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</guid><description>
+&lt;p&gt;See the &lt;a href="../../reference/headers/"&gt;header reference&lt;/a&gt; for the exact values.&lt;/p&gt;</description></item><item><title>Metrics and the Grafana dashboard</title><link>https://j.zills.io/hmac-manager/docs/kubernetes/metrics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/kubernetes/metrics/</guid><description>
+&lt;p&gt;The ext-authz service can serve Prometheus metrics: every verification by
+outcome and policy, verification latency, and ASP.NET Core&amp;rsquo;s own request
+metrics for the check as a whole. The chart can also add a &lt;code&gt;ServiceMonitor&lt;/code&gt;
+for the Prometheus Operator and &lt;strong&gt;a ready-made Grafana dashboard&lt;/strong&gt;, so
+monitoring is three values away.&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://j.zills.io/hmac-manager/docs/kubernetes/metrics/dashboard.png" alt="The HmacManager dashboard in Grafana: verifications per second, the share refused, replays, verify p95 and errors across the top; verifications by outcome, refusals by policy, verified requests by policy and verification latency below; ext-authz latency and responses along the bottom." loading="lazy" /&gt;&lt;/p&gt;
+&lt;h2&gt;Turning it on&lt;span class="hx:absolute hx:-mt-20" id="turning-it-on"&gt;&lt;/span&gt;
+&lt;a href="#turning-it-on" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;All of it is off by default. The metrics port is reachable from anywhere the
+Service is, and the series name every policy and how much traffic it carries,
+so turning it on is a deliberate choice.&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;metrics&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c"&gt;# serve /metrics on port 9464 and add it to the Service&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;serviceMonitor&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c"&gt;# have the Prometheus Operator scrape it&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;dashboard&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c"&gt;# ship the dashboard as a ConfigMap for Grafana&amp;#39;s sidecar&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;th&gt;Default&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Serve &lt;code&gt;/metrics&lt;/code&gt; on the metrics port, and add the port to the Service.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.port&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;9464&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;The metrics port. Must differ from &lt;code&gt;service.port&lt;/code&gt; and from 8081.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Render a &lt;code&gt;ServiceMonitor&lt;/code&gt;. Needs the &lt;code&gt;monitoring.coreos.com&lt;/code&gt; CRDs.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.interval&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;30s&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Scrape interval.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.labels&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;{}&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Extra labels, for your Prometheus&amp;rsquo;s &lt;code&gt;serviceMonitorSelector&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Render the dashboard as a ConfigMap for Grafana&amp;rsquo;s sidecar.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.namespace&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;release namespace&lt;/td&gt;
+&lt;td&gt;Where to create that ConfigMap.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.labels&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;grafana_dashboard: &amp;quot;1&amp;quot;&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;The label the sidecar watches for.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The dashboard needs &lt;code&gt;metrics.enabled&lt;/code&gt; too: on its own it renders, but has
+nothing to show.&lt;/p&gt;
+&lt;h2&gt;With kube-prometheus-stack&lt;span class="hx:absolute hx:-mt-20" id="with-kube-prometheus-stack"&gt;&lt;/span&gt;
+&lt;a href="#with-kube-prometheus-stack" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;a href="https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"target="_blank" rel="noopener"&gt;kube-prometheus-stack&lt;/a&gt;
+runs everything the values above rely on: the Prometheus Operator, Grafana,
+and Grafana&amp;rsquo;s dashboard sidecar. Two of its defaults decide whether the
+&lt;code&gt;ServiceMonitor&lt;/code&gt; and the dashboard are picked up, and both are easy to miss:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Prometheus only selects &lt;code&gt;ServiceMonitor&lt;/code&gt;s labelled with its release&lt;/strong&gt;,
+&lt;code&gt;release: &amp;lt;its release name&amp;gt;&lt;/code&gt;. Give ours that label.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The dashboard sidecar only looks in its own namespace.&lt;/strong&gt; Create the
+ConfigMap there.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;With kube-prometheus-stack installed as &lt;code&gt;kps&lt;/code&gt; in &lt;code&gt;monitoring&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-yaml" data-lang="yaml"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="nt"&gt;metrics&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;serviceMonitor&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;labels&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;release&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;kps&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;dashboard&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;enabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="w"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nt"&gt;namespace&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="l"&gt;monitoring&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;If your stack is already configured to select every &lt;code&gt;ServiceMonitor&lt;/code&gt;
+(&lt;code&gt;prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues: false&lt;/code&gt;)
+or to search every namespace for dashboards
+(&lt;code&gt;grafana.sidecar.dashboards.searchNamespace: ALL&lt;/code&gt;), the corresponding line
+is not needed.&lt;/p&gt;
+&lt;h2&gt;Checking it works&lt;span class="hx:absolute hx:-mt-20" id="checking-it-works"&gt;&lt;/span&gt;
+&lt;a href="#checking-it-works" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;From the scrape outwards:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;# 1. The service serves the metrics. Expect hmac_manager_verifications_total once a request is checked.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;kubectl port-forward -n hmac-system svc/hmac-manager &lt;span class="m"&gt;9464&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;curl -s localhost:9464/metrics &lt;span class="p"&gt;|&lt;/span&gt; grep &lt;span class="s1"&gt;&amp;#39;^hmac_manager&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;# 2. Prometheus selected the ServiceMonitor: Status → Targets lists hmac-manager, state UP.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="c1"&gt;# 3. Grafana loaded the dashboard: search for &amp;#34;HmacManager&amp;#34;, or check the sidecar&amp;#39;s log.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;kubectl logs -n monitoring deploy/kps-grafana -c grafana-sc-dashboard &lt;span class="p"&gt;|&lt;/span&gt; grep hmac-manager&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Symptom&lt;/th&gt;
+&lt;th&gt;Cause&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;No &lt;strong&gt;HmacManager&lt;/strong&gt; dashboard in Grafana&lt;/td&gt;
+&lt;td&gt;The sidecar is not watching the ConfigMap&amp;rsquo;s namespace, or watches for a different label. Set &lt;code&gt;metrics.dashboard.namespace&lt;/code&gt; or &lt;code&gt;metrics.dashboard.labels&lt;/code&gt; to match it.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;The dashboard is there, every panel says &lt;em&gt;No data&lt;/em&gt;&lt;/td&gt;
+&lt;td&gt;Prometheus is not scraping the service: &lt;code&gt;metrics.enabled&lt;/code&gt; is off, or the &lt;code&gt;ServiceMonitor&lt;/code&gt; lacks the label your Prometheus selects by.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;The &lt;strong&gt;Job&lt;/strong&gt; and &lt;strong&gt;Policy&lt;/strong&gt; filters are empty&lt;/td&gt;
+&lt;td&gt;The same, or nothing has been verified yet: the series appear on the first request checked.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Without kube-prometheus-stack, scrape port &lt;code&gt;metrics&lt;/code&gt; on the &lt;code&gt;hmac-manager&lt;/code&gt;
+Service however your Prometheus is configured, and import
+&lt;code&gt;dashboards/hmac-manager.json&lt;/code&gt; from the chart into Grafana, then pick your
+Prometheus in its &lt;strong&gt;Data source&lt;/strong&gt; filter.&lt;/p&gt;
+&lt;h2&gt;Why a port of its own&lt;span class="hx:absolute hx:-mt-20" id="why-a-port-of-its-own"&gt;&lt;/span&gt;
+&lt;a href="#why-a-port-of-its-own" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Envoy sends the ext-authz service the original request&amp;rsquo;s method and path, and
+treats a &lt;code&gt;200&lt;/code&gt; as &lt;em&gt;allow&lt;/em&gt;. A &lt;code&gt;/metrics&lt;/code&gt; route on the verify port would answer
+&lt;code&gt;200&lt;/code&gt; to a request for &lt;code&gt;/metrics&lt;/code&gt; on any protected service, and the gateway or
+waypoint would let it through unsigned. So &lt;code&gt;/metrics&lt;/code&gt; is served only on the
+metrics port. On the verify port it is verified like any other path, and the
+chart refuses a &lt;code&gt;metrics.port&lt;/code&gt; equal to &lt;code&gt;service.port&lt;/code&gt;. The development
+signing helper on port 8081 is kept off the verify port for the same reason.&lt;/p&gt;
+&lt;h2&gt;The dashboard&lt;span class="hx:absolute hx:-mt-20" id="the-dashboard"&gt;&lt;/span&gt;
+&lt;a href="#the-dashboard" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The dashboard is &lt;code&gt;dashboards/hmac-manager.json&lt;/code&gt; in the chart. It shows:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Verifications per second, the share refused, replays, p95 latency and
+errors&lt;/strong&gt;, as a row of stats. Replays and errors turn red above zero.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Verifications by outcome&lt;/strong&gt;, stacked: &lt;code&gt;verified&lt;/code&gt; and every reason for a
+refusal, including &lt;code&gt;unsigned&lt;/code&gt; for requests with no HMAC headers at all.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Refusals by policy&lt;/strong&gt;, and &lt;strong&gt;verified requests by policy&lt;/strong&gt;. A refusal from
+before a policy resolved (&lt;code&gt;unsigned&lt;/code&gt;, &lt;code&gt;invalid_headers&lt;/code&gt;, &lt;code&gt;unknown_policy&lt;/code&gt;)
+has no policy, deliberately: that name came from the caller.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Verification latency&lt;/strong&gt; p50, p95 and p99, and the same for &lt;strong&gt;the ext-authz
+check as a whole&lt;/strong&gt;, which is what the mesh waits on for each request.
+Both histograms run from 0.1 ms to 5 s; a verification against Redis
+typically takes about a millisecond, and against the in-process cache a
+fraction of one.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ext-authz responses&lt;/strong&gt; by status: &lt;code&gt;200&lt;/code&gt; allows, &lt;code&gt;403&lt;/code&gt; denies, and a &lt;code&gt;5xx&lt;/code&gt;
+is the check itself failing. These panels count only the checks: the
+scrape, and the development signing helper, are left out.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Filter by &lt;code&gt;job&lt;/code&gt; and by policy at the top.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Errors&lt;/strong&gt; above zero almost always means &lt;a href="../redis/"&gt;Redis&lt;/a&gt; is unreachable.
+The service fails closed, so those requests are refused, not let through. On
+the dashboard an outage looks like this: errors and &lt;code&gt;5xx&lt;/code&gt; responses rise, and
+verification latency climbs to the 5 s Redis timeout, until Redis is back.&lt;/p&gt;
+&lt;p&gt;&lt;a href="../../reference/metrics/"&gt;The metrics reference&lt;/a&gt; lists every series and
+outcome.&lt;/p&gt;</description></item><item><title>Custom signing content</title><link>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/</guid><description>
 &lt;p&gt;A policy can build its own signing content instead of using the
 &lt;a href="../../concepts/signing-content/"&gt;default format&lt;/a&gt;:&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -5184,4 +5608,87 @@ data-copied-label="Copied!"
 &lt;/div&gt;
 &lt;p&gt;Framework and dependency logging (ASP.NET Core, KubeOps) is suppressed below
 &lt;code&gt;Error&lt;/code&gt; regardless, so routine chatter stays out while genuine framework errors
-still surface. See &lt;a href="../../reference/chart-values/"&gt;chart values&lt;/a&gt;.&lt;/p&gt;</description></item></channel></rss>
+still surface. See &lt;a href="../../reference/chart-values/"&gt;chart values&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Alongside metrics&lt;span class="hx:absolute hx:-mt-20" id="alongside-metrics"&gt;&lt;/span&gt;
+&lt;a href="#alongside-metrics" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Logs say which request was refused and why; &lt;a href="../metrics/"&gt;metrics&lt;/a&gt; say how
+often. Each rejection&amp;rsquo;s event id maps onto a verification outcome, so a rise
+on a dashboard leads straight to the events to look for.&lt;/p&gt;</description></item><item><title>Metrics</title><link>https://j.zills.io/hmac-manager/docs/dotnet/metrics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/dotnet/metrics/</guid><description>
+&lt;p&gt;HmacManager counts every verification by its outcome, times it, and counts
+every signing. It records on a &lt;code&gt;System.Diagnostics.Metrics&lt;/code&gt; meter named
+&lt;code&gt;HmacManager&lt;/code&gt;, so there is nothing to register in the library: add the meter
+to whatever collects your application&amp;rsquo;s metrics.&lt;/p&gt;
+&lt;p&gt;With OpenTelemetry:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="k"&gt;using&lt;/span&gt; &lt;span class="nn"&gt;HmacManager.Diagnostics&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="n"&gt;builder&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Services&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddOpenTelemetry&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;WithMetrics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;metrics&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;metrics&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddMeter&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;HmacManagerDiagnostics&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;MeterName&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddPrometheusExporter&lt;/span&gt;&lt;span class="p"&gt;());&lt;/span&gt; &lt;span class="c1"&gt;// or .AddOtlpExporter()&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Until a listener subscribes, nothing is recorded and no dependency is
+needed. &lt;code&gt;dotnet-counters monitor --counters HmacManager&lt;/code&gt; shows them live
+without changing the application at all.&lt;/p&gt;
+&lt;p&gt;On &lt;code&gt;net8.0&lt;/code&gt;, also give the duration histogram its buckets. From .NET 9 the
+library supplies them itself; without them OpenTelemetry&amp;rsquo;s defaults, sized for
+milliseconds, put every verification in the first bucket:&lt;/p&gt;
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
+&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" class="chroma"&gt;&lt;code class="language-csharp" data-lang="csharp"&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AddView&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#34;hmac_manager.verification.duration&amp;#34;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;ExplicitBucketHistogramConfiguration&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt; &lt;span class="n"&gt;Boundaries&lt;/span&gt; &lt;span class="p"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="m"&gt;0.0001&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.00025&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.0005&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.001&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.0025&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.005&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.01&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.025&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.05&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.25&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;0.5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;2.5&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="m"&gt;5&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class="line"&gt;&lt;span class="cl"&gt;&lt;span class="p"&gt;})&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+aria-label="Copy code"
+data-copied-label="Copied!"
+&gt;
+&lt;div class="hextra-copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;div class="hextra-success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
+&lt;/button&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h2&gt;What you get&lt;span class="hx:absolute hx:-mt-20" id="what-you-get"&gt;&lt;/span&gt;
+&lt;a href="#what-you-get" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;hmac_manager.verifications&lt;/code&gt;&lt;/strong&gt;: one count per request, tagged with the
+outcome (&lt;code&gt;verified&lt;/code&gt;, &lt;code&gt;expired&lt;/code&gt;, &lt;code&gt;replayed&lt;/code&gt;, &lt;code&gt;signature_mismatch&lt;/code&gt; and the
+rest) and the policy and scheme it was checked against.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;hmac_manager.verification.duration&lt;/code&gt;&lt;/strong&gt;: how long verification took, nonce
+claim included.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;hmac_manager.signings&lt;/code&gt;&lt;/strong&gt;: outgoing requests signed, and failures to sign.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href="../../reference/metrics/"&gt;The metrics reference&lt;/a&gt; lists every instrument, tag
+and outcome.&lt;/p&gt;
+&lt;h2&gt;Where requests are counted&lt;span class="hx:absolute hx:-mt-20" id="where-requests-are-counted"&gt;&lt;/span&gt;
+&lt;a href="#where-requests-are-counted" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;A request is counted once, wherever it ends:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;HmacManager.VerifyAsync&lt;/code&gt; counts everything from a parsed request onward,
+under the manager&amp;rsquo;s own policy and scheme.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;HmacAuthenticationHandler&lt;/code&gt;, through &lt;code&gt;HmacAuthenticationContextProvider&lt;/code&gt;,
+counts what is refused before a manager is reached: headers that do not
+parse, a policy this host does not have, a scheme the policy does not
+declare, and keys &lt;code&gt;OnValidateKeys&lt;/code&gt; rejected.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;A request with no HMAC &lt;code&gt;Authorization&lt;/code&gt; header at all is not counted: the
+handler leaves it to your other authentication schemes, and it may be bound
+for an anonymous endpoint. (The Kubernetes ext-authz service refuses such a
+request, and counts it as &lt;code&gt;unsigned&lt;/code&gt;.)&lt;/p&gt;
+&lt;p&gt;A name from a request is only ever a tag once it has resolved to a configured
+policy or scheme, so a caller cannot create series by inventing names. A
+request naming an unknown policy is counted as &lt;code&gt;unknown_policy&lt;/code&gt; with no policy
+tag at all.&lt;/p&gt;
+&lt;h2&gt;Alongside logging&lt;span class="hx:absolute hx:-mt-20" id="alongside-logging"&gt;&lt;/span&gt;
+&lt;a href="#alongside-logging" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Metrics say how often; &lt;a href="../logging/"&gt;logging&lt;/a&gt; says which request and why. The
+outcomes map onto the verification log events: &lt;code&gt;expired&lt;/code&gt; is event 1102,
+&lt;code&gt;replayed&lt;/code&gt; 1103, &lt;code&gt;signature_mismatch&lt;/code&gt; 1104. A rise in one outcome on a
+dashboard is the cue to look for its event in the logs.&lt;/p&gt;</description></item></channel></rss>

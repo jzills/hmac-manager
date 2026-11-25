@@ -366,7 +366,138 @@ can send.&lt;/p&gt;
 full sign/verify path with every level enabled.&lt;/p&gt;
 &lt;p&gt;Signing content (1002, 1105) is not secret — it travels with the request — but
 it does contain the public key, the nonce and any scheme header values, which
-may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Chart values</title><link>https://j.zills.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/chart-values/</guid><description>
+may identify a user. That is why it is &lt;code&gt;Trace&lt;/code&gt; and off by default.&lt;/p&gt;</description></item><item><title>Metrics</title><link>https://j.zills.io/hmac-manager/docs/reference/metrics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/metrics/</guid><description>
+&lt;p&gt;HmacManager records metrics on a &lt;code&gt;System.Diagnostics.Metrics&lt;/code&gt; meter named
+&lt;strong&gt;&lt;code&gt;HmacManager&lt;/code&gt;&lt;/strong&gt; (&lt;code&gt;HmacManagerDiagnostics.MeterName&lt;/code&gt;). Nothing is recorded
+until something listens, so the library takes no dependency for it and an
+application that collects nothing pays one enabled check per measurement.&lt;/p&gt;
+&lt;p&gt;Instrument and tag names are stable across releases, as &lt;a href="../log-events/"&gt;log event
+ids&lt;/a&gt; are. Names below are as the meter records them, then as a
+Prometheus exporter renders them.&lt;/p&gt;
+&lt;h2&gt;Instruments&lt;span class="hx:absolute hx:-mt-20" id="instruments"&gt;&lt;/span&gt;
+&lt;a href="#instruments" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Instrument&lt;/th&gt;
+&lt;th&gt;Prometheus&lt;/th&gt;
+&lt;th&gt;Type&lt;/th&gt;
+&lt;th&gt;Tags&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.verifications&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager_verifications_total&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Counter&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;, &lt;code&gt;hmac_manager.policy&lt;/code&gt;, &lt;code&gt;hmac_manager.scheme&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.verification.duration&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager_verification_duration_seconds&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Histogram, seconds&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;, &lt;code&gt;hmac_manager.policy&lt;/code&gt;, &lt;code&gt;hmac_manager.scheme&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.signings&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager_signings_total&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Counter&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;, &lt;code&gt;hmac_manager.policy&lt;/code&gt;, &lt;code&gt;hmac_manager.scheme&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The duration covers the whole of &lt;code&gt;VerifyAsync&lt;/code&gt;, the nonce claim included, so
+it is where a slow nonce store shows. It is recorded only for verifications
+that reached a policy&amp;rsquo;s &lt;code&gt;HmacManager&lt;/code&gt;, not for requests refused before one. Its
+buckets run from 0.1 ms to 5 s (0.0001, 0.00025, 0.0005, 0.001, 0.0025, 0.005,
+0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5). The library advises them on
+.NET 9 and later; on &lt;code&gt;net8.0&lt;/code&gt;, set them with a view, as
+&lt;a href="../../dotnet/metrics/"&gt;Metrics&lt;/a&gt; shows.&lt;/p&gt;
+&lt;h2&gt;Verification outcomes&lt;span class="hx:absolute hx:-mt-20" id="verification-outcomes"&gt;&lt;/span&gt;
+&lt;a href="#verification-outcomes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Every request the library is asked to verify is counted once, under exactly
+one outcome.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;hmac_manager.outcome&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;Policy tag&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;verified&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Accepted. The nonce is claimed.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;unsigned&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;never&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;No HMAC &lt;code&gt;Authorization&lt;/code&gt; header at all. Counted only by the ext-authz service, which refuses it; in an application the ASP.NET Core handler leaves such a request to other schemes, so it is not counted there.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;invalid_headers&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;only from &lt;code&gt;VerifyAsync&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;An HMAC &lt;code&gt;Authorization&lt;/code&gt; header, with the other HMAC headers absent or unparseable.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;unknown_policy&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;never&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;The request named a policy this process does not have.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;unknown_scheme&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes, no scheme&lt;/td&gt;
+&lt;td&gt;The policy exists but does not declare the scheme the request named.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;keys_rejected&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;HmacEvents.OnValidateKeys&lt;/code&gt; refused the policy&amp;rsquo;s keys (ASP.NET Core handler only).&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;headers_missing&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;A header the request&amp;rsquo;s scheme signs is absent.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;expired&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Outside the policy&amp;rsquo;s &lt;code&gt;MaxAgeInSeconds&lt;/code&gt; window. Usually clock skew.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;signature_mismatch&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;The recomputed signature differs: a wrong key, a client bug, or a forgery. &lt;a href="../log-events/#reading-a-rejection"&gt;Reading a rejection&lt;/a&gt; covers telling them apart.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;replayed&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;The nonce was already claimed.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;error&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;yes&lt;/td&gt;
+&lt;td&gt;Verification threw, almost always because the nonce cache could not be reached. The request is refused (the cache fails closed), so a store outage shows here rather than as a gap in traffic.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Signing outcomes are &lt;code&gt;signed&lt;/code&gt; and &lt;code&gt;failed&lt;/code&gt;.&lt;/p&gt;
+&lt;h2&gt;Tags never carry what a caller chose&lt;span class="hx:absolute hx:-mt-20" id="tags-never-carry-what-a-caller-chose"&gt;&lt;/span&gt;
+&lt;a href="#tags-never-carry-what-a-caller-chose" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;code&gt;hmac_manager.policy&lt;/code&gt; and &lt;code&gt;hmac_manager.scheme&lt;/code&gt; are set only once the name has
+resolved to a policy or scheme this process has configured, so the number of
+series is bounded by your configuration. A name that did not resolve came off
+a request header: tagging it would let anyone who can reach the endpoint
+create series without limit. That is why &lt;code&gt;unknown_policy&lt;/code&gt; has no policy tag
+and &lt;code&gt;unknown_scheme&lt;/code&gt; has no scheme tag. No tag carries a nonce, a signature or
+a key.&lt;/p&gt;
+&lt;h2&gt;Collecting them&lt;span class="hx:absolute hx:-mt-20" id="collecting-them"&gt;&lt;/span&gt;
+&lt;a href="#collecting-them" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;ASP.NET Core with OpenTelemetry:&lt;/strong&gt; add the meter by name. See
+&lt;a href="../../dotnet/metrics/"&gt;Metrics&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Kubernetes:&lt;/strong&gt; the ext-authz service serves these on a Prometheus port of
+its own, and the chart can add a &lt;code&gt;ServiceMonitor&lt;/code&gt; and a Grafana dashboard.
+See &lt;a href="../../kubernetes/metrics/"&gt;Metrics&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;</description></item><item><title>Chart values</title><link>https://j.zills.io/hmac-manager/docs/reference/chart-values/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://j.zills.io/hmac-manager/docs/reference/chart-values/</guid><description>
 &lt;h2&gt;Policies&lt;span class="hx:absolute hx:-mt-20" id="policies"&gt;&lt;/span&gt;
 &lt;a href="#policies" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;At least one is required.&lt;/p&gt;
 &lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
@@ -536,6 +667,46 @@ already exists.&lt;/p&gt;
 &lt;td&gt;&lt;code&gt;logging.level&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;&lt;code&gt;Information&lt;/code&gt;&lt;/td&gt;
 &lt;td&gt;Verbosity of HmacManager&amp;rsquo;s own messages on both the verifier and the operator. &lt;code&gt;Trace&lt;/code&gt; and &lt;code&gt;Debug&lt;/code&gt; are per-request; &lt;code&gt;Information&lt;/code&gt; covers policy and config changes only. Framework logging (ASP.NET Core, KubeOps) is suppressed below &lt;code&gt;Error&lt;/code&gt; regardless.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Serve Prometheus metrics on &lt;code&gt;metrics.port&lt;/code&gt; and add it to the Service. See &lt;a href="../../kubernetes/metrics/"&gt;metrics&lt;/a&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.port&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;9464&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Metrics port. Must differ from &lt;code&gt;service.port&lt;/code&gt; and from 8081.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Render a Prometheus Operator &lt;code&gt;ServiceMonitor&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.interval&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;30s&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Scrape interval.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.serviceMonitor.labels&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;{}&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Extra labels for your Prometheus&amp;rsquo;s selector.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.enabled&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;false&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Render the Grafana dashboard as a sidecar-labelled ConfigMap.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.namespace&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;release namespace&lt;/td&gt;
+&lt;td&gt;Namespace for that ConfigMap.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;metrics.dashboard.labels&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;grafana_dashboard: &amp;quot;1&amp;quot;&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Labels the Grafana sidecar selects by.&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;&lt;code&gt;istio.enabled&lt;/code&gt;&lt;/td&gt;
