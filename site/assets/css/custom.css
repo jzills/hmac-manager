@@ -28,9 +28,8 @@ body {
 
 /* Hero
  * ------------------------------------------------------------------
- * kx's hero, in this palette: the mark, the title, the lede, two buttons,
- * the install command to copy, and a link down to the other ways to
- * install. Behind it, kx's dot grid and accent wash. */
+ * kx's hero, in this palette: the mark, the title, the lede, two buttons
+ * and the install panel. Behind it, kx's dot grid and accent wash. */
 
 :root {
   /* The edge and glow a command a reader is meant to copy carries, here
@@ -168,10 +167,10 @@ body {
   content: " →";
 }
 
-/* The shared command box inside the prose wrapper. The docs' inline-code
+/* The command box inside the prose wrapper. The docs' inline-code
    chip (.content code below) would otherwise draw a second box, with its
    own border and padding, inside the first. */
-.content .oss-command__text {
+.content .hm-command__text {
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -230,6 +229,102 @@ body {
 
 .content .hm-section__more a {
   text-decoration: none;
+}
+
+/* Commands
+ * ------------------------------------------------------------------ */
+
+/* A command to copy: one line in a box framed like kx's hero command, with
+   the prompt drawn in the accent and a copy button at the end
+   (assets/js/hm-copy.js). In the install panel it gives up the box; see
+   .hm-install .hm-command below. */
+.hm-command {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 0.7rem 0.7rem 0.7rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--hm-accent) 22%, var(--hm-border));
+  border-radius: 0.6rem;
+  background-color: var(--hm-surface);
+  box-shadow: 0 12px 32px -18px color-mix(in srgb, var(--hm-accent) 18%, transparent);
+}
+
+/* One line, never wrapped mid-URL. On a phone it is wider than the box and
+   scrolls sideways, but with no scrollbar: a bar under one line of text read
+   as a fault, and the copy button copies the whole command anyway. The
+   height is fixed so the box is the same height whether or not the copy
+   button has been revealed. */
+.hm-command__text {
+  flex: 1;
+  min-width: 0;
+  height: 1.75rem;
+  line-height: 1.75rem;
+  font-family: var(--oss-font-mono);
+  font-size: 0.78rem;
+  color: var(--hm-heading);
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.hm-command__text::-webkit-scrollbar {
+  display: none;
+}
+
+/* The prompt is drawn here, so it never lands in the clipboard. */
+.hm-command__text::before {
+  content: "$ ";
+  color: var(--hm-accent);
+}
+
+.hm-command__copy {
+  display: inline-flex;
+  flex: none;
+  padding: 0.3rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  background: none;
+  color: var(--hm-muted);
+  cursor: pointer;
+}
+
+.hm-command__copy:hover,
+.hm-command__copy:focus-visible {
+  color: var(--hm-heading);
+  border-color: var(--hm-border);
+}
+
+.hm-command__icon {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hm-command__icon--done,
+.hm-command__copy.is-done .hm-command__icon--copy {
+  display: none;
+}
+
+.hm-command__copy.is-done .hm-command__icon--done {
+  display: block;
+}
+
+/* Announced to screen readers, never shown. */
+.hm-command__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* Install, closing the page
@@ -313,7 +408,7 @@ body {
    Helm card's two lines: centred on a one-line command it sat 0.2px lower
    than on the Helm card, which in the hero rounded to a 1px jump when
    switching tabs. */
-.hm-install .oss-command {
+.hm-install .hm-command {
   align-items: flex-start;
   margin: 0;
   padding: 0;
@@ -322,7 +417,7 @@ body {
   box-shadow: none;
 }
 
-.hm-install .oss-command__text {
+.hm-install .hm-command__text {
   font-size: 0.85rem;
 }
 
@@ -388,7 +483,7 @@ body {
   display: none;
 }
 
-.hm-install.is-tabbed .oss-command__text {
+.hm-install.is-tabbed .hm-command__text {
   font-size: 0.95rem;
 }
 
@@ -396,22 +491,22 @@ body {
    copy button level with the first. The shared box is one line high and
    draws one prompt; here each line draws its own, so the newline between
    them is all the clipboard gets. */
-.hm-command--lines .oss-command__text {
+.hm-command--lines .hm-command__text {
   height: auto;
   white-space: pre;
 }
 
-.hm-command--lines .oss-command__text::before {
+.hm-command--lines .hm-command__text::before {
   content: none;
 }
 
 .hm-command__line::before {
   content: "$ ";
-  color: var(--oss-accent);
+  color: var(--hm-accent);
 }
 
 @media (max-width: 30rem) {
-  .hm-install.is-tabbed .oss-command__text {
+  .hm-install.is-tabbed .hm-command__text {
     font-size: 0.85rem;
   }
 }
@@ -783,6 +878,5 @@ body {
   --oss-muted: var(--hm-muted);
   --oss-accent: var(--hm-accent);
   --oss-border: var(--hm-border);
-  --oss-surface: var(--hm-surface);
   --oss-page: var(--hm-background);
 }
