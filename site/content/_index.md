@@ -3,45 +3,71 @@ title: "HmacManager"
 toc: false
 ---
 
-<div class="hm-hero">
+<section class="hm-hero">
   <span class="hm-hero__logo">{{< hm-wordmark >}}</span>
-  <p class="hm-hero__tagline">HMAC request authentication, in your app or in your mesh.</p>
+  <h1 class="hm-hero__title">HMAC request authentication, in your app or in your mesh.</h1>
   <p class="hm-hero__blurb">
     Sign and verify requests against named policies, with replay protection
     built in. Add it to an ASP.NET Core API as a NuGet package, or enforce it
     across an Istio mesh with no application changes at all.
   </p>
-  <ul class="hm-hero__links">
-    <li><a href="https://www.nuget.org/packages/HmacManager/">NuGet</a></li>
-    <li><a href="https://www.npmjs.com/package/hmac-manager">npm</a></li>
-    <li><a href="https://artifacthub.io/packages/helm/zills/hmac-manager">Artifact Hub</a></li>
-    <li><a href="https://hub.docker.com/r/zills/hmac-manager">Docker Hub</a></li>
-    <li><a href="https://github.com/jzills/hmac-manager">GitHub</a></li>
-  </ul>
-</div>
-
-<div class="hm-section" id="install">
-  <h2 class="hm-section__title">Install</h2>
-  <p class="hm-section__lede">
-    Three artifacts, versioned independently. Take the one that matches where
-    you want the check to happen.
-  </p>
-  <div class="hm-install">
-    <div class="hm-install__card">
-      <div class="hm-install__label">ASP.NET Core library</div>
-      <div class="hm-install__command">dotnet add package HmacManager</div>
-    </div>
-    <div class="hm-install__card">
-      <div class="hm-install__label">Kubernetes / Istio</div>
-      <div class="hm-install__command">helm repo add zills https://j.zills.io/hmac-manager</div>
-      <div class="hm-install__command">helm install hmac-manager zills/hmac-manager</div>
-    </div>
-    <div class="hm-install__card">
-      <div class="hm-install__label">JavaScript / TypeScript client</div>
-      <div class="hm-install__command">npm install hmac-manager</div>
-    </div>
+  <div class="hm-hero__actions">
+    <a class="hm-button hm-button--primary" href="docs/getting-started/dotnet-quickstart/">Get started</a>
+    <a class="hm-button" href="docs/">Documentation</a>
   </div>
-</div>
+  {{< hm-install >}}
+  <p class="hm-hero__alt">
+    Published to <a href="https://www.nuget.org/packages/HmacManager/">NuGet</a>,
+    <a href="https://www.npmjs.com/package/hmac-manager">npm</a>,
+    <a href="https://artifacthub.io/packages/helm/zills/hmac-manager">Artifact Hub</a>
+    and <a href="https://hub.docker.com/r/zills/hmac-manager">Docker Hub</a>.
+  </p>
+</section>
+
+<section class="hm-features" id="features" aria-label="What HmacManager does">
+  <a class="hm-feature" href="docs/concepts/policies/">
+    <div class="hm-feature__head">
+      <h2 class="hm-feature__title">Named policies</h2>
+      <span class="hm-feature__icon">{{< hm-icon name="key" >}}</span>
+    </div>
+    <p>A policy is a key pair, a hash algorithm choice, a replay window and a set of schemes. Register several and verify each request against the one it names.</p>
+  </a>
+  <a class="hm-feature" href="docs/concepts/schemes/">
+    <div class="hm-feature__head">
+      <h2 class="hm-feature__title">Schemes</h2>
+      <span class="hm-feature__icon">{{< hm-icon name="tag" >}}</span>
+    </div>
+    <p>A named set of headers folded into the signature, so a request cannot be replayed against a different account or tenant. The headers map to claims.</p>
+  </a>
+  <a class="hm-feature" href="docs/concepts/nonce-and-replay/">
+    <div class="hm-feature__head">
+      <h2 class="hm-feature__title">Replay protection</h2>
+      <span class="hm-feature__icon">{{< hm-icon name="shield-check" >}}</span>
+    </div>
+    <p>Every signature carries a nonce and a timestamp, cached for the window so a captured request cannot be sent twice. In-process or Redis-backed.</p>
+  </a>
+  <a class="hm-feature" href="docs/dotnet/dynamic-policies/">
+    <div class="hm-feature__head">
+      <h2 class="hm-feature__title">Dynamic policies</h2>
+      <span class="hm-feature__icon">{{< hm-icon name="refresh" >}}</span>
+    </div>
+    <p>A static singleton, reloaded from configuration as it changes, or resolved per request from a database, without giving up the built-in handler.</p>
+  </a>
+  <a class="hm-feature" href="docs/dotnet/logging/">
+    <div class="hm-feature__head">
+      <h2 class="hm-feature__title">Diagnosable rejections</h2>
+      <span class="hm-feature__icon">{{< hm-icon name="document-search" >}}</span>
+    </div>
+    <p>Structured <code>ILogger</code> output says <em>which</em> check failed, and every outcome is a metric, with a Grafana dashboard in the Helm chart.</p>
+  </a>
+  <a class="hm-feature" href="docs/kubernetes/hmacpolicy-crd/">
+    <div class="hm-feature__head">
+      <h2 class="hm-feature__title">Policies as resources</h2>
+      <span class="hm-feature__icon">{{< hm-icon name="cube" >}}</span>
+    </div>
+    <p>An <code>HmacPolicy</code> CRD and an operator that reconciles it, so the mesh's policies live in Git and keys stay in Kubernetes Secrets.</p>
+  </a>
+</section>
 
 <div class="hm-section" id="dotnet">
 
@@ -58,9 +84,9 @@ builder.Services
     {
         options.AddPolicy("MyPolicy", policy =>
         {
-            policy.UsePublicKey(Guid.Parse("00000000-0000-0000-0000-000000000001"));
+            policy.UsePublicKey(Guid.Parse("4a4ab0c4-d724-4874-af72-09dd410f3b91"));
             policy.UsePrivateKey("zvg29s2cQ4idOqbUJWETOw==");
-            policy.UseMemoryCache(maxAgeInSeconds: 300); // nonce / replay window
+            policy.UseMemoryCache(maxAgeInSeconds: 300);
         });
     });
 ```
@@ -104,13 +130,13 @@ metadata:
   name: my-policy
   namespace: hmac-system
 spec:
-  publicKey: "00000000-0000-0000-0000-000000000001"
+  publicKey: "4a4ab0c4-d724-4874-af72-09dd410f3b91"
   privateKeySecretRef:
     name: my-hmac-secrets
     key: my-policy-privateKey
   algorithms:
-    contentHash: SHA256      # SHA1 | SHA256 | SHA512
-    signingHash: HMACSHA256  # HMACSHA1 | HMACSHA256 | HMACSHA512
+    contentHash: SHA256
+    signingHash: HMACSHA256
   nonce:
     maxAgeInSeconds: 300
 ```
@@ -132,7 +158,7 @@ import { HmacManagerFactory, HashAlgorithm } from "hmac-manager";
 
 const factory = new HmacManagerFactory([{
   name: "MyPolicy",
-  publicKey: "00000000-0000-0000-0000-000000000001",
+  publicKey: "4a4ab0c4-d724-4874-af72-09dd410f3b91",
   privateKey: "zvg29s2cQ4idOqbUJWETOw==",
   contentHashAlgorithm: HashAlgorithm.SHA256,
   signatureHashAlgorithm: HashAlgorithm.SHA256,
@@ -140,7 +166,7 @@ const factory = new HmacManagerFactory([{
 }]);
 
 const request = new Request("https://api.example.com/orders");
-await factory.create("MyPolicy")!.sign(request); // adds the Hmac headers
+await factory.create("MyPolicy")!.sign(request);
 const response = await fetch(request);
 ```
 
@@ -148,60 +174,12 @@ const response = await fetch(request);
 
 </div>
 
-<div class="hm-section" id="features">
-  <h2 class="hm-section__title">What you get</h2>
-  <p class="hm-section__lede">
-    Each of these has a page in <a href="docs/">the documentation</a>.
-  </p>
-  <div class="hm-features">
-    <div class="hm-feature">
-      <p class="hm-feature__title"><a href="docs/concepts/policies/">Named policies</a></p>
-      <p class="hm-feature__body">
-        A policy is a key pair, a hash algorithm choice, a replay window and a
-        set of schemes. Register several and verify each request against the
-        one it names, so different callers can hold different keys.
-      </p>
-    </div>
-    <div class="hm-feature">
-      <p class="hm-feature__title"><a href="docs/concepts/schemes/">Schemes</a></p>
-      <p class="hm-feature__body">
-        A named set of headers whose values are folded into the signature — so
-        a request cannot be replayed against a different account or tenant.
-        Those headers map to claims automatically.
-      </p>
-    </div>
-    <div class="hm-feature">
-      <p class="hm-feature__title"><a href="docs/concepts/nonce-and-replay/">Replay protection</a></p>
-      <p class="hm-feature__body">
-        Every signature carries a nonce and a timestamp, cached for the
-        lifetime of the window so a captured request cannot be sent twice.
-        In-process or Redis-backed.
-      </p>
-    </div>
-    <div class="hm-feature">
-      <p class="hm-feature__title"><a href="docs/dotnet/dynamic-policies/">Dynamic policies</a></p>
-      <p class="hm-feature__body">
-        Policies can be a static singleton, reloaded from configuration as it
-        changes, or resolved per request from a database — without giving up
-        the built-in authentication handler.
-      </p>
-    </div>
-    <div class="hm-feature">
-      <p class="hm-feature__title"><a href="docs/dotnet/logging/">Diagnosable rejections</a></p>
-      <p class="hm-feature__body">
-        Structured <code>ILogger</code> output with stable event ids says
-        <em>which</em> check failed, and no message can carry a private key.
-        Every outcome is also a <a href="docs/kubernetes/metrics/">metric</a>,
-        with a Grafana dashboard built into the Helm chart.
-      </p>
-    </div>
-    <div class="hm-feature">
-      <p class="hm-feature__title"><a href="docs/kubernetes/hmacpolicy-crd/">Policies as resources</a></p>
-      <p class="hm-feature__body">
-        An <code>HmacPolicy</code> CRD and an operator that reconciles it, so
-        the mesh's policies live in Git beside everything else and keys stay
-        in Kubernetes Secrets.
-      </p>
-    </div>
+<section class="hm-closing" id="install">
+  <h2>Install HmacManager</h2>
+  <p>Three artifacts, versioned independently. Take the one that matches where you want the check to happen.</p>
+  {{< hm-install >}}
+  <div class="hm-hero__actions">
+    <a class="hm-button hm-button--primary" href="docs/getting-started/install/">Installation guide</a>
+    <a class="hm-button" href="https://github.com/jzills/hmac-manager">GitHub</a>
   </div>
-</div>
+</section>

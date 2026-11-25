@@ -42,3 +42,11 @@
 
 {{- /* The typefaces every project docs site is set in; see the partial. */ -}}
 {{- partial "oss/fonts.html" . -}}
+
+{{- /* The landing page's install tabs; see the script. */ -}}
+{{- if .IsHome }}
+  {{- with resources.Get "js/hm-install.js" }}
+    {{- $install := . | minify | fingerprint }}
+  <script defer src="{{ $install.RelPermalink }}" integrity="{{ $install.Data.Integrity }}"></script>
+  {{- end }}
+{{- end }}

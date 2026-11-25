@@ -1,0 +1,24 @@
+{{- /*
+  The install panel: one card per artifact, each command copyable, turned
+  into tabs by assets/js/hm-install.js. Used by the hero and by the install
+  section that closes the landing page, so the two cannot drift.
+
+      {{< hm-install >}}
+
+  Without JavaScript the cards stay a grid, every artifact visible at once.
+*/ -}}
+<div class="hm-install" data-hm-tabs aria-label="Install">
+  <div class="hm-install__card">
+    <div class="hm-install__label">.NET</div>
+    {{ partial "hm/command.html" "dotnet add package HmacManager" }}
+  </div>
+  <div class="hm-install__card">
+    <div class="hm-install__label">Helm</div>
+    {{ partial "hm/command.html" (slice "helm repo add zills https://j.zills.io/hmac-manager" "helm install hmac-manager zills/hmac-manager") }}
+  </div>
+  <div class="hm-install__card">
+    <div class="hm-install__label">npm</div>
+    {{ partial "hm/command.html" "npm install hmac-manager" }}
+  </div>
+</div>
+{{- /**/ -}}

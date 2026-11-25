@@ -1,0 +1,25 @@
+{{- /*
+  A command a reader is meant to copy, in the shared .oss-command box the
+  footer uses, so assets/js/oss-copy.js gives it its copy button.
+
+      {{ partial "hm/command.html" "dotnet add package HmacManager" }}
+
+  Given a slice, the commands go in one box, a line each, behind one copy
+  button that copies them all, newline-separated, so a paste runs them in
+  order:
+
+      {{ partial "hm/command.html" (slice "helm repo add ..." "helm install ...") }}
+
+  The "$ " prompt is drawn by CSS, so it never lands in the clipboard.
+*/ -}}
+{{- if reflect.IsSlice . }}
+<div class="oss-command hm-command--lines" data-oss-copy>
+  <code class="oss-command__text">{{ range $i, $line := . }}{{ if $i }}{{ "\n" }}{{ end }}<span class="hm-command__line">{{ $line }}</span>{{ end }}</code>
+{{- else }}
+<div class="oss-command" data-oss-copy>
+  <code class="oss-command__text">{{ . }}</code>
+{{- end }}
+  <button type="button" class="oss-command__copy" aria-label="Copy the command" hidden><svg viewBox="0 0 16 16" aria-hidden="true" class="oss-command__icon oss-command__icon--copy"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg><svg viewBox="0 0 16 16" aria-hidden="true" class="oss-command__icon oss-command__icon--done"><path d="M3 8.5 6.5 12 13 4.5"/></svg></button>
+  <span class="oss-command__status" role="status"></span>
+</div>
+{{- /**/ -}}
