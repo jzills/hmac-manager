@@ -66,6 +66,7 @@ The full documentation lives at
 | [Custom signing content](https://j.zills.io/hmac-manager/docs/dotnet/custom-signing-content/) | Replacing the default signing string |
 | [Redis nonce cache](https://j.zills.io/hmac-manager/docs/dotnet/redis-nonce-cache/) | Atomic replay protection across instances, from `HmacManager.StackExchangeRedis` |
 | [Logging](https://j.zills.io/hmac-manager/docs/dotnet/logging/) | Categories, levels, and diagnosing a mismatch |
+| [Metrics](https://j.zills.io/hmac-manager/docs/dotnet/metrics/) | Verifications by outcome and latency, for OpenTelemetry |
 
 Concepts shared with the Kubernetes verifier and the TypeScript client —
 [policies](https://j.zills.io/hmac-manager/docs/concepts/policies/),

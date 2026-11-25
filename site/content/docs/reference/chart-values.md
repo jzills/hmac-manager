@@ -63,6 +63,14 @@ already exists.
 | `operator.image.tag` | pinned per chart release | Operator image tag. Versioned separately from the verifier. |
 | `service.port` | `8080` | Port the ext-authz service listens on. |
 | `logging.level` | `Information` | Verbosity of HmacManager's own messages on both the verifier and the operator. `Trace` and `Debug` are per-request; `Information` covers policy and config changes only. Framework logging (ASP.NET Core, KubeOps) is suppressed below `Error` regardless. |
+| `metrics.enabled` | `false` | Serve Prometheus metrics on `metrics.port` and add it to the Service. See [metrics](../../kubernetes/metrics/). |
+| `metrics.port` | `9464` | Metrics port. Must differ from `service.port` and from 8081. |
+| `metrics.serviceMonitor.enabled` | `false` | Render a Prometheus Operator `ServiceMonitor`. |
+| `metrics.serviceMonitor.interval` | `30s` | Scrape interval. |
+| `metrics.serviceMonitor.labels` | `{}` | Extra labels for your Prometheus's selector. |
+| `metrics.dashboard.enabled` | `false` | Render the Grafana dashboard as a sidecar-labelled ConfigMap. |
+| `metrics.dashboard.namespace` | release namespace | Namespace for that ConfigMap. |
+| `metrics.dashboard.labels` | `grafana_dashboard: "1"` | Labels the Grafana sidecar selects by. |
 | `istio.enabled` | `true` | Master switch for Istio integration and the MeshConfig instructions in NOTES.txt. |
 | `istio.ingressGateway.enabled` | `false` | Enforce on ingress gateway traffic. Requires `name` and `namespace`. |
 | `istio.ingressGateway.name` | `""` | Name of the existing Gateway to target. |

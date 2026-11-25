@@ -1,3 +1,6 @@
+{{- if and .Values.metrics.enabled (or (eq (int .Values.metrics.port) (int .Values.service.port)) (eq (int .Values.metrics.port) 8081)) }}
+{{- fail (printf "metrics.port (%d) must differ from service.port and from 8081, the development signing port. Sharing the verify port would let a request for /metrics through the mesh unverified." (int .Values.metrics.port)) }}
+{{- end }}
 {{- if and (gt (int .Values.replicaCount) 1) (not .Values.redis.enabled) }}
 {{- fail "replicaCount > 1 requires redis.enabled=true: the in-process nonce cache is not shared across pods, so replay protection would be bypassed. Set replicaCount to 1 for a single-replica deployment, or enable Redis (redis.enabled=true) to scale safely." }}
 {{- end }}
@@ -40,6 +43,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+              protocol: TCP
+            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /etc/hmac-manager
@@ -62,6 +70,13 @@ spec:
               value: "true"
             - name: Logging__LogLevel__HmacManager
               value: {{ .Values.logging.level | quote }}
+            # Set either way: the service serves metrics unless told not to.
+            - name: Metrics__Enabled
+              value: {{ .Values.metrics.enabled | quote }}
+            {{- if .Values.metrics.enabled }}
+            - name: Metrics__Port
+              value: {{ .Values.metrics.port | quote }}
+            {{- end }}
             {{- if .Values.redis.enabled }}
             - name: ConnectionStrings__Redis
               value: {{ include "hmac-manager.redisAddress" . | quote }}

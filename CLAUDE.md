@@ -105,6 +105,16 @@ preserved.
 `IServiceProvider` exists. It is registered as an `IHostedService` purely so the container can hand
 it the real logger (`UseLogger`) and so it can report the live policy set at startup.
 
+### Metrics
+
+Every instrument the library records is declared in `src/HmacManager/Diagnostics/HmacMetrics.cs`, on a static `Meter` named `HmacManager` (`HmacManagerDiagnostics.MeterName`, the one public type). Same reasons as the log catalogue: call sites stay one line, and the rules below are checkable because the whole contract is in view.
+
+- **Instrument names, tag names and outcome values are a contract** with every dashboard and alert built on them. They are published in `site/content/docs/reference/metrics.md`, and the chart's Grafana dashboard queries them (`kubernetes/chart/dashboards/gen-dashboard.py` generates `hmac-manager.json`; edit the script, regenerate, commit both). Change all three together.
+- **No tag carries a value a caller chose.** A policy or scheme name becomes a tag only once it has resolved to a configured one; an unresolved name came off a request header, and tagging it would let anyone mint unbounded series. So `unknown_policy` has no policy tag and `unknown_scheme` no scheme tag. Never a nonce, signature or key. `test/HmacManager.Tests/Diagnostics/Test_HmacMetrics.cs` asserts the caller's names never appear.
+- **Each request is counted once.** `HmacManager.VerifyAsync` counts from a parsed request onward (and classifies a parser exception as `invalid_headers`, any other as `error`); `HmacAuthenticationContextProvider` counts only refusals before a manager exists; `HmacAuthenticationHandler` counts `keys_rejected`. A provider that resolves a manager counts nothing itself.
+
+The ext-authz service exports them, with ASP.NET Core's `Microsoft.AspNetCore.Hosting` meter, through OpenTelemetry's Prometheus exporter (only ever a beta, and the 1.20 line because 1.21 dropped `net8.0`) on **its own port**, `Metrics:Port` (9464). Never on the verify port: Envoy forwards the original path there and treats `200` as allow, so a `/metrics` route on it would let any request for `/metrics` through unverified. The chart's `metrics.*` values are opt-in and `deployment.yaml` refuses a metrics port equal to the verify or signing port.
+
 ### DI wiring
 
 `IServiceCollectionExtensions.AddHmacManager()` (`src/HmacManager/Mvc/Extensions/`) registers all internal services. `IHmacManagerFactory` is the DI-resolvable entry point to obtain an `IHmacManager` for a named policy at runtime.

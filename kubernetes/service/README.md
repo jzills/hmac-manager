@@ -56,6 +56,7 @@ any traffic until you enable an Istio enforcement point
 |---|---|
 | `8080` | ext-authz check endpoint — the one the Kubernetes Service exposes |
 | `8081` | Signing helper, active only when `environment: Development`; never exposed by the Service |
+| `9464` | Prometheus `/metrics`; exposed by the chart's Service only with `metrics.enabled`, never served on the verify port |
 
 ## Environment variables
 
@@ -67,6 +68,8 @@ For advanced use cases or deployments without Helm.
 | `ASPNETCORE_ENVIRONMENT` | No | `Production` (default) or `Development`. `Development` activates the signing helper on port 8081. |
 | `ASPNETCORE_URLS` | No | Listening URL (default: `http://+:8080`). |
 | `SignPort` | No | Port for the dev-only signing helper (default: `8081`). |
+| `Metrics__Enabled` | No | Serve Prometheus metrics on the metrics port (default: `true`; the chart sets it from `metrics.enabled`). |
+| `Metrics__Port` | No | Port for `/metrics` (default: `9464`). |
 
 Policies are loaded from a JSON config file mounted at
 `/etc/hmac-manager/config.json`:

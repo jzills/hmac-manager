@@ -18,6 +18,7 @@ through in the ext-authz call — the verifier rebuilds the same
 | --- | --- |
 | `8080` | ext-authz check endpoint. This is the one the Service exposes. |
 | `8081` | Signing helper. Only active when `environment: Development`, never exposed by the Service. |
+| `9464` | Prometheus `/metrics`. Exposed by the Service only with `metrics.enabled`; see [metrics](../metrics/). Never served on the verify port. |
 
 ## Image
 
@@ -41,6 +42,8 @@ and `environment`. The rest of this section is for running the image directly.
 | `ASPNETCORE_ENVIRONMENT` | no | `Production` (default) or `Development`. `Development` activates the signing helper on port 8081. |
 | `ASPNETCORE_URLS` | no | Listening URL. Defaults to `http://+:8080`. |
 | `SignPort` | no | Port for the dev-only signing helper. Defaults to `8081`. |
+| `Metrics__Enabled` | no | Serve Prometheus metrics on the metrics port. Defaults to `true` when running the image directly; the chart sets it from `metrics.enabled`. |
+| `Metrics__Port` | no | Port for `/metrics`. Defaults to `9464`. |
 
 Policies come from a JSON file mounted at `/etc/hmac-manager/config.json`,
 which is the same shape as the

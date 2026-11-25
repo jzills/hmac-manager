@@ -82,11 +82,32 @@ public class HmacAuthenticationContextProvider : IHmacAuthenticationContextProvi
         {
             if (authorizationHeader.StartsWith(HmacAuthenticationDefaults.AuthenticationScheme))
             {
-                var hmacPartial = HeaderParserFactory.Create(headers).Parse(out var signature);
+                HmacPartial hmacPartial;
+                string? signature;
+                try
+                {
+                    hmacPartial = HeaderParserFactory.Create(headers).Parse(out signature);
+                }
+                catch (Exception e) when (e is MissingHeaderException or BadHeaderFormatException)
+                {
+                    // Counted here rather than by each caller: both the authentication handler and
+                    // the ext-authz service resolve their context through this method.
+                    HmacMetrics.VerificationRefused(HmacMetrics.VerificationOutcome.InvalidHeaders);
+                    throw;
+                }
+
                 var hmacManager = Factory.Create(hmacPartial.Policy, hmacPartial.Scheme);
 
                 if (Policies.TryGetValue(hmacPartial.Policy, out var hmacPolicy))
                 {
+                    // The policy resolved, so its name is a configured one and safe to tag. The
+                    // scheme is not tagged: it did not resolve, so it is still the caller's.
+                    if (hmacManager is null)
+                    {
+                        HmacMetrics.VerificationRefused(
+                            HmacMetrics.VerificationOutcome.UnknownScheme, hmacPolicy.Name);
+                    }
+
                     context = new HmacAuthenticationContext
                     {
                         HmacManager = hmacManager,
@@ -99,6 +120,7 @@ public class HmacAuthenticationContextProvider : IHmacAuthenticationContextProvi
                     // Thrown, but log first: this exception is caught and flattened to a 403 by the
                     // ext-authz service, where the policy name would otherwise be lost.
                     HmacLog.RequestedPolicyNotRegistered(Logger, hmacPartial.Policy);
+                    HmacMetrics.VerificationRefused(HmacMetrics.VerificationOutcome.UnknownPolicy);
 
                     throw new HmacPolicyNotFoundException(hmacPartial.Policy);
                 }

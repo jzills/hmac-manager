@@ -3,3 +3,6 @@
 .gitignore
 *.lock
 charts/
+
+# The dashboard generator: run by hand, its JSON output is what the chart ships.
+dashboards/*.py

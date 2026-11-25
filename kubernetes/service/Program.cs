@@ -1,5 +1,7 @@
+using HmacManager.Diagnostics;
 using HmacManager.Kubernetes;
 using HmacManager.Mvc.Extensions;
+using OpenTelemetry.Metrics;
 
 Banner.Print();
 
@@ -41,11 +43,34 @@ builder.Services.AddScoped<SignHandler>();
 // unverified request. The sign port is opened only in Development and is not
 // exposed by the Kubernetes Service, so the mesh cannot route to it.
 var signPort = builder.Configuration.GetValue("SignPort", 8081);
+
+// Prometheus metrics — HmacManager's verification outcomes and durations, and ASP.NET Core's
+// own request metrics — on a port of their own, for the same reason as the sign port: Envoy
+// forwards the original request's path to the verify port, so a /metrics route there would
+// answer 200 to a request for /metrics, and the waypoint would let it through unverified.
+var metricsEnabled = builder.Configuration.GetValue("Metrics:Enabled", true);
+var metricsPort = builder.Configuration.GetValue("Metrics:Port", 9464);
+if (metricsEnabled)
+{
+    builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics
+        .AddMeter(HmacManagerDiagnostics.MeterName, "Microsoft.AspNetCore.Hosting")
+        .AddPrometheusExporter());
+}
+
+var extraUrls = new List<string>();
 if (builder.Environment.IsDevelopment())
+{
+    extraUrls.Add($"http://+:{signPort}");
+}
+if (metricsEnabled)
+{
+    extraUrls.Add($"http://+:{metricsPort}");
+}
+if (extraUrls.Count > 0)
 {
     var urls = (builder.Configuration[WebHostDefaults.ServerUrlsKey] ?? "http://+:8080")
         .Split(';', StringSplitOptions.RemoveEmptyEntries)
-        .Append($"http://+:{signPort}")
+        .Concat(extraUrls)
         .ToArray();
 
     builder.WebHost.UseUrls(urls);
@@ -81,6 +106,23 @@ if (app.Environment.IsDevelopment())
 
             await result.ExecuteAsync(ctx);
         }));
+}
+
+if (metricsEnabled)
+{
+    // Terminal on the metrics port: /metrics is the scrape, and anything else is a 404 rather
+    // than falling through to the ext-authz handler below.
+    app.UseWhen(
+        ctx => ctx.Connection.LocalPort == metricsPort,
+        branch =>
+        {
+            branch.UseOpenTelemetryPrometheusScrapingEndpoint();
+            branch.Run(ctx =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            });
+        });
 }
 
 // Catch-all: Envoy HTTP ext-authz forwards the original request's method and path
