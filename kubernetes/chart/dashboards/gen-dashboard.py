@@ -28,6 +28,12 @@ def rate(extra=""):
     return f"sum(rate({VERIFICATIONS}{{{SEL}{extra}}}[$__rate_interval]))"
 
 
+def or_zero(expr):
+    # A sum over no series is no data, not 0: without this a healthy service's Errors/s panel
+    # reads "No data" rather than 0, which looks like a broken scrape.
+    return f"({expr} or vector(0))"
+
+
 def quantiles(metric, extra=""):
     return [
         target(
@@ -79,14 +85,14 @@ POLICY = ',hmac_manager_policy=~"$policy"'
 panels = [
     stat("Verifications/s", rate(), 0, 5, "reqps",
          description="Every request the service was asked to verify, whatever the outcome."),
-    stat("Refused", f"{rate(REFUSED)} / {rate()}", 5, 5, "percentunit", ((0.05, "orange"), (0.25, "red")),
+    stat("Refused", f"{or_zero(rate(REFUSED))} / {rate()}", 5, 5, "percentunit", ((0.05, "orange"), (0.25, "red")),
          "Share of requests refused, for any reason."),
-    stat("Replays/s", rate(',hmac_manager_outcome="replayed"'), 10, 5, "reqps", ANY_ERROR,
+    stat("Replays/s", or_zero(rate(',hmac_manager_outcome="replayed"')), 10, 5, "reqps", ANY_ERROR,
          "Requests whose nonce was already claimed: an attack, or a client resending a signed request verbatim."),
     stat("Verify p95",
          f"histogram_quantile(0.95, sum by (le) (rate({DURATION}{{{SEL}}}[$__rate_interval])))", 15, 5, "s",
          description="95th percentile time to verify a request, nonce claim included."),
-    stat("Errors/s", rate(',hmac_manager_outcome="error"'), 20, 4, "reqps", ANY_ERROR,
+    stat("Errors/s", or_zero(rate(',hmac_manager_outcome="error"')), 20, 4, "reqps", ANY_ERROR,
          "Verifications that threw, almost always the nonce cache (Redis) being unreachable. "
          "Requests are refused while this is above zero."),
     timeseries("Verifications by outcome",

@@ -146,7 +146,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(rate(hmac_manager_verifications_total{job=~\"$job\",hmac_manager_outcome!=\"verified\"}[$__rate_interval])) / sum(rate(hmac_manager_verifications_total{job=~\"$job\"}[$__rate_interval]))",
+          "expr": "(sum(rate(hmac_manager_verifications_total{job=~\"$job\",hmac_manager_outcome!=\"verified\"}[$__rate_interval])) or vector(0)) / sum(rate(hmac_manager_verifications_total{job=~\"$job\"}[$__rate_interval]))",
           "legendFormat": "",
           "refId": "A",
           "range": true
@@ -209,7 +209,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(rate(hmac_manager_verifications_total{job=~\"$job\",hmac_manager_outcome=\"replayed\"}[$__rate_interval]))",
+          "expr": "(sum(rate(hmac_manager_verifications_total{job=~\"$job\",hmac_manager_outcome=\"replayed\"}[$__rate_interval])) or vector(0))",
           "legendFormat": "",
           "refId": "A",
           "range": true
@@ -323,7 +323,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(rate(hmac_manager_verifications_total{job=~\"$job\",hmac_manager_outcome=\"error\"}[$__rate_interval]))",
+          "expr": "(sum(rate(hmac_manager_verifications_total{job=~\"$job\",hmac_manager_outcome=\"error\"}[$__rate_interval])) or vector(0))",
           "legendFormat": "",
           "refId": "A",
           "range": true
