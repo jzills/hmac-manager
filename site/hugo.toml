@@ -140,7 +140,7 @@ disableKinds = ["taxonomy", "term"]
 [params.oss]
   name = "HmacManager"
   mark = "hm-mark.svg"
-  showname = true
+  showname = false
   tagline = "HMAC request authentication, in your app or in your mesh. Sign and verify requests against named policies, with replay protection built in."
   repo = "https://github.com/jzills/hmac-manager"
   bug = """**What happened**
