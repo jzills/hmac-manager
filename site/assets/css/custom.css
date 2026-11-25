@@ -27,112 +27,180 @@ body {
 }
 
 /* Hero
- * ------------------------------------------------------------------ */
+ * ------------------------------------------------------------------
+ * kx's hero, in this palette: the mark, the title, the lede, two buttons,
+ * the install command to copy, and a link down to the other ways to
+ * install. Behind it, kx's dot grid and accent wash. */
+
+:root {
+  /* The edge and glow a command a reader is meant to copy carries, here
+     and in the install panel, as kx's does. */
+  --hm-command-edge: color-mix(in srgb, var(--hm-accent) 22%, var(--hm-border));
+  --hm-command-glow: 0 12px 32px -18px color-mix(in srgb, var(--hm-accent) 12%, transparent);
+}
+
+.dark {
+  --hm-command-glow: 0 12px 32px -18px color-mix(in srgb, var(--hm-accent) 22%, transparent);
+}
 
 .hm-hero {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.15rem;
-  padding: 3.5rem 1rem 2rem;
+  padding: clamp(3rem, 8vw, 5.5rem) 0 1rem;
   text-align: center;
+}
+
+.hm-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -6rem;
+  bottom: -10rem;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 50% 45% at 50% 0%, color-mix(in srgb, var(--hm-accent) 9%, transparent), transparent),
+    radial-gradient(circle, var(--hm-border) 1px, transparent 1.5px) 0 0 / 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 50% 30%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 60% 70% at 50% 30%, #000 30%, transparent 75%);
+  pointer-events: none;
 }
 
 .hm-hero__logo {
   display: block;
   color: var(--hm-accent);
-  width: 100%;
+  margin-bottom: 1.5rem;
 }
 
+/* Taller than kx's mark (--oss-hero-mark): this one is two lines of a
+   character grid, so at kx's height each line was half the size of kx's
+   letters and the strokes thinned to hairlines. The viewBox sets the width,
+   which at the smallest size still fits a phone. */
 .hm-hero__logo svg {
-  /* As tall as kx's hero logo (--oss-hero-mark); the viewBox sets the
-     width, which at that height fits a phone. */
-  height: var(--oss-hero-mark);
+  height: clamp(5.5rem, 14vw, 8.5rem);
   width: auto;
   display: block;
   margin: 0 auto;
 }
 
-/* The hero's title, at kx's size and weight (--oss-type-hero): the
-   wordmark above it is the h1, as kx's logo sits above its title. */
-.hm-hero__tagline {
-  letter-spacing: -0.01em;
-  color: var(--hm-heading);
+.content .hm-hero__title {
+  max-width: 22ch;
   margin: 0;
+  color: var(--hm-heading);
   font-size: var(--oss-type-hero);
   font-weight: 750;
   line-height: 1.05;
-  max-width: 22ch;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
-.hm-hero__blurb {
-  max-width: 46rem;
-  margin: 0;
+.content .hm-hero__blurb {
+  max-width: 40rem;
+  margin: 1.25rem 0 0;
   color: var(--hm-muted);
   font-size: var(--oss-type-lede);
   line-height: var(--oss-leading-prose);
+  text-wrap: pretty;
 }
 
-.hm-hero__blurb code,
-.hm-section__lede code {
-  /* A code chip breaking mid-token splits its own pill background across two
-     lines. Keeping each chip whole is what a container-width fix cannot
-     guarantee at every viewport. */
-  white-space: nowrap;
-}
-
-/* The row of registry links under the hero. */
-.hm-hero__links {
+.hm-hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
   justify-content: center;
-  list-style: none;
-  padding: 0;
-  margin: 0.25rem 0 0;
+  gap: 0.75rem;
+  margin-top: 2rem;
 }
 
-.hm-hero__links a {
-  display: inline-block;
-  /* em, not px: the ring scales with the chip's own font-size, so it reads as
-     the same weight of outline at any zoom rather than thinning to a hairline. */
-  border: 0.2em solid var(--hm-border);
-  border-radius: 999px;
-  background-color: var(--hm-surface);
-  color: var(--hm-muted);
-  padding: 0.25rem 0.75rem;
-  font-size: 0.82rem;
+.content a.hm-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  border: 1px solid var(--hm-border);
+  border-radius: 0.5rem;
+  color: var(--hm-body);
+  font-size: 0.95rem;
+  font-weight: 600;
   text-decoration: none;
-  /* Lowercased here rather than in the markup: NuGet, GitHub and Artifact Hub
-     are spelled that way by the people who own them, and that spelling is what
-     belongs in the document, in the accessibility tree and on the clipboard.
-     The flattening is presentation, so it lives in the presentation layer. */
-  text-transform: lowercase;
-  transition: color 0.12s ease, border-color 0.12s ease;
+  transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
-.hm-hero__links a:hover {
-  color: var(--hm-accent);
+.content a.hm-button:hover {
+  background-color: var(--hm-surface);
+}
+
+/* The page's background is the text on the accent, in both modes: the
+   palette pairs the two for contrast already. */
+.content a.hm-button--primary {
   border-color: var(--hm-accent);
+  background-color: var(--hm-accent);
+  color: var(--hm-background);
+}
+
+.content a.hm-button--primary:hover {
+  background-color: var(--hm-accent);
+  opacity: 0.88;
+}
+
+/* The hero's install panel: the same one that closes the page. */
+.hm-hero .hm-install {
+  margin-top: 1.75rem;
+}
+
+.content .hm-hero__alt {
+  margin: 0.85rem 0 0;
+  color: var(--hm-muted);
+  font-size: 0.9rem;
+}
+
+.content .hm-hero__more {
+  display: inline-block;
+  margin-top: 1.125rem;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.hm-hero__more::after {
+  content: " →";
+}
+
+/* The shared command box inside the prose wrapper. The docs' inline-code
+   chip (.content code below) would otherwise draw a second box, with its
+   own border and padding, inside the first. */
+.content .oss-command__text {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--hm-heading);
 }
 
 /* Sections
  * ------------------------------------------------------------------ */
 
+/* kx's air between sections. */
 .hm-section {
-  padding: 2.5rem 1rem;
+  max-width: 66rem;
+  margin: 6rem auto 0;
+  padding: 0 1rem;
   /* The navbar is sticky, so a section jumped to by fragment would start
      underneath it with its heading hidden. */
   scroll-margin-top: 5rem;
 }
 
-.hm-section__title {
+.content .hm-section__title {
   text-align: center;
   color: var(--hm-heading);
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
   font-size: var(--oss-type-section);
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .hm-section__lede {
@@ -144,117 +212,285 @@ body {
 }
 
 /* A landing-page code sample. These are real markdown fences inside the
-   section's HTML, so chroma highlights them; only the frame is ours. */
-.hm-section pre {
+   section's HTML, so chroma highlights them; only the frame is ours.
+
+   The width is held on Hextra's wrapper, not on the <pre>: the copy button
+   is positioned against the wrapper, and with only the <pre> narrowed it
+   sat at the far edge of the section, well outside the code. */
+.hm-section .hextra-code-block {
   max-width: 56rem;
   margin-inline: auto;
 }
 
 .hm-section__more {
   text-align: center;
+  font-size: 1rem;
   margin: 1.25rem 0 0;
-  font-size: 0.92rem;
 }
 
-/* Install cards
- * ------------------------------------------------------------------ */
+.content .hm-section__more a {
+  text-decoration: none;
+}
+
+/* Install, closing the page
+ * ------------------------------------------------------------------
+ * kx's closing panel: a wash of the accent from its top edge, and the
+ * three artifacts as tabs once assets/js/hm-install.js has run. Without
+ * the script the cards stay a grid, every method visible at once. */
+
+.hm-closing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 66rem;
+  margin: 7rem auto 0;
+  padding: 3.5rem clamp(1rem, 4vw, 3rem);
+  border: 1px solid var(--hm-border);
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in srgb, var(--hm-accent) 6%, transparent), transparent),
+    var(--hm-surface);
+  text-align: center;
+  scroll-margin-top: 5rem;
+}
+
+.content .hm-closing h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--hm-heading);
+  font-size: var(--oss-type-section);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.content .hm-closing > p {
+  max-width: 40rem;
+  margin: 0.6rem 0 0;
+  color: var(--hm-muted);
+}
+
+/* Chroma's palette sets a method name in bold, which in a C# sample, where
+   most tokens are method calls, turned the listing heavy. */
+.content .chroma .nf {
+  font-weight: inherit;
+}
+
+.hm-closing .hm-hero__actions {
+  margin-top: 1.75rem;
+}
 
 .hm-install {
   display: grid;
   gap: 0.75rem;
-  /* Wide enough for the longest command on a card — the helm repo URL — which
-     clipped mid-word at narrower minimums. A command a reader cannot see all
-     of is worse than a grid that wraps to fewer columns. */
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  max-width: 66rem;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 46rem;
+  margin-top: 2rem;
+  text-align: left;
 }
 
 .hm-install__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
   border: 1px solid var(--hm-border);
   border-radius: 0.5rem;
-  background-color: var(--hm-surface);
-  padding: 0.9rem 1rem;
+  background-color: var(--hm-background);
 }
 
 .hm-install__label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--hm-muted);
-  margin-bottom: 0.35rem;
 }
 
-.hm-install__command {
-  font-family: var(--oss-font-mono);
-  font-size: 0.88rem;
+/* In a card the command is a line of the card, not a box of its own.
+
+   The copy button is pinned to the top for every command, not only the
+   Helm card's two lines: centred on a one-line command it sat 0.2px lower
+   than on the Helm card, which in the hero rounded to a 1px jump when
+   switching tabs. */
+.hm-install .oss-command {
+  align-items: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.hm-install .oss-command__text {
+  font-size: 0.85rem;
+}
+
+.hm-install.is-tabbed {
+  display: block;
+  max-width: 40rem;
+  border: 1px solid var(--hm-command-edge);
+  border-radius: 0.75rem;
+  background-color: var(--hm-background);
+  box-shadow: var(--hm-command-glow);
+  overflow: hidden;
+}
+
+.hm-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem 0.5rem 0;
+  /* An inset shadow rather than a border, so the selected tab's underline
+     sits on the rule without overflowing the strip. */
+  box-shadow: inset 0 -1px 0 var(--hm-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.hm-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.hm-tabs__tab {
+  flex: none;
+  padding: 0.55rem 0.8rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--hm-muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.hm-tabs__tab:hover {
   color: var(--hm-body);
-  /* Wrap rather than scroll. A card is a third of the grid and
-     "helm repo add zills https://j.zills.io/hmac-manager" is wider than
-     that at any font size the card can afford; clipped mid-URL it reads as
-     broken, and a horizontal scrollbar inside a card is worse than a second
-     line. The hanging indent is what keeps a wrapped line from looking like a
-     second command — only the first line gets the "$". */
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  padding-inline-start: 1.15em;
-  text-indent: -1.15em;
 }
 
-.hm-install__command + .hm-install__command {
-  margin-top: 0.3rem;
+.hm-tabs__tab[aria-selected="true"] {
+  color: var(--hm-body);
+  border-bottom-color: var(--hm-accent);
 }
 
-.hm-install__command::before {
+.hm-install.is-tabbed .hm-install__card {
+  gap: 0.35rem;
+  padding: 0.9rem 0.75rem 0.9rem 1.25rem;
+  border: 0;
+  border-radius: 0;
+}
+
+/* The theme hides [hidden] with !important, which is what takes an
+   unselected panel out; the flex above would otherwise not matter. */
+.hm-install.is-tabbed .hm-install__label {
+  display: none;
+}
+
+.hm-install.is-tabbed .oss-command__text {
+  font-size: 0.95rem;
+}
+
+/* Several commands in one box (the Helm card): a line each, behind one
+   copy button level with the first. The shared box is one line high and
+   draws one prompt; here each line draws its own, so the newline between
+   them is all the clipboard gets. */
+.hm-command--lines .oss-command__text {
+  height: auto;
+  white-space: pre;
+}
+
+.hm-command--lines .oss-command__text::before {
+  content: none;
+}
+
+.hm-command__line::before {
   content: "$ ";
-  color: var(--hm-accent);
+  color: var(--oss-accent);
+}
+
+@media (max-width: 30rem) {
+  .hm-install.is-tabbed .oss-command__text {
+    font-size: 0.85rem;
+  }
 }
 
 /* Feature cards
- * ------------------------------------------------------------------ */
+ * ------------------------------------------------------------------
+ * kx's: six cards, three to a row at desktop width, each the link to its
+ * page, with the title and an icon sharing the first row. */
 
 .hm-features {
   display: grid;
   gap: 1rem;
-  /* 20rem, not 17: there are six cards, and a minimum narrow enough to fit
-     four across leaves the second row half empty. This holds them to three
-     and three at desktop width. */
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  max-width: 72rem;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  max-width: 66rem;
+  margin: 6rem auto 0;
 }
 
-.hm-feature {
+.content a.hm-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.4rem 1.5rem 1.5rem;
   border: 1px solid var(--hm-border);
-  border-radius: 0.6rem;
+  border-radius: 0.75rem;
   background-color: var(--hm-surface);
-  padding: 1.1rem 1.2rem;
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
-.hm-feature__title {
-  color: var(--hm-accent);
-  margin: 0 0 0.4rem;
+.content a.hm-feature:hover {
+  border-color: var(--hm-command-edge);
+  transform: translateY(-2px);
+  box-shadow: var(--hm-command-glow);
+}
+
+.hm-feature__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.content .hm-feature__title {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--hm-heading);
   font-size: var(--oss-type-card-title);
   font-weight: 600;
+  letter-spacing: normal;
 }
 
-/* Each card's heading links to that feature's page. The whole card is not the
-   link target: the body text names types and commands, and a card-wide anchor
-   would swallow any link put in one later. */
-.hm-feature__title a {
-  color: inherit;
-  text-decoration: none;
+.hm-feature__icon {
+  display: inline-flex;
+  flex: none;
+  padding: 0.45rem;
+  border-radius: 0.5rem;
+  color: var(--hm-accent);
+  background-color: color-mix(in srgb, var(--hm-accent) 12%, transparent);
 }
 
-.hm-feature__title a:hover {
-  text-decoration: underline;
-}
-
-.hm-feature__body {
-  margin: 0;
+.content .hm-feature p {
+  margin: 0.6rem 0 0;
   color: var(--hm-muted);
   font-size: var(--oss-type-card-body);
   line-height: var(--oss-leading-prose);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content a.hm-feature {
+    transition: none;
+  }
+
+  .content a.hm-feature:hover {
+    transform: none;
+  }
 }
 
 /* Request-flow diagram
@@ -530,8 +766,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hm-child,
-  .hm-hero__links a {
+  .hm-child {
     transition: none;
   }
 }
