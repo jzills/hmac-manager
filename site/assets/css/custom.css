@@ -182,7 +182,7 @@ body {
 }
 
 .hm-install__command {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--oss-font-mono);
   font-size: 0.88rem;
   color: var(--hm-body);
   /* Wrap rather than scroll. A card is a third of the grid and
@@ -271,13 +271,13 @@ body {
 
 .hm-flow .hm-flow__label {
   fill: var(--hm-heading);
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--oss-font-mono);
   font-size: 13px;
 }
 
 .hm-flow .hm-flow__note {
   fill: var(--hm-muted);
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--oss-font-mono);
   font-size: 11px;
 }
 
@@ -539,11 +539,12 @@ body {
 
 /* Footer
  * ------------------------------------------------------------------
- * The footer is shared by every project docs site: its markup is
- * layouts/_partials/custom/footer.html, its styles assets/css/oss-footer.css.
- * These map it onto the palette in hm-theme.css, in both modes. */
+ * The footer and the light/dark button are shared by every project docs
+ * site: their styles are assets/css/oss-footer.css and oss-chrome.css. These
+ * map them onto the palette in hm-theme.css, in both modes, which .dark
+ * switches on :root itself. */
 
-.hextra-footer {
+:root {
   --oss-text: var(--hm-heading);
   --oss-muted: var(--hm-muted);
   --oss-accent: var(--hm-accent);

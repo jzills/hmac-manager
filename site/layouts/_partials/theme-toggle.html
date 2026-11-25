@@ -1,0 +1,65 @@
+{{- /*
+  Overrides Hextra's light/dark/system menu with one button, the one kx's
+  navbar carries: a sun on a dark page, a moon on a light one, styled by
+  assets/css/oss-chrome.css. Shared, byte for byte, by snoop, action-cache
+  and hmac-manager; kx has its own, which also knows its palettes.
+
+  Hextra's navbar has no extension point for a control of its own, but
+  "theme-toggle" is one of the menu item types it renders, so overriding
+  this partial puts the button in the navbar at every width. The sidebar
+  footer renders it too, but displayToggle turns that copy off (hugo.toml).
+
+  Two states rather than three: a reader reaching for the navbar wants the
+  page brighter or darker. With nothing stored, Hextra's head script follows
+  the system setting, as before; a click stores "light" or "dark" under
+  Hextra's own "color-theme" key, so its head script applies the choice
+  before the next page paints.
+
+  Deliberately not .hextra-theme-toggle: the theme's core/theme.js binds that
+  class to its dropdown menu.
+*/ -}}
+{{- $params := . | default dict -}}
+{{- $class := $params.class | default "hx:p-2" -}}
+
+<button type="button" class="oss-mode {{ $class }}" aria-label="Switch to the light theme">
+  {{- partial "utils/icon.html" (dict "name" "sun" "attributes" `height=18 class="oss-mode__icon oss-mode__icon--sun"`) -}}
+  {{- partial "utils/icon.html" (dict "name" "moon" "attributes" `height=18 class="oss-mode__icon oss-mode__icon--moon"`) -}}
+</button>
+
+<script>
+  (function () {
+    // Every copy of the partial wires itself up once; they stay in step
+    // through the class on <html>, which is what each one reads.
+    function isDark() {
+      return document.documentElement.classList.contains("dark");
+    }
+
+    function label(button) {
+      var dark = isDark();
+      button.setAttribute("aria-label", dark ? "Switch to the light theme" : "Switch to the dark theme");
+      button.setAttribute("title", dark ? "Light theme" : "Dark theme");
+    }
+
+    document.querySelectorAll(".oss-mode").forEach(function (button) {
+      if (button.dataset.ossWired === "true") {
+        return;
+      }
+      button.dataset.ossWired = "true";
+      label(button);
+
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        var next = isDark() ? "light" : "dark";
+        // setTheme is Hextra's, from its head script: it swaps the class and
+        // color-scheme on <html>.
+        window.setTheme(next);
+        try {
+          localStorage.setItem("color-theme", next);
+        } catch (e) {
+          /* Private browsing; the choice lasts for this page only. */
+        }
+        document.querySelectorAll(".oss-mode").forEach(label);
+      });
+    });
+  })();
+</script>
