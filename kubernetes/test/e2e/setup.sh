@@ -82,9 +82,16 @@ docker build -f "$REPO_ROOT/kubernetes/operator/Dockerfile" \
 log "Loading hmac-manager-operator image into kind..."
 kind load docker-image "zills/hmac-manager-operator:${IMAGE_TAG}" --name "$CLUSTER_NAME"
 
-log "Pulling and loading bundled Redis image into kind..."
-docker pull redis:7-alpine
-kind load docker-image redis:7-alpine --name "$CLUSTER_NAME"
+# Pulled by each node's own containerd rather than `docker pull` + `kind load`.
+# redis:7-alpine is a multi-platform index; with Docker's containerd image store
+# (the default on current runner images) `docker save` exports that index while
+# holding only the host platform's content, and kind's
+# `ctr images import --all-platforms` then fails with "content digest ... not
+# found". The images built above are single-platform, so they still load fine.
+log "Pulling bundled Redis image onto the kind nodes..."
+for node in $(kind get nodes --name "$CLUSTER_NAME"); do
+    docker exec "$node" crictl pull docker.io/library/redis:7-alpine
+done
 
 # ── 8. Policy secret + Helm install ──────────────────────────────────────────
 log "Creating namespace and HMAC policy secret..."
