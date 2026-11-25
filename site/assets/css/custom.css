@@ -11,11 +11,10 @@
  */
 
 html {
-  /* Most of the navbar is fragments on the landing page — Install, .NET,
-     Kubernetes, Client, and the mark itself, which goes to the top — and the
-     docs pages have a table of contents that is nothing but fragments.
-     Without this the browser teleports, and a reader who clicks "Kubernetes"
-     arrives with no idea whether the page moved a screen or ten.
+  /* The mark goes to the top of the landing page by fragment, and the docs
+     pages have a table of contents that is nothing but fragments. Without
+     this the browser teleports, and a reader arrives with no idea whether
+     the page moved a screen or ten.
 
      No reduced-motion guard here: Hextra's reset already forces
      scroll-behavior: auto under that query. */
@@ -119,7 +118,7 @@ body {
 
 .hm-section {
   padding: 2.5rem 1rem;
-  /* The navbar is sticky, so a section jumped to from the menu would start
+  /* The navbar is sticky, so a section jumped to by fragment would start
      underneath it with its heading hidden. */
   scroll-margin-top: 5rem;
 }
@@ -536,4 +535,19 @@ body {
   .hm-hero__links a {
     transition: none;
   }
+}
+
+/* Footer
+ * ------------------------------------------------------------------
+ * The footer is shared by every project docs site: its markup is
+ * layouts/_partials/custom/footer.html, its styles assets/css/oss-footer.css.
+ * These map it onto the palette in hm-theme.css, in both modes. */
+
+.hextra-footer {
+  --oss-text: var(--hm-heading);
+  --oss-muted: var(--hm-muted);
+  --oss-accent: var(--hm-accent);
+  --oss-border: var(--hm-border);
+  --oss-surface: var(--hm-surface);
+  --oss-page: var(--hm-background);
 }

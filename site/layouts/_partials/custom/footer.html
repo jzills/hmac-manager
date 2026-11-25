@@ -1,0 +1,62 @@
+{{- /*
+  The footer on every page of every project docs site. Shared, byte for byte,
+  by kx, snoop, action-cache and hmac-manager: change it in one, copy it to
+  all four. What differs per site lives elsewhere:
+
+    - [params.oss] in hugo.toml: the mark, name, tagline, repository, the bug
+      report's body, and the three link columns.
+    - _partials/oss/footer-command.html: the install command, which on some
+      sites carries a copy button wired to that site's own script.
+    - the --oss-* properties in custom.css, which map this footer onto the
+      site's palette.
+
+  Top: the project's mark, tagline and install command beside three short
+  link columns. Bottom: the z.//s mark and a link to zills.io, the row that
+  closes every zills site, so a reader on any docs page has the way back to
+  the rest of the work.
+
+  Column links are either a site path (`path`, through relURL, which adds the
+  /<project>/ the site is served under), an absolute `url`, or `kind = "bug"`,
+  which opens GitHub's new-issue form with the label set and the body laid
+  out from [params.oss] bug.
+*/ -}}
+{{- $oss := site.Params.oss -}}
+{{- $repo := $oss.repo -}}
+{{- $bugURL := printf "%s/issues/new?%s" $repo (querify "labels" "bug" "body" ($oss.bug | default "")) -}}
+<div class="oss-footer">
+  <div class="oss-footer__top">
+    <div class="oss-footer__about">
+      <a class="oss-footer__brand" href="{{ site.Home.RelPermalink }}" aria-label="{{ $oss.name }}">
+        {{- with resources.Get $oss.mark }}{{ .Content | safeHTML }}{{ end -}}
+        {{- if $oss.showname }}<span class="oss-footer__name" aria-hidden="true">{{ $oss.name }}</span>{{ end -}}
+      </a>
+      <p class="oss-footer__tagline">{{ $oss.tagline }}</p>
+      <div class="oss-footer__command">
+        {{- partial "oss/footer-command.html" . -}}
+      </div>
+    </div>
+    <nav class="oss-footer__cols" aria-label="Footer">
+      {{- range $oss.columns }}
+      <div class="oss-footer__col">
+        <h2 class="oss-footer__heading">{{ .heading }}</h2>
+        <ul>
+          {{- range .links }}
+            {{- $href := "" }}
+            {{- if eq .kind "bug" }}{{ $href = $bugURL }}
+            {{- else if .url }}{{ $href = .url }}
+            {{- else }}{{ $href = .path | relURL }}{{ end }}
+          <li><a href="{{ $href }}">{{ .label }}</a></li>
+          {{- end }}
+        </ul>
+      </div>
+      {{- end }}
+    </nav>
+  </div>
+
+  <div class="oss-footer__zills">
+    {{- /* The mark goes to zills.io too; the text link beside it is the one keyboards and screen readers get. */ -}}
+    <a class="oss-zmark" href="https://zills.io/" tabindex="-1" aria-hidden="true">z<span class="oss-zmark__dot"></span><span class="oss-zmark__slashes">//</span>s</a>
+    <span class="oss-footer__divider" aria-hidden="true"></span>
+    <a class="oss-footer__hub" href="https://zills.io/">zills.io <span aria-hidden="true">↗</span></a>
+  </div>
+</div>

@@ -23,6 +23,11 @@ baseURL = "https://j.zills.io/hmac-manager/"
 # the home page with this alone and every other page as "Page – this".
 title = "HmacManager"
 
+# No tag or category pages: no page has either, so Hugo's default /tags/ and
+# /categories/ were empty, and listed in the sitemap they were indexed as thin
+# pages.
+disableKinds = ["taxonomy", "term"]
+
 # label is a custom param, so it belongs under params — Hugo deprecated setting
 # it on the language itself in 0.112.0 and warns on every build otherwise.
 [languages.en]
@@ -80,11 +85,20 @@ title = "HmacManager"
   [params.navbar]
     displayTitle = false
     displayLogo = false
+    width = "normal"
 
+  # The footer is layouts/_partials/custom/footer.html, filled from
+  # [params.oss] below; the theme's copyright and "Powered by" rows are off.
   [params.footer]
     enable = true
     displayCopyright = false
     displayPoweredBy = false
+    width = "normal"
+
+  # The page, navbar and footer widths, stated on every project docs site so
+  # their columns line up when you move from one to the next.
+  [params.page]
+    width = "normal"
 
   [params.search]
     enable = true
@@ -103,43 +117,97 @@ title = "HmacManager"
   # Hextra's own light/dark toggle, unmodified. kx replaces this partial with a
   # ten-palette menu because its palettes are generated from the CLI's theme
   # registry; there is no such registry here, so two modes is the whole story
-  # and the stock control is the right one.
+  # and the stock control is the right one. It sits in the navbar (the Theme
+  # menu entry below); displayToggle governs a second copy, in a sticky bar at
+  # the foot of the docs sidebar, doing what the navbar's already does.
   [params.theme]
     default = "dark"
-    displayToggle = true
+    displayToggle = false
 
-# Docs leads, then the landing page's own sections — one per artifact, in the
-# order the landing page presents them.
+# The footer, shared by every project docs site: the markup is
+# layouts/_partials/custom/footer.html and the install command is
+# layouts/_partials/oss/footer-command.html. Keys are lowercase, as Hugo
+# stores them. A link is a site `path`, an absolute `url`, or kind = "bug",
+# which opens a new issue with `bug` as its body; the body asks which of the
+# four artifacts the reader runs, since each has its own version.
+[params.oss]
+  name = "HmacManager"
+  mark = "hm-mark.svg"
+  showname = true
+  tagline = "HMAC request authentication, in your app or in your mesh. Sign and verify requests against named policies, with replay protection built in."
+  repo = "https://github.com/jzills/hmac-manager"
+  bug = """**What happened**
+
+
+**What you expected**
+
+
+**Steps to reproduce**
+
+
+**Versions**
+
+Which you run (the NuGet package, the npm client, the ext-authz image or the Helm chart) and its version.
+"""
+
+  [[params.oss.columns]]
+    heading = "Get started"
+    links = [
+      { label = "Install", path = "docs/getting-started/install/" },
+      { label = ".NET quickstart", path = "docs/getting-started/dotnet-quickstart/" },
+      { label = "Kubernetes quickstart", path = "docs/getting-started/kubernetes-quickstart/" },
+      { label = "Client quickstart", path = "docs/getting-started/client-quickstart/" },
+    ]
+  [[params.oss.columns]]
+    heading = "Learn"
+    links = [
+      { label = "Concepts", path = "docs/concepts/" },
+      { label = ".NET", path = "docs/dotnet/" },
+      { label = "Kubernetes", path = "docs/kubernetes/" },
+      { label = "Reference", path = "docs/reference/" },
+    ]
+  [[params.oss.columns]]
+    heading = "Project"
+    links = [
+      { label = "GitHub", url = "https://github.com/jzills/hmac-manager" },
+      { label = "Releases", url = "https://github.com/jzills/hmac-manager/releases" },
+      { label = "Report a bug", kind = "bug" },
+      { label = "MIT license", url = "https://github.com/jzills/hmac-manager/blob/HEAD/LICENSE" },
+    ]
+
+# The bar holds a first visitor's top tasks, the same on each of the project
+# sites: Documentation, Quickstart, Releases, Search, GitHub and the
+# light/dark button. The landing page's own sections (.NET, Kubernetes,
+# Client) are a scroll away, and a menu of them read as its table of
+# contents. Quickstart is the .NET one, where most readers start; the docs
+# index links the other two.
 [menu]
   [[menu.main]]
-    name = "Docs"
+    name = "Documentation"
     pageRef = "/docs"
     weight = 1
   [[menu.main]]
-    name = "Install"
-    pageRef = "/#install"
+    name = "Quickstart"
+    pageRef = "/docs/getting-started/dotnet-quickstart"
     weight = 2
   [[menu.main]]
-    name = ".NET"
-    pageRef = "/#dotnet"
+    name = "Releases"
+    url = "https://github.com/jzills/hmac-manager/releases"
     weight = 3
   [[menu.main]]
-    name = "Kubernetes"
-    pageRef = "/#kubernetes"
-    weight = 4
-  [[menu.main]]
-    name = "Client"
-    pageRef = "/#client"
-    weight = 5
-  [[menu.main]]
     name = "Search"
-    weight = 6
+    weight = 4
     [menu.main.params]
       type = "search"
   [[menu.main]]
     identifier = "github"
     name = "GitHub"
     url = "https://github.com/jzills/hmac-manager"
-    weight = 7
+    weight = 5
     [menu.main.params]
       icon = "github"
+  [[menu.main]]
+    name = "Theme"
+    weight = 6
+    [menu.main.params]
+      type = "theme-toggle"

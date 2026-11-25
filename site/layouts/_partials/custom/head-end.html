@@ -17,3 +17,13 @@
   {{- $theme := . | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $theme.RelPermalink }}" integrity="{{ $theme.Data.Integrity }}" />
 {{- end }}
+
+{{- /*
+  The footer's stylesheet, shared by every project docs site, linked the same
+  way for the same reason. custom.css maps its --oss-* colors onto this
+  palette.
+*/ -}}
+{{- with resources.Get "css/oss-footer.css" }}
+  {{- $footer := . | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ $footer.RelPermalink }}" integrity="{{ $footer.Data.Integrity }}" />
+{{- end }}
