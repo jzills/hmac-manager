@@ -32,5 +32,13 @@
   {{- end }}
 {{- end }}
 
+{{- /* The copy button on the footer's install command, shared by every
+       project docs site. Deferred: the button ships hidden, and the
+       command reads correctly without it. */ -}}
+{{- with resources.Get "js/oss-copy.js" }}
+  {{- $copy := . | minify | fingerprint }}
+  <script defer src="{{ $copy.RelPermalink }}" integrity="{{ $copy.Data.Integrity }}"></script>
+{{- end }}
+
 {{- /* The typefaces every project docs site is set in; see the partial. */ -}}
 {{- partial "oss/fonts.html" . -}}

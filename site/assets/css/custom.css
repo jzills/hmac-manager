@@ -45,29 +45,33 @@ body {
 }
 
 .hm-hero__logo svg {
-  /* The wordmark is 612x240, so it is wide before it is tall; sizing it by
-     width is what keeps it from overflowing a phone. */
-  width: clamp(17rem, 62vw, 34rem);
-  height: auto;
+  /* As tall as kx's hero logo (--oss-hero-mark); the viewBox sets the
+     width, which at that height fits a phone. */
+  height: var(--oss-hero-mark);
+  width: auto;
   display: block;
   margin: 0 auto;
 }
 
+/* The hero's title, at kx's size and weight (--oss-type-hero): the
+   wordmark above it is the h1, as kx's logo sits above its title. */
 .hm-hero__tagline {
-  font-size: clamp(1.25rem, 3.2vw, 1.9rem);
-  font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--hm-heading);
   margin: 0;
-  max-width: 40rem;
+  font-size: var(--oss-type-hero);
+  font-weight: 750;
+  line-height: 1.05;
+  max-width: 22ch;
+  text-wrap: balance;
 }
 
 .hm-hero__blurb {
   max-width: 46rem;
   margin: 0;
-  font-size: clamp(1rem, 2vw, 1.1rem);
-  line-height: 1.6;
   color: var(--hm-muted);
+  font-size: var(--oss-type-lede);
+  line-height: var(--oss-leading-prose);
 }
 
 .hm-hero__blurb code,
@@ -125,10 +129,10 @@ body {
 
 .hm-section__title {
   text-align: center;
-  font-size: 1.5rem;
-  font-weight: 650;
   color: var(--hm-heading);
   margin: 0 0 0.5rem;
+  font-size: var(--oss-type-section);
+  font-weight: 700;
 }
 
 .hm-section__lede {
@@ -136,7 +140,7 @@ body {
   color: var(--hm-muted);
   max-width: 46rem;
   margin: 0 auto 1.75rem;
-  line-height: 1.6;
+  line-height: var(--oss-leading-prose);
 }
 
 /* A landing-page code sample. These are real markdown fences inside the
@@ -228,9 +232,10 @@ body {
 }
 
 .hm-feature__title {
-  font-weight: 600;
   color: var(--hm-accent);
   margin: 0 0 0.4rem;
+  font-size: var(--oss-type-card-title);
+  font-weight: 600;
 }
 
 /* Each card's heading links to that feature's page. The whole card is not the
@@ -248,8 +253,8 @@ body {
 .hm-feature__body {
   margin: 0;
   color: var(--hm-muted);
-  line-height: 1.55;
-  font-size: 0.95rem;
+  font-size: var(--oss-type-card-body);
+  line-height: var(--oss-leading-prose);
 }
 
 /* Request-flow diagram
