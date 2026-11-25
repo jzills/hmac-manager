@@ -113,6 +113,23 @@ policies:
       maxAgeInSeconds: 30
 ```
 
+## Metrics and a dashboard
+
+The chart ships a Grafana dashboard, and can have Prometheus scrape the
+verifier, with three values:
+
+```yaml
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  dashboard:
+    enabled: true
+```
+
+With kube-prometheus-stack, two of its defaults also need matching; see
+[metrics](../metrics/#with-kube-prometheus-stack).
+
 ## Values
 
 The full table is in the [chart values reference](../../reference/chart-values/).
@@ -122,3 +139,4 @@ The full table is in the [chart values reference](../../reference/chart-values/)
 - [The HmacPolicy CRD](../hmacpolicy-crd/) — managing policies with `kubectl` instead
 - [Enforcement](../enforcement/) — ingress gateway versus ambient waypoint
 - [Redis](../redis/) — replay protection and the replica constraint
+- [Metrics](../metrics/) — Prometheus, the ServiceMonitor and the Grafana dashboard

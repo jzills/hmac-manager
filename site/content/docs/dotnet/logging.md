@@ -95,3 +95,9 @@ logging:
 Framework and dependency logging (ASP.NET Core, KubeOps) is suppressed below
 `Error` regardless, so routine chatter stays out while genuine framework errors
 still surface. See [chart values](../../reference/chart-values/).
+
+## Alongside metrics
+
+Logs say which request was refused and why; [metrics](../metrics/) say how
+often. Each rejection's event id maps onto a verification outcome, so a rise
+on a dashboard leads straight to the events to look for.

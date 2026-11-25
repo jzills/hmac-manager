@@ -1,5 +1,8 @@
+using HmacManager.Diagnostics;
 using HmacManager.Kubernetes;
 using HmacManager.Mvc.Extensions;
+using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Metrics;
 
 Banner.Print();
 
@@ -41,11 +44,40 @@ builder.Services.AddScoped<SignHandler>();
 // unverified request. The sign port is opened only in Development and is not
 // exposed by the Kubernetes Service, so the mesh cannot route to it.
 var signPort = builder.Configuration.GetValue("SignPort", 8081);
+
+// Prometheus metrics — HmacManager's verification outcomes and durations, and ASP.NET Core's
+// own request metrics — on a port of their own, for the same reason as the sign port: Envoy
+// forwards the original request's path to the verify port, so a /metrics route there would
+// answer 200 to a request for /metrics, and the waypoint would let it through unverified.
+var metricsEnabled = builder.Configuration.GetValue("Metrics:Enabled", true);
+var metricsPort = builder.Configuration.GetValue("Metrics:Port", 9464);
+if (metricsEnabled)
+{
+    builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics
+        .AddMeter(HmacManagerDiagnostics.MeterName, "Microsoft.AspNetCore.Hosting")
+        // ASP.NET Core's buckets start at 5 ms, and a check takes about one: the same buckets as
+        // the verification itself, so the two latency panels can be read against each other.
+        .AddView("http.server.request.duration", new ExplicitBucketHistogramConfiguration
+        {
+            Boundaries = [.. HmacMetrics.DurationBuckets]
+        })
+        .AddPrometheusExporter());
+}
+
+var extraUrls = new List<string>();
 if (builder.Environment.IsDevelopment())
+{
+    extraUrls.Add($"http://+:{signPort}");
+}
+if (metricsEnabled)
+{
+    extraUrls.Add($"http://+:{metricsPort}");
+}
+if (extraUrls.Count > 0)
 {
     var urls = (builder.Configuration[WebHostDefaults.ServerUrlsKey] ?? "http://+:8080")
         .Split(';', StringSplitOptions.RemoveEmptyEntries)
-        .Append($"http://+:{signPort}")
+        .Concat(extraUrls)
         .ToArray();
 
     builder.WebHost.UseUrls(urls);
@@ -60,6 +92,25 @@ if (string.IsNullOrWhiteSpace(redisConnectionString))
         "cache is in-process and is NOT shared across replicas — run a single replica " +
         "or configure Redis for multi-replica replay protection.");
 }
+
+#if NET9_0_OR_GREATER
+if (metricsEnabled)
+{
+    // ASP.NET Core's request metrics are the ext-authz checks' own: leave out the scrapes and the
+    // development signing helper, or every /sign call would count as a check that allowed.
+    // MetricsDisabled is .NET 9+; the image ships net10.0, so the net8.0 build goes without.
+    app.Use((ctx, next) =>
+    {
+        var port = ctx.Connection.LocalPort;
+        if ((port == metricsPort || port == signPort) && ctx.Features.Get<IHttpMetricsTagsFeature>() is { } tags)
+        {
+            tags.MetricsDisabled = true;
+        }
+
+        return next(ctx);
+    });
+}
+#endif
 
 if (app.Environment.IsDevelopment())
 {
@@ -81,6 +132,23 @@ if (app.Environment.IsDevelopment())
 
             await result.ExecuteAsync(ctx);
         }));
+}
+
+if (metricsEnabled)
+{
+    // Terminal on the metrics port: /metrics is the scrape, and anything else is a 404 rather
+    // than falling through to the ext-authz handler below.
+    app.UseWhen(
+        ctx => ctx.Connection.LocalPort == metricsPort,
+        branch =>
+        {
+            branch.UseOpenTelemetryPrometheusScrapingEndpoint();
+            branch.Run(ctx =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            });
+        });
 }
 
 // Catch-all: Envoy HTTP ext-authz forwards the original request's method and path

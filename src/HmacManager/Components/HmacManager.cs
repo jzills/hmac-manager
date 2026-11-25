@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using HmacManager.Caching;
 using HmacManager.Diagnostics;
+using HmacManager.Exceptions;
 using HmacManager.Extensions;
 
 namespace HmacManager.Components;
@@ -93,18 +94,47 @@ public class HmacManager : IHmacManager
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Each way a request can fail verification is rejected — and logged — separately. A single
-    /// "verification failed" would be true but useless: an expired signature, a replayed nonce and
-    /// a genuine signature mismatch have entirely different causes and entirely different fixes.
+    /// Each way a request can fail verification is rejected — and logged and counted — separately.
+    /// A single "verification failed" would be true but useless: an expired signature, a replayed
+    /// nonce and a genuine signature mismatch have entirely different causes and entirely different
+    /// fixes.
     /// </remarks>
     public async Task<HmacResult> VerifyAsync(HttpRequestMessage request)
+    {
+        var started = Clock.GetTimestamp();
+        try
+        {
+            var (result, outcome) = await VerifyCoreAsync(request);
+
+            HmacMetrics.VerificationCompleted(
+                Options.Policy, Options.Scheme?.Name, outcome, Clock.GetElapsedTime(started));
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            // Headers that do not parse throw from the parser. Anything else is a fault — a nonce
+            // cache that cannot be reached fails closed by throwing — and is counted, so a store
+            // outage shows on a dashboard as refusals rather than as a gap in traffic.
+            var outcome = e is MissingHeaderException or BadHeaderFormatException
+                ? HmacMetrics.VerificationOutcome.InvalidHeaders
+                : HmacMetrics.VerificationOutcome.Error;
+
+            HmacMetrics.VerificationCompleted(
+                Options.Policy, Options.Scheme?.Name, outcome, Clock.GetElapsedTime(started));
+
+            throw;
+        }
+    }
+
+    private async Task<(HmacResult Result, string Outcome)> VerifyCoreAsync(HttpRequestMessage request)
     {
         if (!TryParseHmac(request.Headers, out var incomingHmac) || incomingHmac is null)
         {
             HmacLog.VerificationHeadersMissing(
                 Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name);
 
-            return ResultFactory.Failure();
+            return (ResultFactory.Failure(), HmacMetrics.VerificationOutcome.HeadersMissing);
         }
 
         if (!incomingHmac.DateRequested.HasValidDateRequested(Options.MaxAgeInSeconds, Clock))
@@ -112,7 +142,7 @@ public class HmacManager : IHmacManager
             HmacLog.VerificationRequestExpired(
                 Logger, Options.Policy, incomingHmac.DateRequested, Options.MaxAgeInSeconds);
 
-            return ResultFactory.Failure();
+            return (ResultFactory.Failure(), HmacMetrics.VerificationOutcome.Expired);
         }
 
         var hmacVerification = await Factory.CreateAsync(request, incomingHmac);
@@ -126,7 +156,7 @@ public class HmacManager : IHmacManager
                 hmacVerification.SigningContent,
                 incomingHmac.Signature);
 
-            return ResultFactory.Failure();
+            return (ResultFactory.Failure(), HmacMetrics.VerificationOutcome.SignatureMismatch);
         }
 
         // The request can expire while its signature is computed. Checked again here, before the
@@ -139,20 +169,20 @@ public class HmacManager : IHmacManager
             HmacLog.VerificationRequestExpired(
                 Logger, Options.Policy, incomingHmac.DateRequested, Options.MaxAgeInSeconds);
 
-            return ResultFactory.Failure();
+            return (ResultFactory.Failure(), HmacMetrics.VerificationOutcome.Expired);
         }
 
         if (!await Cache.TryAddAsync(incomingHmac.Nonce, incomingHmac.DateRequested, TimeSpan.FromSeconds(Options.MaxAgeInSeconds)))
         {
             HmacLog.VerificationNonceReplayed(Logger, Options.Policy, incomingHmac.Nonce);
 
-            return ResultFactory.Failure();
+            return (ResultFactory.Failure(), HmacMetrics.VerificationOutcome.Replayed);
         }
 
         HmacLog.RequestVerified(
             Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name);
 
-        return ResultFactory.Success(hmacVerification);
+        return (ResultFactory.Success(hmacVerification), HmacMetrics.VerificationOutcome.Verified);
     }
 
     /// <inheritdoc/>
@@ -163,6 +193,8 @@ public class HmacManager : IHmacManager
         {
             HmacLog.SigningFailed(
                 Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name);
+            HmacMetrics.SigningCompleted(
+                Options.Policy, Options.Scheme?.Name, HmacMetrics.SigningOutcome.Failed);
 
             return ResultFactory.Failure();
         }
@@ -173,6 +205,7 @@ public class HmacManager : IHmacManager
         HmacLog.RequestSigned(
             Logger, request.Method, request.RequestUri, Options.Policy, Options.Scheme?.Name, hmac.Nonce);
         HmacLog.SigningContentComputed(Logger, Options.Policy, hmac.SigningContent);
+        HmacMetrics.SigningCompleted(Options.Policy, Options.Scheme?.Name, HmacMetrics.SigningOutcome.Signed);
 
         return ResultFactory.Success(hmac);
     }

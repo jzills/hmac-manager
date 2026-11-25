@@ -113,6 +113,14 @@ appear configured and do nothing.
 | `operator.image.tag` | pinned per release | Operator image tag. |
 | `service.port` | `8080` | Port the ext-authz service listens on. |
 | `logging.level` | `Information` | Verbosity of HmacManager's own log messages (signing, verification, policy reload, reconciliation) on both the server and the operator. `Trace` and `Debug` are per-request; `Information` covers policy/config changes only. Framework and dependency logging (ASP.NET Core, KubeOps, etc.) is suppressed below `Error` regardless of this setting. |
+| `metrics.enabled` | `false` | Serve Prometheus metrics on `metrics.port` and add it to the Service. See [metrics](https://j.zills.io/hmac-manager/docs/kubernetes/metrics/). |
+| `metrics.port` | `9464` | Metrics port. Must differ from `service.port` and from 8081. |
+| `metrics.serviceMonitor.enabled` | `false` | Render a Prometheus Operator `ServiceMonitor`. |
+| `metrics.serviceMonitor.interval` | `30s` | Scrape interval. |
+| `metrics.serviceMonitor.labels` | `{}` | Extra labels for your Prometheus's selector. |
+| `metrics.dashboard.enabled` | `false` | Render the Grafana dashboard as a sidecar-labelled ConfigMap. |
+| `metrics.dashboard.namespace` | release namespace | Namespace for that ConfigMap. |
+| `metrics.dashboard.labels` | `grafana_dashboard: "1"` | Labels the Grafana sidecar selects by. |
 | `istio.enabled` | `true` | Master switch for Istio integration and the NOTES MeshConfig instructions. |
 | `istio.ingressGateway.enabled` | `false` | Enforce inbound (ingress gateway) traffic. Requires `name` + `namespace`. |
 | `istio.ingressGateway.name` | `""` | Name of the existing Gateway to target. Required when enabled. |
@@ -120,6 +128,30 @@ appear configured and do nothing.
 | `istio.waypoint.enabled` | `false` | Enforce east-west (ambient mode) traffic. Requires `name` + `namespace`. |
 | `istio.waypoint.name` | `""` | Name of the waypoint Gateway. Required when enabled. |
 | `istio.waypoint.namespace` | `""` | Namespace of the waypoint. Required when enabled. |
+
+## Metrics and a Grafana dashboard
+
+The chart includes a Grafana dashboard for the verifier: verifications per
+second, refusals by reason and by policy, replays, latency and Redis errors.
+Turn on the metrics, a Prometheus Operator `ServiceMonitor` and the dashboard:
+
+```yaml
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack   # the label your Prometheus selects ServiceMonitors by
+  dashboard:
+    enabled: true
+    namespace: monitoring              # where your Grafana's dashboard sidecar looks
+```
+
+The dashboard is a ConfigMap labelled `grafana_dashboard: "1"`, which
+kube-prometheus-stack's Grafana sidecar loads; it is also
+`dashboards/hmac-manager.json` in the chart, to import by hand. Metrics are
+served on their own port, `9464`, never on the verify port. See
+[metrics](https://j.zills.io/hmac-manager/docs/kubernetes/metrics/).
 
 ## More
 
@@ -129,6 +161,7 @@ appear configured and do nothing.
 | [The HmacPolicy CRD](https://j.zills.io/hmac-manager/docs/kubernetes/hmacpolicy-crd/) | Managing policies with `kubectl`, status, key rotation |
 | [The ext-authz service](https://j.zills.io/hmac-manager/docs/kubernetes/ext-authz-service/) | Ports, image tags, the development signing endpoint |
 | [Redis](https://j.zills.io/hmac-manager/docs/kubernetes/redis/) | Replay protection and the replica constraint |
+| [Metrics](https://j.zills.io/hmac-manager/docs/kubernetes/metrics/) | Prometheus metrics, the ServiceMonitor and the Grafana dashboard |
 | [Chart values](https://j.zills.io/hmac-manager/docs/reference/chart-values/) | The same table, kept with the rest of the docs |
 
 Sign requests from any .NET client with the

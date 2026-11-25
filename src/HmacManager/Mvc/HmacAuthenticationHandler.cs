@@ -86,6 +86,7 @@ internal class HmacAuthenticationHandler : AuthenticationHandler<HmacAuthenticat
         if (!hasValidKeys)
         {
             HmacLog.KeyValidationRejected(Logger, policy.Name!);
+            HmacMetrics.VerificationRefused(HmacMetrics.VerificationOutcome.KeysRejected, policy.Name!);
             return AuthenticateResult.Fail(new HmacAuthenticationException());
         }
 

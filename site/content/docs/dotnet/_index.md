@@ -1,7 +1,7 @@
 ---
 title: .NET library
 linkTitle: .NET
-description: Registration, authorization, events, dynamic policies and logging for ASP.NET Core.
+description: Registration, authorization, events, dynamic policies, logging and metrics for ASP.NET Core.
 weight: 3
 ---
 

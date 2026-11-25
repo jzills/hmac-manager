@@ -1,0 +1,144 @@
+suite: metrics
+release:
+  name: hmac-manager
+values:
+  - values/base.yaml
+templates:
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
+  - dashboard.yaml
+
+tests:
+  - it: is off by default, and tells the service so
+    template: deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Metrics__Enabled
+            value: "false"
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: metrics
+            containerPort: 9464
+            protocol: TCP
+
+  - it: adds no metrics port to the Service by default
+    template: service.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.ports
+          count: 1
+
+  - it: exposes the metrics port on the container when enabled
+    template: deployment.yaml
+    set:
+      metrics.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: metrics
+            containerPort: 9464
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: Metrics__Port
+            value: "9464"
+
+  - it: exposes the metrics port on the Service when enabled
+    template: service.yaml
+    set:
+      metrics.enabled: true
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            port: 9464
+            targetPort: metrics
+            protocol: TCP
+            name: metrics
+
+  - it: refuses a metrics port that is the verify port
+    template: deployment.yaml
+    set:
+      metrics.enabled: true
+      metrics.port: 8080
+    asserts:
+      - failedTemplate:
+          errorPattern: "metrics.port \\(8080\\) must differ from service.port"
+
+  - it: refuses a metrics port that is the development signing port
+    template: deployment.yaml
+    set:
+      metrics.enabled: true
+      metrics.port: 8081
+    asserts:
+      - failedTemplate:
+          errorPattern: "must differ from service.port and from 8081"
+
+  - it: renders no ServiceMonitor unless asked
+    template: servicemonitor.yaml
+    set:
+      metrics.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no ServiceMonitor when metrics are off, even if asked
+    template: servicemonitor.yaml
+    set:
+      metrics.serviceMonitor.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a ServiceMonitor that selects the server Service only
+    template: servicemonitor.yaml
+    set:
+      metrics.enabled: true
+      metrics.serviceMonitor.enabled: true
+      metrics.serviceMonitor.labels:
+        release: kube-prometheus-stack
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: server
+      - equal:
+          path: spec.endpoints[0].port
+          value: metrics
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack
+
+  - it: renders the dashboard ConfigMap with the sidecar label
+    template: dashboard.yaml
+    set:
+      metrics.dashboard.enabled: true
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.labels.grafana_dashboard
+          value: "1"
+      - equal:
+          path: metadata.namespace
+          value: hmac-system
+      - matchRegex:
+          path: data["hmac-manager.json"]
+          pattern: hmac_manager_verifications_total
+
+  - it: puts the dashboard where the sidecar looks when told to
+    template: dashboard.yaml
+    set:
+      metrics.dashboard.enabled: true
+      metrics.dashboard.namespace: monitoring
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring

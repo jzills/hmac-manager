@@ -1,6 +1,6 @@
 ---
 title: Kubernetes
-description: The ext-authz verifier, the HmacPolicy CRD, the Helm chart and enforcement.
+description: The ext-authz verifier, the HmacPolicy CRD, the Helm chart, enforcement and metrics.
 weight: 4
 ---
 
@@ -12,6 +12,8 @@ outside your application and needs no change to it.
 
 Three pieces are deployed together by one chart: the **verifier** that answers
 ext-authz checks, the **operator** that turns `HmacPolicy` resources into the
-config the verifier mounts, and **Redis** for replay protection.
+config the verifier mounts, and **Redis** for replay protection. Turn on
+[metrics](metrics/) and the same chart wires up Prometheus scraping and a
+Grafana dashboard.
 
 {{< hm-children >}}

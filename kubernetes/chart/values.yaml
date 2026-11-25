@@ -33,6 +33,33 @@ service:
 logging:
   level: Information
 
+# Prometheus metrics: HmacManager's verification outcomes and latency (hmac_manager_*), plus
+# ASP.NET Core's request metrics, served at /metrics on a port of their own. Never on the verify
+# port: Envoy forwards the original request's path there, so a /metrics route on it would answer
+# 200 — "allow" — to any request for /metrics.
+#
+# Opt-in: the port is reachable from anywhere in the cluster that the Service is, and the series
+# name every policy and how much traffic each one carries.
+metrics:
+  enabled: false
+  port: 9464
+  # A Prometheus Operator ServiceMonitor for the metrics port. Requires the
+  # monitoring.coreos.com CRDs (kube-prometheus-stack installs them).
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    # Extra labels, e.g. the `release` label your Prometheus selects ServiceMonitors by.
+    labels: {}
+  # The HmacManager Grafana dashboard, as a ConfigMap for Grafana's dashboard sidecar to load
+  # (kube-prometheus-stack runs one, watching for the label below).
+  dashboard:
+    enabled: false
+    # Namespace the ConfigMap is created in. Defaults to the release namespace; set it to
+    # where your sidecar looks if it does not search all namespaces.
+    namespace: ""
+    labels:
+      grafana_dashboard: "1"
+
 # HMAC authentication policies. At least one policy is required.
 #
 # Each policy needs a name, a public key (UUID), and a reference to a Kubernetes

@@ -47,6 +47,10 @@
 
   <ItemGroup> 
     <InternalsVisibleTo Include="HmacManager.Tests" /> 
+    <!-- The ext-authz service records the one outcome only it can see, Unsigned, on the library's
+         own counter, so dashboards read every refusal from one series. It builds from this source,
+         never from the package. -->
+    <InternalsVisibleTo Include="HmacManager.Kubernetes" />
   </ItemGroup>
 
 </Project>

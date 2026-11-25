@@ -14,6 +14,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The 1.20 line: 1.21 dropped net8.0, which this project still targets. Moving to 1.21 goes
+         with dropping net8.0 here. -->
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
+    <!-- Only ever published as a beta; it is the exporter OpenTelemetry maintains for ASP.NET
+         Core. Confined to the service image: the library itself depends on nothing for metrics. -->
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.20.1-beta.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\HmacManager\HmacManager.csproj" />
     <ProjectReference Include="..\..\src\HmacManager.StackExchangeRedis\HmacManager.StackExchangeRedis.csproj" />
   </ItemGroup>

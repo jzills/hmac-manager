@@ -1,0 +1,17 @@
+{{- if .Values.metrics.dashboard.enabled }}
+# The HmacManager dashboard, for Grafana's dashboard sidecar. The JSON is kept as a file in the
+# chart (dashboards/hmac-manager.json) so it can be imported into a Grafana without the sidecar too.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hmac-manager.fullname" . }}-dashboard
+  namespace: {{ .Values.metrics.dashboard.namespace | default .Values.namespace }}
+  labels:
+    {{- include "hmac-manager.labels" . | nindent 4 }}
+    {{- with .Values.metrics.dashboard.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  hmac-manager.json: |-
+    {{- .Files.Get "dashboards/hmac-manager.json" | nindent 4 }}
+{{- end }}

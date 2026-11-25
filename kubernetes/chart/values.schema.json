@@ -69,6 +69,43 @@
       },
       "required": ["level"]
     },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Prometheus metrics on a dedicated port, an optional ServiceMonitor, and an optional Grafana dashboard ConfigMap.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port /metrics is served on. Must differ from service.port and from 8081, the development signing port."
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "interval": { "type": "string", "pattern": "^[0-9]+(ms|s|m|h)$" },
+            "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+          },
+          "required": ["enabled"]
+        },
+        "dashboard": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "namespace": { "type": "string" },
+            "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+          },
+          "required": ["enabled"]
+        }
+      },
+      "required": ["enabled", "port"]
+    },
     "policies": {
       "type": "array",
       "minItems": 1,

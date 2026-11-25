@@ -5,6 +5,9 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "hmac-manager.labels" . | nindent 4 }}
+    # What the ServiceMonitor selects by: the bundled Redis Service carries the same name and
+    # instance labels.
+    app.kubernetes.io/component: server
 spec:
   selector:
     {{- include "hmac-manager.selectorLabels" . | nindent 4 }}
@@ -14,3 +17,9 @@ spec:
       targetPort: {{ .Values.service.port }}
       protocol: TCP
       name: http
+    {{- if .Values.metrics.enabled }}
+    - port: {{ .Values.metrics.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}

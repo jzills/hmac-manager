@@ -27,6 +27,7 @@ Requests are signed and verified against named **policies**. A policy carries a 
 - Dynamic policies — a singleton collection, or pulled at runtime from a database or other store.
 - First-class ASP.NET Core authentication/authorization integration, plus client-side request signing via an `HttpClient` handler.
 - Structured `ILogger` diagnostics with stable event ids — every rejection reports *which* check failed, and no message can carry a private key.
+- Metrics for OpenTelemetry — every verification counted by outcome and policy, and timed, on a `System.Diagnostics.Metrics` meter.
 - Targets `net8.0` and `net10.0`.
 
 **Kubernetes / Istio**
@@ -35,6 +36,7 @@ Requests are signed and verified against named **policies**. A policy carries a 
 - **`HmacPolicy` CRD + operator** — declare policies as Kubernetes resources; the operator reconciles them into the ConfigMap and Secret the verifier mounts.
 - Private keys sourced from Kubernetes **Secrets**; policy and key changes **hot-reload without a pod restart**.
 - Redis bundled for replay protection — no external dependencies to provision.
+- **Prometheus metrics and a built-in Grafana dashboard** — verifications, refusals by reason and policy, replays, latency and Redis errors, three chart values away.
 - Installable via Helm and indexed on Artifact Hub.
 
 ## .NET Library
@@ -110,7 +112,21 @@ spec:
 kubectl apply -f my-policy.yaml
 ```
 
-→ [Kubernetes documentation](https://j.zills.io/hmac-manager/docs/kubernetes/) — the ext-authz service, the CRD and operator, chart values, and enforcement.
+> [!TIP]
+> **The chart ships a Grafana dashboard.** Turn on metrics and it is scraped by Prometheus and loaded into Grafana for you:
+>
+> ```yaml
+> metrics:
+>   enabled: true
+>   serviceMonitor:
+>     enabled: true
+>   dashboard:
+>     enabled: true
+> ```
+>
+> Using kube-prometheus-stack? See [metrics](https://j.zills.io/hmac-manager/docs/kubernetes/metrics/#with-kube-prometheus-stack) for the two of its defaults to match.
+
+→ [Kubernetes documentation](https://j.zills.io/hmac-manager/docs/kubernetes/) — the ext-authz service, the CRD and operator, chart values, enforcement, and metrics.
 
 - **Helm chart** — [kubernetes/chart](kubernetes/chart/README.md) · [Artifact Hub](https://artifacthub.io/packages/helm/zills/hmac-manager)
 - **Container images** — [zills/hmac-manager](https://hub.docker.com/r/zills/hmac-manager) (ext-authz service) · [zills/hmac-manager-operator](https://hub.docker.com/r/zills/hmac-manager-operator) (policy operator) on Docker Hub
