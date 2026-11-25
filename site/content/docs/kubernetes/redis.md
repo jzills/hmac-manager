@@ -24,7 +24,9 @@ unaffected.
 
 A Redis fault fails the check rather than letting the request through, and is
 logged as event 1400; losing and regaining the connection are events 1401 and
-1402. See the [event reference](../../reference/log-events/).
+1402. See the [event reference](../../reference/log-events/). With [metrics](../metrics/) on, those requests are counted
+under the `error` outcome, and the dashboard's **Errors** panel turns red for
+as long as Redis is unreachable.
 
 ### Upgrading from 0.4.2 or earlier
 
@@ -58,6 +60,20 @@ the chart fails.
 
 So `redis.enabled=false` is for single-replica deployments only — a
 development cluster, or something genuinely running one pod.
+
+### Turning it back on
+
+Setting `redis.enabled=true` on an existing release starts Redis and restarts
+the verifier, but the policies it reads still say `Memory` until the operator
+has rendered them again and the kubelet has delivered the new ConfigMap,
+typically within a minute or two. The verifier then reloads them (event 1211)
+and claims nonces in Redis from there on.
+
+Until that reload each pod uses its own in-process cache. Requests are still
+verified, and a replay to the same pod is still refused, but a replay landing
+on a different replica is not. Since the release was on one replica, that only
+matters if the same upgrade raises `replicaCount`: turn Redis on first, and
+scale out once event 1211 has been logged.
 
 ## What is stored
 

@@ -129,6 +129,30 @@ appear configured and do nothing.
 | `istio.waypoint.name` | `""` | Name of the waypoint Gateway. Required when enabled. |
 | `istio.waypoint.namespace` | `""` | Namespace of the waypoint. Required when enabled. |
 
+## Metrics and a Grafana dashboard
+
+The chart includes a Grafana dashboard for the verifier: verifications per
+second, refusals by reason and by policy, replays, latency and Redis errors.
+Turn on the metrics, a Prometheus Operator `ServiceMonitor` and the dashboard:
+
+```yaml
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack   # the label your Prometheus selects ServiceMonitors by
+  dashboard:
+    enabled: true
+    namespace: monitoring              # where your Grafana's dashboard sidecar looks
+```
+
+The dashboard is a ConfigMap labelled `grafana_dashboard: "1"`, which
+kube-prometheus-stack's Grafana sidecar loads; it is also
+`dashboards/hmac-manager.json` in the chart, to import by hand. Metrics are
+served on their own port, `9464`, never on the verify port. See
+[metrics](https://j.zills.io/hmac-manager/docs/kubernetes/metrics/).
+
 ## More
 
 | | |

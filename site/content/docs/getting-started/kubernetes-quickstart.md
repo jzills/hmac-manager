@@ -97,3 +97,4 @@ you can produce a valid signature without writing a client. See the
 - [The HmacPolicy CRD](../../kubernetes/hmacpolicy-crd/) — managing policies as resources instead of chart values
 - [Chart values](../../reference/chart-values/) — the full reference
 - [Enforcement](../../kubernetes/enforcement/) — ingress versus waypoint
+- [Metrics](../../kubernetes/metrics/) — Prometheus and the Grafana dashboard built into the chart

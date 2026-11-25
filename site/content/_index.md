@@ -189,9 +189,10 @@ const response = await fetch(request);
     <div class="hm-feature">
       <p class="hm-feature__title"><a href="docs/dotnet/logging/">Diagnosable rejections</a></p>
       <p class="hm-feature__body">
-        Structured <code>ILogger</code> output with stable event ids: every
-        rejection says <em>which</em> check failed. No message can carry a
-        private key, and a test asserts it over the whole sign/verify path.
+        Structured <code>ILogger</code> output with stable event ids says
+        <em>which</em> check failed, and no message can carry a private key.
+        Every outcome is also a <a href="docs/kubernetes/metrics/">metric</a>,
+        with a Grafana dashboard built into the Helm chart.
       </p>
     </div>
     <div class="hm-feature">

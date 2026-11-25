@@ -1,6 +1,6 @@
 ---
 title: Reference
-description: Headers, log event ids, chart values and the configuration schema.
+description: Headers, log event ids, metrics, chart values and the configuration schema.
 weight: 6
 ---
 
