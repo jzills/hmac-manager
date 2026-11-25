@@ -1,22 +1,57 @@
 version: 2
 updates:
+  # NuGet looks for project files in the directories it is given, not beneath
+  # them, and there is no solution at the root, so a single "/" entry found
+  # nothing and no NuGet update was ever opened. Every project directory is
+  # listed instead.
+  #
+  # src/ is deliberately absent. A library's PackageReference is the minimum
+  # version every consumer is forced up to, so it moves when the library needs
+  # it to, not when something newer ships. Security updates are not governed
+  # by this file and still reach src/.
   - package-ecosystem: "nuget"
-    directory: "/"
+    directories:
+      - "/test/*"
+      - "/kubernetes/operator"
+      - "/kubernetes/service"
+      - "/samples/*/*"
     schedule:
       interval: "weekly"
+    # One PR per family across every directory, rather than one per package per
+    # project: the test projects alone would otherwise open dozens.
+    groups:
+      test:
+        patterns:
+          - "NUnit*"
+          - "coverlet.*"
+          - "Microsoft.NET.Test.Sdk"
+          - "Microsoft.AspNetCore.Mvc.Testing"
+          - "Microsoft.AspNetCore.TestHost"
+          - "Microsoft.Extensions.TimeProvider.Testing"
+      kubeops:
+        patterns:
+          - "KubeOps.*"
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+          - "System.*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "npm"
-    directory: "/client/lib"
+  # The runtime base images. Their tags float (aspnet:10.0), so a rebuild
+  # already picks up patches; this catches a move to a new major tag.
+  - package-ecosystem: "docker"
+    directories:
+      - "/kubernetes/operator"
+      - "/kubernetes/service"
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "npm"
-    directory: "/client/sample"
+    directory: "/client/lib"
     schedule:
       interval: "weekly"
 
