@@ -114,14 +114,14 @@ disableKinds = ["taxonomy", "term"]
       # theme's scripts/search.html; base is only for a different CDN.
       js = "vendor/flexsearch/flexsearch.bundle.min.js"
 
-  # Hextra's own light/dark toggle, unmodified. kx replaces this partial with a
-  # ten-palette menu because its palettes are generated from the CLI's theme
-  # registry; there is no such registry here, so two modes is the whole story
-  # and the stock control is the right one. It sits in the navbar (the Theme
-  # menu entry below); displayToggle governs a second copy, in a sticky bar at
-  # the foot of the docs sidebar, doing what the navbar's already does.
+  # The light/dark button is the navbar's Theme entry below. It renders
+  # layouts/_partials/theme-toggle.html, one sun/moon button shared with the
+  # other project docs sites, in place of Hextra's light/dark/system menu.
+  # With nothing stored, the reader's system setting picks light or dark.
+  # displayToggle governs a second copy, in a sticky bar at the foot of the
+  # docs sidebar, doing what the navbar's already does.
   [params.theme]
-    default = "dark"
+    default = "system"
     displayToggle = false
 
 # The footer, shared by every project docs site: the markup is
