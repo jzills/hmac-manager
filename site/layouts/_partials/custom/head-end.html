@@ -32,21 +32,17 @@
   {{- end }}
 {{- end }}
 
-{{- /* The copy button on the footer's install command, shared by every
-       project docs site. Deferred: the button ships hidden, and the
-       command reads correctly without it. */ -}}
-{{- with resources.Get "js/oss-copy.js" }}
-  {{- $copy := . | minify | fingerprint }}
-  <script defer src="{{ $copy.RelPermalink }}" integrity="{{ $copy.Data.Integrity }}"></script>
-{{- end }}
-
 {{- /* The typefaces every project docs site is set in; see the partial. */ -}}
 {{- partial "oss/fonts.html" . -}}
 
-{{- /* The landing page's install tabs; see the script. */ -}}
+{{- /* The landing page's install tabs and copy buttons; see the scripts.
+       Deferred: the buttons ship hidden, and the panel reads correctly as
+       a grid without either. */ -}}
 {{- if .IsHome }}
-  {{- with resources.Get "js/hm-install.js" }}
-    {{- $install := . | minify | fingerprint }}
-  <script defer src="{{ $install.RelPermalink }}" integrity="{{ $install.Data.Integrity }}"></script>
+  {{- range slice "js/hm-install.js" "js/hm-copy.js" }}
+    {{- with resources.Get . }}
+      {{- $js := . | minify | fingerprint }}
+  <script defer src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}"></script>
+    {{- end }}
   {{- end }}
 {{- end }}

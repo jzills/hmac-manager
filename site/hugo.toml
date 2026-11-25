@@ -132,9 +132,8 @@ disableKinds = ["taxonomy", "term"]
     displayToggle = false
 
 # The footer, shared by every project docs site: the markup is
-# layouts/_partials/custom/footer.html and the install command is
-# layouts/_partials/oss/footer-command.html. Keys are lowercase, as Hugo
-# stores them. A link is a site `path`, an absolute `url`, or kind = "bug",
+# layouts/_partials/custom/footer.html. Keys are lowercase, as Hugo stores
+# them. A link is a site `path`, an absolute `url`, or kind = "bug",
 # which opens a new issue with `bug` as its body; the body asks which of the
 # four artifacts the reader runs, since each has its own version.
 [params.oss]
@@ -142,7 +141,6 @@ disableKinds = ["taxonomy", "term"]
   mark = "hm-mark.svg"
   showname = false
   tagline = "HMAC request authentication for ASP.NET Core, in your app or across your mesh."
-  command = "dotnet add package HmacManager"
   repo = "https://github.com/jzills/hmac-manager"
   bug = """**What happened**
 

@@ -1,5 +1,5 @@
 // The tabs that turn the landing page's install cards into one panel. Each
-// command's copy button is the shared one, assets/js/oss-copy.js.
+// command's copy button is assets/js/hm-copy.js.
 //
 // An enhancement over markup that already works without it: without
 // JavaScript the cards stay a grid, every method visible at once.

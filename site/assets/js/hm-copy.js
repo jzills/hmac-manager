@@ -1,6 +1,5 @@
-// The copy button on the footer's install command, on every project docs
-// site. Shared, byte for byte, by kx, snoop, action-cache and hmac-manager:
-// change it in one, copy it to all four. Linked from custom/head-end.html.
+// The copy button on each command of the landing page's install panels
+// (_partials/hm/command.html). Linked from custom/head-end.html.
 //
 // An enhancement over markup that already works without it: the button
 // ships `hidden` and is revealed only once this runs, so a reader without
@@ -23,18 +22,18 @@
     selection.addRange(range);
   }
 
-  document.querySelectorAll("[data-oss-copy]").forEach(function (box) {
-    var text = box.querySelector(".oss-command__text");
-    var button = box.querySelector(".oss-command__copy");
-    var status = box.querySelector(".oss-command__status");
+  document.querySelectorAll("[data-hm-copy]").forEach(function (box) {
+    var text = box.querySelector(".hm-command__text");
+    var button = box.querySelector(".hm-command__copy");
+    var status = box.querySelector(".hm-command__status");
     if (!text || !button) return;
     button.hidden = false;
     button.addEventListener("click", function () {
       var done = function () {
         if (status) status.textContent = "Copied";
         button.classList.add("is-done");
-        clearTimeout(button._ossDone);
-        button._ossDone = setTimeout(function () {
+        clearTimeout(button._hmDone);
+        button._hmDone = setTimeout(function () {
           button.classList.remove("is-done");
           if (status) status.textContent = "";
         }, DONE_MS);
