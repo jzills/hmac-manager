@@ -7,10 +7,11 @@
   image is a second file to keep in step for no gain. Inlined instead, so the
   mark takes its colour from the palette like everything else on the page.
 
-  The name is spelled out beside it, which kx's equivalent does not need to
-  do: its mark *is* its wordmark. This one is the compact H-in-a-frame, which
-  identifies the project only to someone who already knows it, so the navbar
-  carries the name in text.
+  The mark alone, the H in its frame, with no name beside it: every project
+  docs site's navbar carries a compact mark of the same height (kx's and
+  action-cache's pixel letters, snoop's wordmark), so the menu to its right
+  reads the same from one site to the next. The name is the link's label,
+  the hero's wordmark and the browser tab's title.
 
   hx:ltr:mr-auto is load-bearing — it is what pushes the menu to the right.
 
@@ -27,5 +28,4 @@
   {{- with resources.Get "hm-mark.svg" }}
     {{- .Content | safeHTML }}
   {{- end }}
-  <span class="hm-navbar-mark__name">HmacManager</span>
 </a>

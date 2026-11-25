@@ -318,17 +318,11 @@ body {
   color: var(--hm-accent);
 }
 
+/* The same height as kx's and action-cache's navbar marks. */
 .hm-navbar-mark svg {
-  height: 1.75rem;
+  height: 2.1rem;
   width: auto;
   display: block;
-}
-
-.hm-navbar-mark__name {
-  font-weight: 650;
-  font-size: 1.05rem;
-  color: var(--hm-heading);
-  letter-spacing: -0.01em;
 }
 
 /* Hextra chrome
