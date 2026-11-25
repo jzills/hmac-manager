@@ -1,10 +1,13 @@
 name: Kubernetes PR Validation
 
+# Runs on every PR, not behind a `paths:` filter, so its checks can be required:
+# a workflow a path filter never starts reports no check at all, and a required
+# check that never reports blocks the PR forever. The `changes` job decides
+# instead, and the jobs below are skipped when nothing they cover changed. A
+# skipped job satisfies a required check.
 on:
   pull_request:
     branches: [ "main", "develop" ]
-    paths:
-      - "kubernetes/**"
 
 env:
   ISTIO_VERSION: "1.30.2"
@@ -15,8 +18,38 @@ env:
   TEST_PRIVATE_KEY: "euJ9iXZfURClr78ERyZr8csmHoVkZIfeoSVu3jNZf0w="
 
 jobs:
+  changes:
+    name: Detect Kubernetes changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      kubernetes: ${{ steps.diff.outputs.kubernetes }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # src/ is included because both images are built from it: the service and
+      # the operator reference src/HmacManager (and the service the Redis
+      # package), so a library change is a change to what E2E deploys.
+      - name: Diff against the base branch
+        id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # Captured first: under pipefail, grep -q closing the pipe early can
+          # kill git diff with SIGPIPE and turn a match into a failure.
+          CHANGED=$(git diff --name-only "$BASE_SHA"...HEAD)
+          if grep -qE '^(kubernetes/|src/|\.github/workflows/kubernetes-pr\.yml$)' <<<"$CHANGED"; then
+            echo "kubernetes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "kubernetes=false" >> "$GITHUB_OUTPUT"
+          fi
+
   helm-unit-tests:
     name: Helm Unit Tests
+    needs: changes
+    if: needs.changes.outputs.kubernetes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -35,6 +68,8 @@ jobs:
 
   trivy-scan:
     name: Trivy Security Scan
+    needs: changes
+    if: needs.changes.outputs.kubernetes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -59,6 +94,8 @@ jobs:
 
   e2e-tests:
     name: E2E Tests
+    needs: changes
+    if: needs.changes.outputs.kubernetes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
