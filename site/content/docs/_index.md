@@ -1,6 +1,5 @@
 ---
 title: Documentation
-linkTitle: Docs
 description: Add HMAC authentication to an ASP.NET Core API, or enforce it across an Istio mesh.
 weight: 1
 ---
